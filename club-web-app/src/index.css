@@ -1,0 +1,189 @@
+@import "tailwindcss";
+
+@theme {
+  --color-canvas: #0A090A;
+  --color-surface-1: #141213;
+  --color-surface-2: #1E1A1B;
+  --color-surface-3: #292425;
+
+  --color-accent-subtle: #2A1215;
+  --color-accent-base: #52181E;
+  --color-accent-strong: #8F232E;
+  --color-accent-highlight: #E0A3AA;
+  --color-accent-light: #E0A3AA;
+
+  --color-text-primary: #E5E5E7;
+  --color-text-secondary: #9B98A0;
+  --color-text-muted: #67646C;
+  --color-border-subtle: #242021;
+  --color-border-clean: #382D30;
+
+  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+}
+
+:root {
+  --bg-main: #0A090A;
+  --text-main: #E5E5E7;
+  color-scheme: dark;
+}
+
+:root.light {
+  --bg-main: #F7F7F8;
+  --text-main: #000000;
+  color-scheme: light;
+}
+
+body {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  color: var(--text-main);
+  background-color: var(--bg-main);
+  overflow-x: hidden;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Light, vibrant red text selection */
+::selection {
+  background-color: #DC2626;
+  color: #FFFFFF;
+}
+
+/* Display Titles */
+h1,
+h2,
+.font-display {
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+/* Subheadings and labels */
+.tracking-label {
+  letter-spacing: 0.06em;
+}
+
+/* Crisp pinkish focus indicator */
+*:focus-visible {
+  outline: 2px solid #E0A3AA;
+  outline-offset: 2px;
+}
+
+/* =========================================================
+   LIGHT MODE: FAINT RED OUTLINE & PURE BLACK TEXT
+   - Top navigation bar is solid white with faint red outline
+   - Cards and structural borders have a delicate, faint red outline
+   - All text is pure solid black (#000000)
+   ========================================================= */
+
+html.light body {
+  background-color: #F7F7F8;
+  color: #000000 !important;
+}
+
+/* Pure white top header navbar with faint red border outline */
+html.light header {
+  background-color: #FFFFFF !important;
+  border-color: rgba(220, 38, 38, 0.16) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+}
+
+html.light header .bg-\[\#0A090A\],
+html.light header .bg-\[\#0A090A\]\/95 {
+  background-color: #FFFFFF !important;
+}
+
+html.light header nav {
+  background-color: #F4F4F5 !important;
+  border-color: rgba(220, 38, 38, 0.18) !important;
+}
+
+html.light header a.bg-\[\#2A1215\],
+html.light header a.bg-\[\#241416\] {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+  border-color: #000000 !important;
+}
+
+/* Strict pure black text for all typography in light mode */
+html.light,
+html.light body,
+html.light h1,
+html.light h2,
+html.light h3,
+html.light h4,
+html.light p,
+html.light span:not(header a.bg-\[\#2A1215\] *):not(header a.bg-\[\#241416\] *),
+html.light a:not(header a.bg-\[\#2A1215\]):not(header a.bg-\[\#241416\]),
+html.light time,
+html.light div,
+html.light input,
+html.light button,
+html.light svg:not(.keep-color),
+html.light .text-\[\#E5E5E7\],
+html.light .text-\[\#9B98A0\],
+html.light .text-\[\#67646C\],
+html.light .text-\[\#EF4444\],
+html.light .text-\[\#F87171\],
+html.light .text-\[\#E0A3AA\],
+html.light .text-\[\#BD6B75\],
+html.light .text-white {
+  color: #000000 !important;
+}
+
+/* Selection in light mode */
+html.light ::selection {
+  background-color: #000000;
+  color: #FFFFFF !important;
+}
+
+/* Neutral background surfaces */
+html.light .bg-\[\#0A090A\],
+html.light .bg-\[\#0A090A\]\/95 {
+  background-color: #F7F7F8 !important;
+}
+
+html.light .bg-\[\#141213\],
+html.light .bg-\[\#131214\] {
+  background-color: #FFFFFF !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+html.light .bg-\[\#1E1A1B\],
+html.light .bg-\[\#241416\],
+html.light .bg-\[\#2A1215\],
+html.light .bg-\[\#3D1E22\] {
+  background-color: #F0F0F2 !important;
+}
+
+/* Faint red outline across cards, containers, and borders in light mode */
+html.light .border-\[\#221E1F\],
+html.light .border-\[\#201E22\],
+html.light .border-\[\#242021\],
+html.light .border-\[\#30292B\],
+html.light .border-\[\#382D30\],
+html.light .border-\[\#5E2C32\],
+html.light [class*="border-\[\#EF4444\]"] {
+  border-color: rgba(220, 38, 38, 0.18) !important;
+}
+
+/* SVG background geometry in light mode */
+html.light svg.text-\[\#241416\],
+html.light svg.text-\[\#141213\] {
+  color: #E4E4E8 !important;
+  opacity: 0.35 !important;
+}
+
+/* Subtle, gentle hover tints in light mode with faint red border accent */
+html.light [class*="hover:bg-"]:hover,
+html.light button:hover,
+html.light a:hover {
+  background-color: #E8E8EC !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+html.light [class*="hover:border-"]:hover {
+  border-color: rgba(220, 38, 38, 0.35) !important;
+}
+
+html.light [class*="hover:text-"]:hover {
+  color: #000000 !important;
+}
