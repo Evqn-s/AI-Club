@@ -10,6 +10,7 @@ coverage/
 dist/
 build/
 .vercel/
+club-web-app/
 
 # Environment files
 .env

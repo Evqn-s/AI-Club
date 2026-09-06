@@ -148,17 +148,14 @@ If you want announcements posted in your Discord server to sync directly into th
 2. Click **Add New...** → **Project**.
 3. Under **Import Git Repository**, find `AI-Club` (or `Evqn-s/AI-Club`) and click **Import**.
 
-### Step 2 — Configure Root Directory
-Because the web app lives in the `club-web-app` folder:
-1. In the setup screen, find **Root Directory** and click **Edit**.
-2. Select or enter: `club-web-app`.
-3. Click **Continue**. Vercel will automatically detect the **Vite** preset.
+### Step 2 — Configure Build Settings
+Because all project files are now at the repository root, Vercel will automatically detect the **Vite** preset without needing a custom root directory!
 
 **Settings Summary:**
 | Setting | Value |
 |---|---|
 | Framework Preset | `Vite` |
-| Root Directory | `club-web-app` |
+| Root Directory | `./` (default) |
 | Build Command | `npm run build` |
 | Output Directory | `dist` |
 
