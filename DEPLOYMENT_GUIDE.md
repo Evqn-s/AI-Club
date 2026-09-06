@@ -68,7 +68,7 @@ git push -u origin main
 ### Step 2 — Run the database schema
 1. In the Supabase left sidebar, click **SQL Editor**.
 2. Click **+ New query**.
-3. Open [`club-web-app/supabase/schema.sql`](file:///c:/Users/esun/Documents/antigravity/AI%20Club%20Website/club-web-app/supabase/schema.sql) and paste the entire file into the editor:
+3. Open [`supabase/schema.sql`](file:///c:/Users/esun/Documents/antigravity/AI%20Club%20Website/supabase/schema.sql) and paste the entire file into the editor:
    - Sets up `club_info` (singleton table for meeting times, rules, socials)
    - Sets up `news` (announcements from Discord and admins)
    - Sets up `events` (calendar schedule)
@@ -125,7 +125,7 @@ If you want announcements posted in your Discord server to sync directly into th
    ```
 2. Log in and link your project:
    ```powershell
-   cd "C:\Users\esun\Documents\antigravity\AI Club Website\club-web-app"
+   cd "C:\Users\esun\Documents\antigravity\AI Club Website"
    supabase login
    supabase link --project-ref <YOUR_PROJECT_REF>
    ```
