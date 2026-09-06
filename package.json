@@ -1,0 +1,15 @@
+{
+  "name": "ai-club-website-workspace",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix club-web-app",
+    "build": "npm run build --prefix club-web-app",
+    "preview": "npm run preview --prefix club-web-app"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.69.0",
+    "@typescript-eslint/parser": "^8.69.0",
+    "eslint": "^10.10.0",
+    "prettier": "^3.9.6"
+  }
+}
