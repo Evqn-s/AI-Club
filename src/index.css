@@ -48,14 +48,14 @@ body {
   color: #FFFFFF;
 }
 
-/* Display Titles with tuned-down, subtle ambient glow across all pages */
+/* Display Titles with enhanced subtle ambient glow across all pages */
 h1,
 h2,
 h3,
 .font-display {
   font-family: "Plus Jakarta Sans", system-ui, sans-serif;
   letter-spacing: -0.02em;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.14), 0 0 20px rgba(220, 38, 38, 0.12);
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.22), 0 0 28px rgba(239, 68, 68, 0.2), 0 0 45px rgba(220, 38, 38, 0.12);
   transition: text-shadow 0.25s ease;
 }
 
@@ -232,7 +232,7 @@ html.light h1,
 html.light h2,
 html.light h3,
 html.light .font-display {
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.95), 0 0 20px rgba(59, 130, 246, 0.14) !important;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.95), 0 0 24px rgba(59, 130, 246, 0.22), 0 0 44px rgba(37, 99, 235, 0.1) !important;
 }
 
 /* Keep small navbar brand text perfectly crisp without shadow */

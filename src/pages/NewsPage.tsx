@@ -77,7 +77,7 @@ export function NewsPage() {
       {/* Header */}
       <div className="border-b border-[#242021] pb-6">
         <span className="text-[11px] font-medium tracking-[0.08em] uppercase text-[#9B98A0]">Announcements</span>
-        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-[-0.03em] font-display text-[#E5E5E7] mt-1">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-[-0.03em] font-display text-[#E5E5E7] mt-1">
           Latest News
         </h1>
       </div>

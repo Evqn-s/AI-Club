@@ -46,8 +46,8 @@ export function HomePage() {
   return (
     <div className="space-y-16 py-12">
       {/* Editorial Centered Hero with Bold Scale & Negative Space */}
-      <section className="text-center max-w-4xl mx-auto space-y-8 pt-6 pb-2">
-        <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-[-0.04em] font-display text-[#E5E5E7] leading-[0.98] select-none">
+      <section className="text-center max-w-5xl mx-auto space-y-8 pt-6 pb-2">
+        <h1 className="text-7xl sm:text-8xl md:text-9xl lg:text-[9.5rem] xl:text-[10.5rem] font-black tracking-[-0.04em] font-display text-[#E5E5E7] leading-[0.95] select-none">
           {info?.club_name || "AI Club"}
         </h1>
 
@@ -85,7 +85,7 @@ export function HomePage() {
               <Clock className="h-4 w-4 text-[#E0A3AA]" />
               <span className="text-[11px] font-medium tracking-[0.08em] uppercase text-[#9B98A0]">Schedule</span>
             </div>
-            <CardTitle className="text-xl text-[#E5E5E7]">Regular Meetings</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl text-[#E5E5E7]">Regular Meetings</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -105,7 +105,7 @@ export function HomePage() {
               <Mail className="h-4 w-4 text-[#E0A3AA]" />
               <span className="text-[11px] font-medium tracking-[0.08em] uppercase text-[#9B98A0]">Connect</span>
             </div>
-            <CardTitle className="text-xl text-[#E5E5E7]">Get in Touch</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl text-[#E5E5E7]">Get in Touch</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (

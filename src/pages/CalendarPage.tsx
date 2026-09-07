@@ -90,7 +90,7 @@ export function CalendarPage() {
       {/* Header */}
       <div className="border-b border-[#242021] pb-6">
         <span className="text-[11px] font-medium tracking-[0.08em] uppercase text-[#9B98A0]">Schedule</span>
-        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-[-0.03em] font-display text-[#E5E5E7] mt-1">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-[-0.03em] font-display text-[#E5E5E7] mt-1">
           Club Calendar
         </h1>
       </div>
@@ -126,7 +126,7 @@ export function CalendarPage() {
           {events.map((evt) => (
             <Card key={evt.id} className="border-[#242021] bg-[#141213] flex flex-col justify-between hover:border-[#382D30] transition-colors">
               <CardHeader className="pb-4">
-                <CardTitle className="text-lg font-bold text-[#E5E5E7]">{evt.title}</CardTitle>
+                <CardTitle className="text-xl font-bold text-[#E5E5E7]">{evt.title}</CardTitle>
                 <CardDescription className="flex flex-col gap-2 pt-2 text-[#9B98A0]">
                   <span className="flex items-center gap-2">
                     <CalendarIcon className="h-3.5 w-3.5 text-[#E0A3AA] shrink-0" />
