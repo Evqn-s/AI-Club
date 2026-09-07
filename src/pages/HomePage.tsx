@@ -47,12 +47,12 @@ export function HomePage() {
     <div className="space-y-16 py-12">
       {/* Editorial Centered Hero with Bold Scale & Negative Space */}
       <section className="text-center max-w-4xl mx-auto space-y-8 pt-6 pb-2">
-        <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-[-0.04em] font-display text-[#E5E5E7] leading-[0.98] select-none touching-sine-wave">
+        <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-[-0.04em] font-display text-[#E5E5E7] leading-[0.98] select-none">
           {info?.club_name || "AI Club"}
         </h1>
 
         <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-          <Button asChild size="lg" className="shadow-[0_0_22px_rgba(220,38,38,0.3)] hover:shadow-[0_0_30px_rgba(239,68,68,0.45)] transition-shadow">
+          <Button asChild size="lg">
             <Link
               href="/calendar"
               onMouseEnter={() => prefetchRoute("/calendar")}
@@ -63,7 +63,7 @@ export function HomePage() {
               <ArrowRight className="h-4 w-4 ml-1.5" />
             </Link>
           </Button>
-          <Button variant="outline" size="lg" asChild className="shadow-[0_0_20px_rgba(220,38,38,0.18)] hover:shadow-[0_0_28px_rgba(239,68,68,0.35)] transition-shadow">
+          <Button variant="outline" size="lg" asChild>
             <Link
               href="/news"
               onMouseEnter={() => prefetchRoute("/news")}
@@ -79,7 +79,7 @@ export function HomePage() {
       {/* Structured Minimalist Cards Grid */}
       <div className="grid gap-6 sm:grid-cols-2">
         {/* Schedule */}
-        <Card className="border-[#242021] bg-[#141213]/85 backdrop-blur-md transition-colors">
+        <Card className="border-[#242021] bg-[#141213]">
           <CardHeader>
             <div className="flex items-center gap-2 text-[#E0A3AA] mb-1">
               <Clock className="h-4 w-4 text-[#E0A3AA]" />
@@ -91,7 +91,7 @@ export function HomePage() {
             {loading ? (
               <Skeleton className="h-6 w-3/4" />
             ) : (
-              <div className="p-4 rounded-xl border border-[#242021] bg-[#0A090A]/85 backdrop-blur-sm text-[#E5E5E7] text-sm font-medium">
+              <div className="p-4 rounded-xl border border-[#242021] bg-[#0A090A] text-[#E5E5E7] text-sm font-medium">
                 {info?.meeting_times || "Every Tuesday at 6 PM"}
               </div>
             )}
@@ -99,7 +99,7 @@ export function HomePage() {
         </Card>
 
         {/* Contact & Social Links (Managed directly via Supabase PostgreSQL club_info table) */}
-        <Card className="border-[#242021] bg-[#141213]/85 backdrop-blur-md transition-colors">
+        <Card className="border-[#242021] bg-[#141213]">
           <CardHeader>
             <div className="flex items-center gap-2 text-[#E0A3AA] mb-1">
               <Mail className="h-4 w-4 text-[#E0A3AA]" />
