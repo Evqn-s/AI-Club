@@ -48,12 +48,15 @@ body {
   color: #FFFFFF;
 }
 
-/* Display Titles */
+/* Display Titles with very slight ambient glow */
 h1,
 h2,
+h3,
 .font-display {
   font-family: "Plus Jakarta Sans", system-ui, sans-serif;
   letter-spacing: -0.02em;
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.2), 0 0 32px rgba(220, 38, 38, 0.18);
+  transition: text-shadow 0.25s ease;
 }
 
 /* Subheadings and labels */
@@ -222,4 +225,12 @@ html.light .typing-cursor {
 /* 3 thinking dots (AI processing): rose in dark mode, blue in light mode */
 html.light .thinking-dot {
   background-color: #2563EB !important;
+}
+
+/* Very slight title glow in light mode */
+html.light h1,
+html.light h2,
+html.light h3,
+html.light .font-display {
+  text-shadow: 0 0 10px rgba(37, 99, 235, 0.25), 0 0 22px rgba(37, 99, 235, 0.12) !important;
 }

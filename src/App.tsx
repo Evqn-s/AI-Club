@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Route, Switch } from "wouter";
 import { ThemeProvider } from "@/components/ThemeBar";
 import { Navbar } from "@/components/Navbar";
@@ -6,8 +7,19 @@ import { OrganicBackground } from "@/components/OrganicBackground";
 import { HomePage } from "@/pages/HomePage";
 import { NewsPage } from "@/pages/NewsPage";
 import { CalendarPage } from "@/pages/CalendarPage";
+import { prefetchRoute } from "@/lib/cache";
 
 export function App() {
+  useEffect(() => {
+    // Warm up routes during idle time so navigation is instantaneous even on first click
+    const timer = setTimeout(() => {
+      prefetchRoute("/");
+      prefetchRoute("/news");
+      prefetchRoute("/calendar");
+    }, 250);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <ThemeProvider>
       <div className="min-h-screen flex flex-col bg-[#0A090A] text-[#E5E5E7] relative selection:bg-[#DC2626] selection:text-white transition-colors duration-200">

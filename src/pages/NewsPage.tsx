@@ -1,52 +1,33 @@
 import { useEffect, useState } from "react";
 import { supabase, isSupabaseConfigured, type NewsItem } from "@/lib/supabase";
+import {
+  prefetchNews,
+  getCachedNews,
+  fallbackNews,
+  setCachedNews,
+  invalidateCache,
+} from "@/lib/cache";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const fallbackNews: NewsItem[] = [
-  {
-    id: "msg_1",
-    content: "Welcome to the new semester! Join our Discord and check out our upcoming AI workshop series.",
-    author: "Admin",
-    timestamp: "2026-09-01T12:00:00Z",
-  },
-  {
-    id: "msg_2",
-    content: "Hackathon project groups will be finalized during our next Tuesday session. Bring your project ideas!",
-    author: "President",
-    timestamp: "2026-09-04T18:30:00Z",
-  },
-];
-
 export function NewsPage() {
-  const [news, setNews] = useState<NewsItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cached = getCachedNews();
+  const [news, setNews] = useState<NewsItem[]>(() => cached || fallbackNews);
+  const [loading, setLoading] = useState<boolean>(() => !cached);
   const [error, setError] = useState<string | null>(null);
 
-  async function fetchNews() {
-    setLoading(true);
+  async function fetchNews(force = false) {
+    if (force) {
+      invalidateCache("news");
+      setLoading(true);
+    }
     setError(null);
     try {
-      if (isSupabaseConfigured && supabase) {
-        const { data, error: sbError } = await supabase
-          .from("news")
-          .select("*")
-          .order("timestamp", { ascending: false });
-
-        if (sbError) throw sbError;
-
-        if (data) {
-          setNews(data.length > 0 ? data : fallbackNews);
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Local fallback / demo mode
-      setNews(fallbackNews);
+      const data = await prefetchNews();
+      setNews(data);
     } catch (err: any) {
       console.error("Failed to load news:", err);
       setError("Unable to connect to announcements database. Showing local offline data.");
@@ -71,7 +52,11 @@ export function NewsPage() {
           { event: "INSERT", schema: "public", table: "news" },
           (payload) => {
             if (isMounted && payload.new) {
-              setNews((prev) => [payload.new as NewsItem, ...prev]);
+              setNews((prev) => {
+                const next = [payload.new as NewsItem, ...prev];
+                setCachedNews(next);
+                return next;
+              });
             }
           }
         )
@@ -104,7 +89,7 @@ export function NewsPage() {
             <AlertCircle className="h-4 w-4 text-[#E0A3AA] shrink-0" />
             <span>{error}</span>
           </div>
-          <Button variant="outline" size="sm" onClick={fetchNews} className="h-8 px-3 text-xs shrink-0">
+          <Button variant="outline" size="sm" onClick={() => fetchNews(true)} className="h-8 px-3 text-xs shrink-0">
             <RefreshCw className="h-3 w-3 mr-1" />
             <span>Retry</span>
           </Button>

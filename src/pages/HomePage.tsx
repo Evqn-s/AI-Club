@@ -1,55 +1,31 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
-import { supabase, isSupabaseConfigured, type ClubInfo } from "@/lib/supabase";
+import { type ClubInfo } from "@/lib/supabase";
+import {
+  prefetchHome,
+  getCachedHome,
+  fallbackClubInfo,
+  prefetchRoute,
+} from "@/lib/cache";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Clock, Mail, ArrowRight, GraduationCap, Instagram, ExternalLink } from "lucide-react";
 
-const fallbackClubInfo: ClubInfo = {
-  id: "club_main",
-  club_name: "AI Club",
-  mission: "",
-  meeting_times: "Every Tuesday at 6 PM",
-  rules: [],
-  contact_email: "contact.aiclub@gmail.com",
-  google_classroom_code: "aiclub2026",
-  google_classroom_url: "https://classroom.google.com",
-  instagram_handle: "@aiclub.official",
-  instagram_url: "https://instagram.com/aiclub.official",
-};
-
 export function HomePage() {
-  const [info, setInfo] = useState<ClubInfo | null>(null);
-  const [loading, setLoading] = useState(true);
+  const cached = getCachedHome();
+  const [info, setInfo] = useState<ClubInfo>(() => cached || fallbackClubInfo);
+  const [loading, setLoading] = useState<boolean>(() => !cached);
 
   useEffect(() => {
     let isMounted = true;
 
-    async function loadInfo() {
-      if (isSupabaseConfigured && supabase) {
-        try {
-          const { data, error } = await supabase
-            .from("club_info")
-            .select("*")
-            .single();
-
-          if (!error && data && isMounted) {
-            setInfo(data);
-            setLoading(false);
-            return;
-          }
-        } catch (e) {
-          console.error("Error loading club info from Supabase:", e);
-        }
-      }
+    prefetchHome().then((data) => {
       if (isMounted) {
-        setInfo(fallbackClubInfo);
+        setInfo(data);
         setLoading(false);
       }
-    }
-
-    loadInfo();
+    });
 
     return () => {
       isMounted = false;
@@ -72,13 +48,23 @@ export function HomePage() {
 
         <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
           <Button asChild size="lg">
-            <Link href="/calendar">
+            <Link
+              href="/calendar"
+              onMouseEnter={() => prefetchRoute("/calendar")}
+              onFocus={() => prefetchRoute("/calendar")}
+              onTouchStart={() => prefetchRoute("/calendar")}
+            >
               <span>View Schedule</span>
               <ArrowRight className="h-4 w-4 ml-1.5" />
             </Link>
           </Button>
           <Button variant="outline" size="lg" asChild>
-            <Link href="/news">
+            <Link
+              href="/news"
+              onMouseEnter={() => prefetchRoute("/news")}
+              onFocus={() => prefetchRoute("/news")}
+              onTouchStart={() => prefetchRoute("/news")}
+            >
               <span>Announcements</span>
             </Link>
           </Button>

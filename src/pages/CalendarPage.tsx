@@ -1,55 +1,31 @@
 import { useEffect, useState } from "react";
 import { supabase, isSupabaseConfigured, type CalendarEvent } from "@/lib/supabase";
+import {
+  prefetchCalendar,
+  getCachedCalendar,
+  fallbackEvents,
+  invalidateCache,
+} from "@/lib/cache";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar as CalendarIcon, Clock, MapPin, ExternalLink, AlertCircle, RefreshCw } from "lucide-react";
 
-const fallbackEvents: CalendarEvent[] = [
-  {
-    id: "evt_1",
-    title: "General Meeting",
-    date: "2026-09-15",
-    time: "18:00",
-    description: "Monthly general assembly to discuss upcoming hackathons and workshop sessions.",
-    location: "Room 101",
-  },
-  {
-    id: "evt_2",
-    title: "AI Workshop: Neural Networks 101",
-    date: "2026-09-22",
-    time: "17:30",
-    description: "Hands-on session building your first neural network from scratch using Python and PyTorch.",
-    location: "Engineering Lab B",
-  },
-];
-
 export function CalendarPage() {
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cached = getCachedCalendar();
+  const [events, setEvents] = useState<CalendarEvent[]>(() => cached || fallbackEvents);
+  const [loading, setLoading] = useState<boolean>(() => !cached);
   const [error, setError] = useState<string | null>(null);
 
-  async function fetchEvents() {
-    setLoading(true);
+  async function fetchEvents(force = false) {
+    if (force) {
+      invalidateCache("calendar");
+      setLoading(true);
+    }
     setError(null);
     try {
-      if (isSupabaseConfigured && supabase) {
-        const { data, error: sbError } = await supabase
-          .from("events")
-          .select("*")
-          .order("date", { ascending: true });
-
-        if (sbError) throw sbError;
-
-        if (data) {
-          setEvents(data.length > 0 ? data : fallbackEvents);
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Local fallback / demo mode
-      setEvents(fallbackEvents);
+      const data = await prefetchCalendar();
+      setEvents(data);
     } catch (err: any) {
       console.error("Failed to load events:", err);
       setError("Unable to connect to events database. Showing local offline schedule.");
@@ -126,7 +102,7 @@ export function CalendarPage() {
             <AlertCircle className="h-4 w-4 text-[#E0A3AA] shrink-0" />
             <span>{error}</span>
           </div>
-          <Button variant="outline" size="sm" onClick={fetchEvents} className="h-8 px-3 text-xs shrink-0">
+          <Button variant="outline" size="sm" onClick={() => fetchEvents(true)} className="h-8 px-3 text-xs shrink-0">
             <RefreshCw className="h-3 w-3 mr-1" />
             <span>Retry</span>
           </Button>

@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { ThemeBar } from "@/components/ThemeBar";
+import { prefetchRoute } from "@/lib/cache";
 
 export function Navbar() {
   const [location] = useLocation();
@@ -14,7 +15,13 @@ export function Navbar() {
     <header className="sticky top-0 z-40 border-b border-[#242021] bg-[#0A090A]/95 backdrop-blur-none transition-colors">
       <div className="mx-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3 sm:px-6 py-2.5 sm:py-3 max-w-5xl">
         {/* Brand identity pill */}
-        <Link href="/" className="flex items-center gap-2 sm:gap-2.5 shrink-0 group">
+        <Link
+          href="/"
+          onMouseEnter={() => prefetchRoute("/")}
+          onFocus={() => prefetchRoute("/")}
+          onTouchStart={() => prefetchRoute("/")}
+          className="flex items-center gap-2 sm:gap-2.5 shrink-0 group"
+        >
           <span className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-[#241416] border border-[#5E2C32] text-xs font-mono font-bold text-[#E0A3AA]">
             AI
           </span>
@@ -33,6 +40,9 @@ export function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  onMouseEnter={() => prefetchRoute(link.href)}
+                  onFocus={() => prefetchRoute(link.href)}
+                  onTouchStart={() => prefetchRoute(link.href)}
                   className={`px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-medium uppercase tracking-[0.06em] transition-colors whitespace-nowrap ${
                     isActive
                       ? "bg-[#241416] text-[#FFFFFF] border border-[#5E2C32] shadow-sm"
