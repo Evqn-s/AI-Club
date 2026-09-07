@@ -71,11 +71,13 @@ export function SineWaveBackground() {
         points.push(strandPoints);
       }
 
-      // 1. Draw subtle 3D transverse ribs (connecting back to front) for wireframe depth
+      // Detect theme on each frame so theme-switching is reactive
+      const isLight = document.documentElement.classList.contains("light");
+
+      // 1. Draw subtle 3D transverse ribs
       const numSteps = points[0]?.length || 0;
       for (let pIdx = 0; pIdx < numSteps; pIdx += Math.round(RIB_SPACING / X_STEP)) {
         const x = points[0][pIdx].x;
-        // Edge feathering for ribs
         const edgeFactor = Math.sin((x / width) * Math.PI);
         if (edgeFactor <= 0.05) continue;
 
@@ -85,7 +87,10 @@ export function SineWaveBackground() {
           if (s === 0) ctx.moveTo(pt.x, pt.y);
           else ctx.lineTo(pt.x, pt.y);
         }
-        ctx.strokeStyle = `rgba(180, 50, 70, ${(0.07 * edgeFactor).toFixed(3)})`;
+        const ribColor = isLight
+          ? `rgba(37, 99, 235, ${(0.07 * edgeFactor).toFixed(3)})`
+          : `rgba(180, 50, 70, ${(0.07 * edgeFactor).toFixed(3)})`;
+        ctx.strokeStyle = ribColor;
         ctx.lineWidth = 0.75;
         ctx.shadowBlur = 0;
         ctx.stroke();
@@ -93,14 +98,22 @@ export function SineWaveBackground() {
 
       // 2. Draw longitudinal 3D ribbon strands from back to front
       for (let s = 0; s < NUM_STRANDS; s++) {
-        const d = s / (NUM_STRANDS - 1); // 0 (back) to 1 (front)
+        const d = s / (NUM_STRANDS - 1);
         const strandPoints = points[s];
+        const maxAlpha = 0.12 + d * 0.36;
 
-        // Atmospheric depth cue: back strands are darker crimson, front strands are glowing rose
-        const r = Math.round(150 + d * 74); // 150 -> 224
-        const g = Math.round(35 + d * 128);  // 35 -> 163
-        const b = Math.round(55 + d * 115);  // 55 -> 170
-        const maxAlpha = 0.12 + d * 0.36;   // 0.12 at back, 0.48 at front (moderate visibility)
+        let r: number, g: number, b: number;
+        if (isLight) {
+          // Blue palette: deep navy (back) → vivid sapphire (front)
+          r = Math.round(30 + d * 37);    // 30 → 67
+          g = Math.round(64 + d * 86);   // 64 → 150
+          b = Math.round(175 + d * 60);  // 175 → 235
+        } else {
+          // Crimson/rose palette: dark maroon (back) → glowing rose (front)
+          r = Math.round(150 + d * 74);  // 150 → 224
+          g = Math.round(35 + d * 128);  // 35 → 163
+          b = Math.round(55 + d * 115);  // 55 → 170
+        }
 
         const grad = ctx.createLinearGradient(0, 0, width, 0);
         grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0)`);
@@ -111,9 +124,8 @@ export function SineWaveBackground() {
 
         ctx.beginPath();
         ctx.strokeStyle = grad;
-        ctx.lineWidth = 0.9 + d * 0.8; // 0.9px back, 1.7px front
+        ctx.lineWidth = 0.9 + d * 0.8;
 
-        // Add delicate luminescence on the front 3 strands only
         if (s >= NUM_STRANDS - 3) {
           ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.35)`;
           ctx.shadowBlur = 6;
