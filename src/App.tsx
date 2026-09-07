@@ -16,7 +16,7 @@ export function App() {
 
         <Navbar />
 
-        <main className="flex-1 mx-auto w-full max-w-5xl px-6 sm:px-8">
+        <main className="flex-1 mx-auto w-full max-w-5xl px-6 sm:px-8 relative z-10">
           <Switch>
             <Route path="/" component={HomePage} />
             <Route path="/news" component={NewsPage} />

@@ -6,7 +6,7 @@ export function SineWaveBackground() {
 
   // Trigger smooth fade-in after mounting
   useEffect(() => {
-    const timer = setTimeout(() => setFadedIn(true), 100);
+    const timer = setTimeout(() => setFadedIn(true), 60);
     return () => clearTimeout(timer);
   }, []);
 
@@ -24,11 +24,11 @@ export function SineWaveBackground() {
     ).matches;
 
     function resize() {
-      if (!canvas) return;
+      if (!canvas || !ctx) return;
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = window.innerWidth * dpr;
       canvas.height = window.innerHeight * dpr;
-      ctx?.scale(dpr, dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
     resize();
@@ -39,67 +39,112 @@ export function SineWaveBackground() {
 
       const width = window.innerWidth;
       const height = window.innerHeight;
-      const centerY = height * 0.48; // Positioned slightly above center behind hero/content
 
       ctx.clearRect(0, 0, width, height);
 
-      // Horizontal linear gradient to fade edges smoothly at screen boundaries
-      const grad1 = ctx.createLinearGradient(0, 0, width, 0);
-      grad1.addColorStop(0, "rgba(224, 163, 170, 0)");
-      grad1.addColorStop(0.15, "rgba(224, 163, 170, 0.08)");
-      grad1.addColorStop(0.5, "rgba(224, 163, 170, 0.18)");
-      grad1.addColorStop(0.85, "rgba(224, 163, 170, 0.08)");
-      grad1.addColorStop(1, "rgba(224, 163, 170, 0)");
+      // --- UPPER HERO WAVE BAND (Positioned directly under "AI Club" and across CTA buttons) ---
+      const heroCenterY = Math.max(height * 0.32, 220);
 
-      const grad2 = ctx.createLinearGradient(0, 0, width, 0);
-      grad2.addColorStop(0, "rgba(155, 44, 59, 0)");
-      grad2.addColorStop(0.2, "rgba(155, 44, 59, 0.05)");
-      grad2.addColorStop(0.5, "rgba(155, 44, 59, 0.13)");
-      grad2.addColorStop(0.8, "rgba(155, 44, 59, 0.05)");
-      grad2.addColorStop(1, "rgba(155, 44, 59, 0)");
+      // Hero Wave 1: Ambient deep crimson undertone
+      const heroGradAmb = ctx.createLinearGradient(0, 0, width, 0);
+      heroGradAmb.addColorStop(0, "rgba(180, 40, 60, 0)");
+      heroGradAmb.addColorStop(0.1, "rgba(180, 40, 60, 0.2)");
+      heroGradAmb.addColorStop(0.5, "rgba(220, 50, 80, 0.45)");
+      heroGradAmb.addColorStop(0.9, "rgba(180, 40, 60, 0.2)");
+      heroGradAmb.addColorStop(1, "rgba(180, 40, 60, 0)");
 
-      // Wave 1 - Primary subtle sine wave
       ctx.beginPath();
-      ctx.strokeStyle = grad1;
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = heroGradAmb;
+      ctx.lineWidth = 2;
+      ctx.shadowColor = "rgba(220, 50, 80, 0.4)";
+      ctx.shadowBlur = 8;
+      const step = 3;
 
-      const step = 4;
       for (let x = 0; x <= width; x += step) {
-        // Combined subtle sine waves for organic harmonic feel
         const y =
-          centerY +
-          Math.sin(x * 0.0022 + phase) * 32 +
-          Math.sin(x * 0.0048 + phase * 0.7) * 14;
-
-        if (x === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
+          heroCenterY +
+          Math.sin(x * 0.0018 + phase * 0.7 + 1.5) * 36 +
+          Math.cos(x * 0.0035 + phase * 0.5) * 16;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
       }
       ctx.stroke();
 
-      // Wave 2 - Secondary harmonic wave with phase offset
+      // Hero Wave 2: Crimson harmonic wave
+      const heroGradCrimson = ctx.createLinearGradient(0, 0, width, 0);
+      heroGradCrimson.addColorStop(0, "rgba(255, 77, 109, 0)");
+      heroGradCrimson.addColorStop(0.12, "rgba(255, 77, 109, 0.25)");
+      heroGradCrimson.addColorStop(0.5, "rgba(255, 77, 109, 0.65)");
+      heroGradCrimson.addColorStop(0.88, "rgba(255, 77, 109, 0.25)");
+      heroGradCrimson.addColorStop(1, "rgba(255, 77, 109, 0)");
+
       ctx.beginPath();
-      ctx.strokeStyle = grad2;
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = heroGradCrimson;
+      ctx.lineWidth = 2.2;
+      ctx.shadowColor = "rgba(255, 77, 109, 0.5)";
+      ctx.shadowBlur = 10;
 
       for (let x = 0; x <= width; x += step) {
         const y =
-          centerY +
-          Math.sin(x * 0.0019 + phase * 0.85 + 2.0) * 24 +
-          Math.cos(x * 0.0038 + phase * 0.6) * 10;
+          heroCenterY +
+          Math.sin(x * 0.0026 + phase * 0.9 + 3.0) * 44 +
+          Math.cos(x * 0.0048 + phase * 0.6) * 18;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
 
-        if (x === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
+      // Hero Wave 3: Primary luminescent rose sine wave
+      const heroGradRose = ctx.createLinearGradient(0, 0, width, 0);
+      heroGradRose.addColorStop(0, "rgba(224, 163, 170, 0)");
+      heroGradRose.addColorStop(0.15, "rgba(224, 163, 170, 0.35)");
+      heroGradRose.addColorStop(0.5, "rgba(224, 163, 170, 0.85)");
+      heroGradRose.addColorStop(0.85, "rgba(224, 163, 170, 0.35)");
+      heroGradRose.addColorStop(1, "rgba(224, 163, 170, 0)");
+
+      ctx.beginPath();
+      ctx.strokeStyle = heroGradRose;
+      ctx.lineWidth = 2.8;
+      ctx.shadowColor = "rgba(224, 163, 170, 0.7)";
+      ctx.shadowBlur = 14;
+
+      for (let x = 0; x <= width; x += step) {
+        const y =
+          heroCenterY +
+          Math.sin(x * 0.003 + phase) * 50 +
+          Math.sin(x * 0.006 + phase * 0.8) * 22;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // --- LOWER SECTION AMBIENT WAVE BAND ---
+      const lowerCenterY = height * 0.72;
+      const lowerGrad = ctx.createLinearGradient(0, 0, width, 0);
+      lowerGrad.addColorStop(0, "rgba(224, 163, 170, 0)");
+      lowerGrad.addColorStop(0.2, "rgba(180, 50, 70, 0.2)");
+      lowerGrad.addColorStop(0.5, "rgba(224, 163, 170, 0.45)");
+      lowerGrad.addColorStop(0.8, "rgba(180, 50, 70, 0.2)");
+      lowerGrad.addColorStop(1, "rgba(224, 163, 170, 0)");
+
+      ctx.beginPath();
+      ctx.strokeStyle = lowerGrad;
+      ctx.lineWidth = 1.8;
+      ctx.shadowColor = "rgba(224, 163, 170, 0.4)";
+      ctx.shadowBlur = 8;
+
+      for (let x = 0; x <= width; x += step) {
+        const y =
+          lowerCenterY +
+          Math.sin(x * 0.0022 + phase * 0.75 + 0.8) * 35 +
+          Math.cos(x * 0.0044 + phase * 0.5) * 15;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
       }
       ctx.stroke();
 
       if (!prefersReducedMotion) {
-        phase += 0.008; // Very slow, calm oscillation
+        phase += 0.014; // Smooth oscillation
         animationFrameId = requestAnimationFrame(draw);
       }
     }
