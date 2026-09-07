@@ -4,7 +4,8 @@ import { MessageSquare, X, Send, Bot, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const COOLDOWN_SECONDS = 5;
+const COOLDOWN_TICKS = 5;    // 5 ticks × 500ms = 2.5 second cooldown
+const COOLDOWN_TICK_MS = 500;
 const CHAR_INTERVAL_MS = 33; // 10x faster (approx 30 characters per second)
 
 function TypewriterMessage({
@@ -56,7 +57,7 @@ function TypewriterMessage({
     <>
       {displayedText}
       {isTyping && (
-        <span className="inline-block w-1.5 h-3 ml-0.5 bg-[#E0A3AA] animate-pulse align-middle" />
+        <span className="typing-cursor inline-block w-1.5 h-3 ml-0.5 bg-[#E0A3AA] animate-pulse align-middle" />
       )}
     </>
   );
@@ -129,7 +130,7 @@ export function ChatWidget() {
 
   function startCooldown() {
     if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
-    setCooldown(COOLDOWN_SECONDS);
+    setCooldown(COOLDOWN_TICKS);
     cooldownTimerRef.current = setInterval(() => {
       setCooldown((prev) => {
         if (prev <= 1) {
@@ -139,13 +140,13 @@ export function ChatWidget() {
         }
         return prev - 1;
       });
-    }, 1000);
+    }, COOLDOWN_TICK_MS);
   }
 
   const handleTypewriterComplete = useCallback((messageId: string) => {
     completedMessageIds.current.add(messageId);
     setIsTyping(false);
-    // Once all the text is displayed, start the 5-second cooldown
+    // Once all the text is displayed, start the 2.5-second cooldown
     startCooldown();
   }, []);
 
@@ -160,9 +161,10 @@ export function ChatWidget() {
   const isInputDisabled = isLoading || isTyping || cooldown > 0;
   const isSubmitDisabled = isInputDisabled || !input.trim();
 
+  const cooldownSeconds = (cooldown * COOLDOWN_TICK_MS) / 1000;
   let placeholderText = "Ask about club details...";
   if (cooldown > 0) {
-    placeholderText = `Wait ${cooldown}s before sending again…`;
+    placeholderText = `Wait ${cooldownSeconds % 1 === 0 ? cooldownSeconds : cooldownSeconds.toFixed(1)}s before sending again…`;
   } else if (isTyping) {
     placeholderText = "Typing response…";
   } else if (isLoading) {

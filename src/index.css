@@ -213,3 +213,8 @@ html.light [class*="hover:border"]:hover {
 html.light [class*="hover:text-"]:hover {
   color: #000000 !important;
 }
+
+/* Typing cursor dot: rose in dark mode, blue in light mode */
+html.light .typing-cursor {
+  background-color: #2563EB !important;
+}
