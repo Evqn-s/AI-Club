@@ -1,4 +1,4 @@
-import { google } from "@ai-sdk/google";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { streamText } from "ai";
 import { createClient } from "@supabase/supabase-js";
 
@@ -65,17 +65,11 @@ export default async function handler(req: Request) {
       return { role, content };
     });
 
-    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-    if (!apiKey) {
-      return new Response(
-        JSON.stringify({ error: "AI service credentials are not configured on the server." }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
     // 1. Initialize Supabase if keys exist, else fallback to static context
     const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+
+    let apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || "";
 
     let clubContext = {
       club_info: {
@@ -106,23 +100,41 @@ export default async function handler(req: Request) {
     if (supabaseUrl && supabaseKey) {
       try {
         const supabase = createClient(supabaseUrl, supabaseKey);
-        const [infoRes, newsRes, eventsRes] = await Promise.all([
+        const [infoRes, newsRes, eventsRes, secretRes] = await Promise.all([
           supabase.from("club_info").select("*").single(),
           supabase.from("news").select("*").order("timestamp", { ascending: false }).limit(5),
           supabase.from("events").select("*").order("date", { ascending: true }).limit(5),
+          supabase.from("app_secrets").select("value").eq("key", "GOOGLE_GENERATIVE_AI_API_KEY").single(),
         ]);
 
         if (infoRes.data) clubContext.club_info = infoRes.data;
         if (newsRes.data && newsRes.data.length > 0) clubContext.news = newsRes.data;
         if (eventsRes.data && eventsRes.data.length > 0) clubContext.calendar = eventsRes.data;
+
+        // If the API key exists in Supabase app_secrets table, prioritize it!
+        // This allows changing the API key in Supabase Table Editor without redeploying Vercel.
+        if (secretRes.data?.value && secretRes.data.value.trim() !== "") {
+          apiKey = secretRes.data.value.trim();
+        }
       } catch (dbError) {
         console.error("Failed to query context from Supabase:", dbError);
       }
     }
 
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({
+          error: "Gemini API key is not configured. Add GOOGLE_GENERATIVE_AI_API_KEY in the Supabase 'app_secrets' table or in Vercel environment variables.",
+        }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    const google = createGoogleGenerativeAI({ apiKey });
+
     // 2. Stream answer using Vercel AI SDK and Google Gemini with token limits
     const result = streamText({
-      model: google("gemini-1.5-flash"),
+      model: google("gemini-3.7-flash"),
       maxTokens: 500,
       system: `You are a helpful, concise assistant for the AI Club.
 Answer user questions accurately using the club context below.
