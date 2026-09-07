@@ -4,11 +4,16 @@ from typing import List, Optional, Dict, Any, Union
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Header, Request
 
-from backend.sql_db import get_club_info, get_news, get_calendar, add_news
+from backend.sql_db import get_club_info, get_news, get_calendar, add_news, check_supabase_connection
 from backend.gemini_rag import generate_rag_answer
 
 router = APIRouter()
 WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET") or os.getenv("DISCORD_BOT_TOKEN") or "default_secret"
+
+@router.get("/api/db-status")
+def db_status():
+    """Reports whether the backend is using Supabase Postgres or local SQLite."""
+    return check_supabase_connection()
 
 class ChatMessage(BaseModel):
     role: Optional[str] = "user"
