@@ -34,117 +34,103 @@ export function SineWaveBackground() {
     resize();
     window.addEventListener("resize", resize);
 
+    const NUM_STRANDS = 10;
+    const X_STEP = 6;
+    const RIB_SPACING = 54; // Distance between subtle 3D vertical mesh lines
+
     function draw() {
       if (!ctx || !canvas) return;
 
       const width = window.innerWidth;
       const height = window.innerHeight;
+      const centerY = Math.max(height * 0.34, 230);
 
       ctx.clearRect(0, 0, width, height);
 
-      // --- UPPER HERO WAVE BAND (Positioned directly under "AI Club" and across CTA buttons) ---
-      const heroCenterY = Math.max(height * 0.32, 220);
+      // Pre-calculate 3D ribbon grid points
+      // Each strand i has depth d in [0, 1] (0 = back, 1 = front)
+      const points: { x: number; y: number }[][] = [];
 
-      // Hero Wave 1: Ambient deep crimson undertone
-      const heroGradAmb = ctx.createLinearGradient(0, 0, width, 0);
-      heroGradAmb.addColorStop(0, "rgba(180, 40, 60, 0)");
-      heroGradAmb.addColorStop(0.1, "rgba(180, 40, 60, 0.2)");
-      heroGradAmb.addColorStop(0.5, "rgba(220, 50, 80, 0.45)");
-      heroGradAmb.addColorStop(0.9, "rgba(180, 40, 60, 0.2)");
-      heroGradAmb.addColorStop(1, "rgba(180, 40, 60, 0)");
+      for (let s = 0; s < NUM_STRANDS; s++) {
+        const d = s / (NUM_STRANDS - 1); // Depth 0 to 1
+        const strandPoints: { x: number; y: number }[] = [];
 
-      ctx.beginPath();
-      ctx.strokeStyle = heroGradAmb;
-      ctx.lineWidth = 2;
-      ctx.shadowColor = "rgba(220, 50, 80, 0.4)";
-      ctx.shadowBlur = 8;
-      const step = 3;
+        const baseY = centerY + (d - 0.5) * 60;
+        const amp1 = 26 + d * 18;
+        const amp2 = 10 + d * 8;
+        const depthPhase = phase + d * 1.35;
 
-      for (let x = 0; x <= width; x += step) {
-        const y =
-          heroCenterY +
-          Math.sin(x * 0.0018 + phase * 0.7 + 1.5) * 36 +
-          Math.cos(x * 0.0035 + phase * 0.5) * 16;
-        if (x === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+        for (let x = 0; x <= width; x += X_STEP) {
+          const y =
+            baseY +
+            Math.sin(x * 0.0022 + depthPhase) * amp1 +
+            Math.cos(x * 0.0045 + depthPhase * 0.7) * amp2;
+
+          strandPoints.push({ x, y });
+        }
+        points.push(strandPoints);
       }
-      ctx.stroke();
 
-      // Hero Wave 2: Crimson harmonic wave
-      const heroGradCrimson = ctx.createLinearGradient(0, 0, width, 0);
-      heroGradCrimson.addColorStop(0, "rgba(255, 77, 109, 0)");
-      heroGradCrimson.addColorStop(0.12, "rgba(255, 77, 109, 0.25)");
-      heroGradCrimson.addColorStop(0.5, "rgba(255, 77, 109, 0.65)");
-      heroGradCrimson.addColorStop(0.88, "rgba(255, 77, 109, 0.25)");
-      heroGradCrimson.addColorStop(1, "rgba(255, 77, 109, 0)");
+      // 1. Draw subtle 3D transverse ribs (connecting back to front) for wireframe depth
+      const numSteps = points[0]?.length || 0;
+      for (let pIdx = 0; pIdx < numSteps; pIdx += Math.round(RIB_SPACING / X_STEP)) {
+        const x = points[0][pIdx].x;
+        // Edge feathering for ribs
+        const edgeFactor = Math.sin((x / width) * Math.PI);
+        if (edgeFactor <= 0.05) continue;
 
-      ctx.beginPath();
-      ctx.strokeStyle = heroGradCrimson;
-      ctx.lineWidth = 2.2;
-      ctx.shadowColor = "rgba(255, 77, 109, 0.5)";
-      ctx.shadowBlur = 10;
-
-      for (let x = 0; x <= width; x += step) {
-        const y =
-          heroCenterY +
-          Math.sin(x * 0.0026 + phase * 0.9 + 3.0) * 44 +
-          Math.cos(x * 0.0048 + phase * 0.6) * 18;
-        if (x === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+        ctx.beginPath();
+        for (let s = 0; s < NUM_STRANDS; s++) {
+          const pt = points[s][pIdx];
+          if (s === 0) ctx.moveTo(pt.x, pt.y);
+          else ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.strokeStyle = `rgba(180, 50, 70, ${(0.07 * edgeFactor).toFixed(3)})`;
+        ctx.lineWidth = 0.75;
+        ctx.shadowBlur = 0;
+        ctx.stroke();
       }
-      ctx.stroke();
 
-      // Hero Wave 3: Primary luminescent rose sine wave
-      const heroGradRose = ctx.createLinearGradient(0, 0, width, 0);
-      heroGradRose.addColorStop(0, "rgba(224, 163, 170, 0)");
-      heroGradRose.addColorStop(0.15, "rgba(224, 163, 170, 0.35)");
-      heroGradRose.addColorStop(0.5, "rgba(224, 163, 170, 0.85)");
-      heroGradRose.addColorStop(0.85, "rgba(224, 163, 170, 0.35)");
-      heroGradRose.addColorStop(1, "rgba(224, 163, 170, 0)");
+      // 2. Draw longitudinal 3D ribbon strands from back to front
+      for (let s = 0; s < NUM_STRANDS; s++) {
+        const d = s / (NUM_STRANDS - 1); // 0 (back) to 1 (front)
+        const strandPoints = points[s];
 
-      ctx.beginPath();
-      ctx.strokeStyle = heroGradRose;
-      ctx.lineWidth = 2.8;
-      ctx.shadowColor = "rgba(224, 163, 170, 0.7)";
-      ctx.shadowBlur = 14;
+        // Atmospheric depth cue: back strands are darker crimson, front strands are glowing rose
+        const r = Math.round(150 + d * 74); // 150 -> 224
+        const g = Math.round(35 + d * 128);  // 35 -> 163
+        const b = Math.round(55 + d * 115);  // 55 -> 170
+        const maxAlpha = 0.12 + d * 0.36;   // 0.12 at back, 0.48 at front (moderate visibility)
 
-      for (let x = 0; x <= width; x += step) {
-        const y =
-          heroCenterY +
-          Math.sin(x * 0.003 + phase) * 50 +
-          Math.sin(x * 0.006 + phase * 0.8) * 22;
-        if (x === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+        const grad = ctx.createLinearGradient(0, 0, width, 0);
+        grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0)`);
+        grad.addColorStop(0.18, `rgba(${r}, ${g}, ${b}, ${(maxAlpha * 0.35).toFixed(3)})`);
+        grad.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, ${maxAlpha.toFixed(3)})`);
+        grad.addColorStop(0.82, `rgba(${r}, ${g}, ${b}, ${(maxAlpha * 0.35).toFixed(3)})`);
+        grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+
+        ctx.beginPath();
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 0.9 + d * 0.8; // 0.9px back, 1.7px front
+
+        // Add delicate luminescence on the front 3 strands only
+        if (s >= NUM_STRANDS - 3) {
+          ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.35)`;
+          ctx.shadowBlur = 6;
+        } else {
+          ctx.shadowBlur = 0;
+        }
+
+        for (let i = 0; i < strandPoints.length; i++) {
+          const pt = strandPoints[i];
+          if (i === 0) ctx.moveTo(pt.x, pt.y);
+          else ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.stroke();
       }
-      ctx.stroke();
-
-      // --- LOWER SECTION AMBIENT WAVE BAND ---
-      const lowerCenterY = height * 0.72;
-      const lowerGrad = ctx.createLinearGradient(0, 0, width, 0);
-      lowerGrad.addColorStop(0, "rgba(224, 163, 170, 0)");
-      lowerGrad.addColorStop(0.2, "rgba(180, 50, 70, 0.2)");
-      lowerGrad.addColorStop(0.5, "rgba(224, 163, 170, 0.45)");
-      lowerGrad.addColorStop(0.8, "rgba(180, 50, 70, 0.2)");
-      lowerGrad.addColorStop(1, "rgba(224, 163, 170, 0)");
-
-      ctx.beginPath();
-      ctx.strokeStyle = lowerGrad;
-      ctx.lineWidth = 1.8;
-      ctx.shadowColor = "rgba(224, 163, 170, 0.4)";
-      ctx.shadowBlur = 8;
-
-      for (let x = 0; x <= width; x += step) {
-        const y =
-          lowerCenterY +
-          Math.sin(x * 0.0022 + phase * 0.75 + 0.8) * 35 +
-          Math.cos(x * 0.0044 + phase * 0.5) * 15;
-        if (x === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.stroke();
 
       if (!prefersReducedMotion) {
-        phase += 0.014; // Smooth oscillation
+        phase += 0.0035; // Much slower, serene fluid drift (down from 0.014)
         animationFrameId = requestAnimationFrame(draw);
       }
     }
@@ -161,7 +147,7 @@ export function SineWaveBackground() {
 
   return (
     <div
-      className={`absolute inset-0 pointer-events-none transition-opacity duration-1000 ease-out ${
+      className={`absolute inset-0 pointer-events-none transition-opacity duration-1500 ease-out ${
         fadedIn ? "opacity-100" : "opacity-0"
       }`}
       aria-hidden="true"
