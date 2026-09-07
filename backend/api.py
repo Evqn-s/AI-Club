@@ -1,8 +1,10 @@
 import os
+import json
 from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any, Union
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Header, Request
+from fastapi.responses import StreamingResponse
 
 from backend.sql_db import get_club_info, get_news, get_calendar, add_news, check_supabase_connection
 from backend.gemini_rag import generate_rag_answer
@@ -43,13 +45,13 @@ def fetch_calendar():
     """Fetches upcoming events ordered by date ascending from SQL database."""
     return get_calendar(limit=10)
 
-@router.post("/api/chat")
-async def chat_with_bot(payload: Union[ChatQuery, Dict[str, Any]]):
+@router.post("/api/chat", response_model=None)
+async def chat_with_bot(payload: Union[ChatQuery, Dict[str, Any]], request: Request = None):
     """
     Handles user chat query using Gemini RAG with SQL club context.
     Accepts both:
       1) { "query": "when is the meeting?", "history": [...] }
-      2) { "messages": [{ "role": "user", "content": "..." }] }
+      2) { "messages": [{ "role": "user", "content": "..." }] } (Vercel AI SDK useChat)
     """
     if isinstance(payload, dict):
         messages = payload.get("messages")
@@ -59,6 +61,8 @@ async def chat_with_bot(payload: Union[ChatQuery, Dict[str, Any]]):
         messages = payload.messages
         query = payload.query
         history = payload.history or []
+
+    is_stream_client = bool(messages and len(messages) > 0)
 
     if messages and len(messages) > 0:
         # Extract last user message as query and preceding as history
@@ -70,6 +74,25 @@ async def chat_with_bot(payload: Union[ChatQuery, Dict[str, Any]]):
         raise HTTPException(status_code=400, detail="Query or messages cannot be empty")
 
     answer = generate_rag_answer(query=query, history=history)
+
+    # If this request came from the frontend useChat widget (which sends { messages: [...] }),
+    # stream using the AI SDK Data Stream protocol so useChat parses it without error.
+    accept = request.headers.get("accept", "") if request else ""
+    if is_stream_client or "text/plain" in accept or "stream" in accept:
+        def stream_generator():
+            yield f"0:{json.dumps(answer)}\n"
+            yield 'd:{"finishReason":"stop"}\n'
+
+        return StreamingResponse(
+            stream_generator(),
+            media_type="text/plain; charset=utf-8",
+            headers={
+                "x-vercel-ai-data-stream": "v1",
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+            },
+        )
+
     return {"answer": answer}
 
 @router.post("/api/discord-webhook")

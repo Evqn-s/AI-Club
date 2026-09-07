@@ -108,12 +108,23 @@ def run_tests():
     chat_res_2 = asyncio.run(chat_with_bot({
         "messages": [{"role": "user", "content": "When are the club meetings?"}]
     }))
-    assert "answer" in chat_res_2, "chat response must have 'answer' key"
-    answer_2 = chat_res_2["answer"]
-    if answer_2.startswith("Error: Gemini API key"):
-        print(f"   ⚠️  Gemini key not set — SQL context was still fetched correctly")
+    if hasattr(chat_res_2, "body_iterator"):
+        chunks = []
+        async def read_stream():
+            async for chunk in chat_res_2.body_iterator:
+                chunks.append(chunk if isinstance(chunk, str) else chunk.decode("utf-8"))
+        asyncio.run(read_stream())
+        stream_text = "".join(chunks)
+        assert "0:" in stream_text, "StreamingResponse must contain AI SDK data stream chunk"
+        assert chat_res_2.headers.get("x-vercel-ai-data-stream") == "v1", "Header must be x-vercel-ai-data-stream: v1"
+        print(f"   ✅ AI SDK Data Stream OK for frontend ({len(chunks)} chunks, header verified)")
     else:
-        print(f"   ✅ LLM answer: {answer_2[:80]}...")
+        assert "answer" in chat_res_2, "chat response must have 'answer' key"
+        answer_2 = chat_res_2["answer"]
+        if answer_2.startswith("Error: Gemini API key"):
+            print(f"   ⚠️  Gemini key not set — SQL context was still fetched correctly")
+        else:
+            print(f"   ✅ LLM answer: {answer_2[:80]}...")
 
     # ── Summary ──────────────────────────────────────────
     print()

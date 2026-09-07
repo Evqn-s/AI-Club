@@ -124,7 +124,7 @@ Context Data (from SQL Database):
 User Query: {query}
 """
 
-    model_name = "gemini-3.1-flash-lite"
+    model_name = (os.getenv("GEMINI_MODEL") or "gemini-3.1-flash-lite").strip()
     client = genai.Client(api_key=api_key)
 
     try:
@@ -148,5 +148,10 @@ User Query: {query}
         return answer_text if answer_text else "I don't have information about that."
 
     except Exception as e:
-        print(f"[RAG] Gemini API Error with {model_name}: {e}")
-        return f"Error connecting to AI: {str(e)}"
+        err_str = str(e)
+        if "404" in err_str or "NOT_FOUND" in err_str or "not found" in err_str.lower():
+            print(f"[RAG] 404 Not Found from Google AI Studio for model '{model_name}'.")
+            print(f"[RAG] Possible cause: model '{model_name}' is not enabled or not recognized in Google AI Studio for your API key.")
+        else:
+            print(f"[RAG] Gemini API Error with {model_name}: {e}")
+        return f"Error connecting to AI: {err_str}"
