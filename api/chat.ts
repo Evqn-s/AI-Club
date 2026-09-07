@@ -132,10 +132,14 @@ export default async function handler(req: Request) {
 
     const google = createGoogleGenerativeAI({ apiKey });
 
-    // 2. Stream answer using Vercel AI SDK and Google Gemini with token limits
+    const model = google("gemini-3.1-flash-lite");
+
     const result = streamText({
-      model: google("gemini-2.5-flash-lite"),
-      maxTokens: 500,
+      model,
+      messages: sanitizedMessages,
+      maxTokens: 32500, // as requested
+      temperature: 0.7,
+      topP: 1,
       system: `You are a helpful, concise assistant for the AI Club.
 Answer user questions accurately using the club context below.
 If asked follow-up questions, reference the conversation history.
@@ -147,7 +151,6 @@ Rules:
 
 Club Context Data:
 ${JSON.stringify(clubContext, null, 2)}`,
-      messages: sanitizedMessages,
     });
 
     return result.toDataStreamResponse();
