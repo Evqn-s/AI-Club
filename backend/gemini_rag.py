@@ -67,12 +67,12 @@ def generate_rag_answer(query: str, history: Optional[List[dict]] = None) -> str
         return RESPONSE_CACHE[cache_key]
 
     api_key = (
-        os.getenv("GEMINI_API_KEY")
-        or os.getenv("GOOGLE_GENERATIVE_AI_API_KEY")
+        os.getenv("GOOGLE_GENERATIVE_AI_API_KEY")
+        or os.getenv("GEMINI_API_KEY")
         or get_secret("GOOGLE_GENERATIVE_AI_API_KEY")
     )
     if not api_key:
-        return "Error: Gemini API key is not configured. Please set GEMINI_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY."
+        return "Error: Gemini API key is not configured. Please set GOOGLE_GENERATIVE_AI_API_KEY in your .env file."
 
     if not HAS_GENAI:
         return "Error: google-genai library is not installed. Run 'pip install google-genai'."
