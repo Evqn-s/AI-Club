@@ -45,7 +45,7 @@ export default async function handler(req: Request) {
       process.env.GEMINI_API_KEY ||
       "";
     let keySource = apiKey ? "process.env" : "none";
-    let configuredModel = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+    let configuredModel = "gemini-3.1-flash-lite";
     let fastApiStatus = "not_configured";
 
     if (backendUrl) {
@@ -63,16 +63,15 @@ export default async function handler(req: Request) {
     if (supabaseUrl && supabaseKey) {
       try {
         const supabase = createClient(supabaseUrl, supabaseKey);
-        const [secretRes, modelRes] = await Promise.all([
-          supabase.from("app_secrets").select("value").eq("key", "GOOGLE_GENERATIVE_AI_API_KEY").single(),
-          supabase.from("app_secrets").select("value").eq("key", "GEMINI_MODEL").single(),
-        ]);
+        const secretRes = await supabase
+          .from("app_secrets")
+          .select("value")
+          .eq("key", "GOOGLE_GENERATIVE_AI_API_KEY")
+          .single();
+
         if (secretRes.data?.value && secretRes.data.value.trim() !== "") {
           apiKey = secretRes.data.value.trim();
           keySource = "supabase.app_secrets";
-        }
-        if (modelRes.data?.value && modelRes.data.value.trim() !== "") {
-          configuredModel = modelRes.data.value.trim();
         }
       } catch {
         // Supabase optional
@@ -232,7 +231,7 @@ export default async function handler(req: Request) {
     process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
     process.env.GEMINI_API_KEY ||
     "";
-  let selectedModel = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+  const selectedModel = "gemini-3.1-flash-lite";
 
   let clubContext = {
     club_info: {
@@ -264,12 +263,11 @@ export default async function handler(req: Request) {
   if (supabaseUrl && supabaseKey) {
     try {
       const supabase = createClient(supabaseUrl, supabaseKey);
-      const [infoRes, newsRes, eventsRes, secretRes, modelRes] = await Promise.all([
+      const [infoRes, newsRes, eventsRes, secretRes] = await Promise.all([
         supabase.from("club_info").select("*").single(),
         supabase.from("news").select("*").order("timestamp", { ascending: false }).limit(5),
         supabase.from("events").select("*").order("date", { ascending: true }).limit(5),
         supabase.from("app_secrets").select("value").eq("key", "GOOGLE_GENERATIVE_AI_API_KEY").single(),
-        supabase.from("app_secrets").select("value").eq("key", "GEMINI_MODEL").single(),
       ]);
 
       if (infoRes.data) clubContext.club_info = infoRes.data;
@@ -278,10 +276,6 @@ export default async function handler(req: Request) {
 
       if (secretRes.data?.value && secretRes.data.value.trim() !== "") {
         apiKey = secretRes.data.value.trim();
-      }
-
-      if (modelRes.data?.value && modelRes.data.value.trim() !== "") {
-        selectedModel = modelRes.data.value.trim();
       }
     } catch (dbError) {
       console.warn("Failed to query context from Supabase, using defaults:", dbError);
@@ -295,16 +289,6 @@ export default async function handler(req: Request) {
       }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
-  }
-
-  // Sanitize model name: avoid deprecated or nonexistent models that cause Google 404
-  if (
-    selectedModel.includes("3.1-flash-lite") ||
-    selectedModel.includes("2.5-flash-lite") ||
-    selectedModel === "gemini-2.5-flash"
-  ) {
-    // Fall back to the proven stable standard model
-    selectedModel = "gemini-2.0-flash";
   }
 
   try {

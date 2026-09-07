@@ -124,47 +124,29 @@ Context Data (from SQL Database):
 User Query: {query}
 """
 
-    model_name = (
-        os.getenv("GEMINI_MODEL")
-        or get_secret("GEMINI_MODEL")
-        or "gemini-2.0-flash"
-    )
-
+    model_name = "gemini-3.1-flash-lite"
     client = genai.Client(api_key=api_key)
 
-    # Candidate models to try in order
-    models_to_try = [model_name]
-    for m in ["gemini-2.0-flash", "gemini-1.5-flash"]:
-        if m not in models_to_try:
-            models_to_try.append(m)
-
-    last_error = None
-    for candidate in models_to_try:
-        try:
-            response = client.models.generate_content(
-                model=candidate,
-                contents=prompt,
-                config=genai_types.GenerateContentConfig(
-                    max_output_tokens=1024,
-                    temperature=0.7,
-                    top_p=1.0,
-                )
+    try:
+        response = client.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config=genai_types.GenerateContentConfig(
+                max_output_tokens=1024,
+                temperature=0.7,
+                top_p=1.0,
             )
+        )
 
-            raw_text = response.text if response.text else ""
-            answer_text = clean_thought_tokens(raw_text)
+        raw_text = response.text if response.text else ""
+        answer_text = clean_thought_tokens(raw_text)
 
-            if answer_text and not answer_text.startswith("Error"):
-                RESPONSE_CACHE[cache_key] = answer_text
-                return answer_text
+        if answer_text and not answer_text.startswith("Error"):
+            RESPONSE_CACHE[cache_key] = answer_text
+            return answer_text
 
-            if answer_text:
-                return answer_text
+        return answer_text if answer_text else "I don't have information about that."
 
-        except Exception as e:
-            last_error = e
-            print(f"[RAG] Model '{candidate}' failed ({e}), trying next candidate if available...")
-            continue
-
-    print(f"[RAG] All Gemini models failed. Last error: {last_error}")
-    return f"Error connecting to AI: {str(last_error)}"
+    except Exception as e:
+        print(f"[RAG] Gemini API Error with {model_name}: {e}")
+        return f"Error connecting to AI: {str(e)}"
