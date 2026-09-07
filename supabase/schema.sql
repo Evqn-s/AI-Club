@@ -38,12 +38,17 @@ create table if not exists public.events (
 
 create index if not exists events_date_idx on public.events (date asc);
 
--- 4. Permissions for Supabase API
+-- 4. Enable Row Level Security (RLS)
+alter table public.club_info enable row level security;
+alter table public.news      enable row level security;
+alter table public.events    enable row level security;
+
+-- 5. Permissions for Supabase API
 grant select on public.club_info to anon, authenticated;
 grant select on public.news      to anon, authenticated;
 grant select on public.events    to anon, authenticated;
 
--- 5. Read policies
+-- 6. Read policies
 drop policy if exists "Public read club_info" on public.club_info;
 create policy "Public read club_info"
   on public.club_info for select
