@@ -1,6 +1,11 @@
+import { SineWaveBackground } from "./SineWaveBackground";
+
 export function OrganicBackground() {
   return (
     <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden" aria-hidden="true">
+      {/* Subtle oscillating sine wave with fade-in on site load */}
+      <SineWaveBackground />
+
       {/* Top right organic curve (oxblood/crimson tint) */}
       <svg
         className="absolute -top-32 -right-32 w-[600px] h-[600px] opacity-40 text-[#241416]"

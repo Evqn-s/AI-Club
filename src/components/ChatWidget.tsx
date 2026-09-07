@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const COOLDOWN_SECONDS = 5;
-const CHAR_INTERVAL_MS = 333; // 3 characters per second (1 character every 333ms)
+const CHAR_INTERVAL_MS = 33; // 10x faster (approx 30 characters per second)
 
 function TypewriterMessage({
   content,
