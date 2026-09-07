@@ -66,16 +66,3 @@ create policy "Public read events"
   on public.events for select
   to anon, authenticated
   using (true);
-
--- 6. Realtime (wrapped in exception handlers so it never fails)
-do $$
-begin
-  alter publication supabase_realtime add table public.news;
-exception when others then null;
-end $$;
-
-do $$
-begin
-  alter publication supabase_realtime add table public.events;
-exception when others then null;
-end $$;

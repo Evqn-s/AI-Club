@@ -1,7 +1,3 @@
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { streamText } from "ai";
-import { createClient } from "@supabase/supabase-js";
-
 export const config = {
   runtime: "edge",
 };
@@ -9,7 +5,7 @@ export const config = {
 // In-memory sliding-window rate limiter for serverless edge instances
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 15; // Max 15 requests/min per IP
+const MAX_REQUESTS_PER_WINDOW = 20; // Max 20 requests/min per IP
 
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
@@ -29,81 +25,37 @@ function isRateLimited(ip: string): boolean {
 }
 
 export default async function handler(req: Request) {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+  const backendUrl = (
+    process.env.BACKEND_URL ||
+    process.env.FASTAPI_BACKEND_URL ||
+    "http://127.0.0.1:8000"
+  ).replace(/\/$/, "");
 
-  // Diagnostic GET route: lets you visit /api/chat in the browser to test the key and see all available models
+  // Health / diagnostic GET route: checks Python FastAPI backend status
   if (req.method === "GET") {
-    let apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || "";
-    let keySource = apiKey ? "process.env" : "none";
-    let customModel = "gemini-2.5-flash";
-
-    if (supabaseUrl && supabaseKey) {
-      try {
-        const supabase = createClient(supabaseUrl, supabaseKey);
-        const [secretRes, modelRes] = await Promise.all([
-          supabase.from("app_secrets").select("value").eq("key", "GOOGLE_GENERATIVE_AI_API_KEY").single(),
-          supabase.from("app_secrets").select("value").eq("key", "GEMINI_MODEL").single(),
-        ]);
-        if (secretRes.data?.value && secretRes.data.value.trim() !== "") {
-          apiKey = secretRes.data.value.trim();
-          keySource = "supabase.app_secrets";
-        }
-        if (modelRes.data?.value && modelRes.data.value.trim() !== "") {
-          customModel = modelRes.data.value.trim();
-        }
-      } catch (dbErr: any) {
-        return new Response(
-          JSON.stringify({ error: "Failed connecting to Supabase", details: dbErr.message }),
-          { status: 500, headers: { "Content-Type": "application/json" } }
-        );
-      }
-    }
-
-    if (!apiKey) {
-      return new Response(
-        JSON.stringify({
-          status: "missing_key",
-          message: "No Google Generative AI API key found in Supabase 'app_secrets' or environment variables.",
-        }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
     try {
-      const googleResp = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`
-      );
-      const data = await googleResp.json();
-
-      if (!googleResp.ok) {
+      const resp = await fetch(`${backendUrl}/health`, { method: "GET" }).catch(() => null);
+      if (resp && resp.ok) {
         return new Response(
           JSON.stringify({
-            status: "google_api_error",
-            httpStatus: googleResp.status,
-            keySource,
-            error: data,
-          }, null, 2),
-          { status: googleResp.status, headers: { "Content-Type": "application/json" } }
+            status: "connected",
+            backend: "Python FastAPI",
+            backendUrl,
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
         );
       }
-
-      const availableModels = (data.models || [])
-        .filter((m: any) => m.supportedGenerationMethods?.includes("generateContent"))
-        .map((m: any) => m.name.replace("models/", ""));
-
       return new Response(
         JSON.stringify({
-          status: "connected",
-          keySource,
-          configuredModel: customModel,
-          availableModels,
-        }, null, 2),
-        { status: 200, headers: { "Content-Type": "application/json" } }
+          status: "backend_offline",
+          message: `FastAPI backend at ${backendUrl} is not currently reachable. Ensure 'python -m backend.main' is running.`,
+          backendUrl,
+        }),
+        { status: 503, headers: { "Content-Type": "application/json" } }
       );
     } catch (err: any) {
       return new Response(
-        JSON.stringify({ status: "fetch_error", error: err.message }),
+        JSON.stringify({ error: "Failed to ping Python backend", details: err.message }),
         { status: 500, headers: { "Content-Type": "application/json" } }
       );
     }
@@ -130,118 +82,63 @@ export default async function handler(req: Request) {
 
   try {
     const body = await req.json().catch(() => null);
-
-    if (!body || !Array.isArray(body.messages) || body.messages.length === 0) {
+    if (!body) {
       return new Response(
-        JSON.stringify({ error: "Invalid request: 'messages' must be a non-empty array" }),
+        JSON.stringify({ error: "Invalid request: JSON body required" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    // Input sanitization: Slice to last 10 messages and truncate long inputs (cost & abuse control)
-    const sanitizedMessages = body.messages.slice(-10).map((m: any) => {
-      const content = typeof m.content === "string" ? m.content.slice(0, 1000) : "";
-      const role = m.role === "user" || m.role === "assistant" || m.role === "system" ? m.role : "user";
-      return { role, content };
+    // Forward request payload directly to Python FastAPI backend
+    const fastApiResp = await fetch(`${backendUrl}/api/chat`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
     });
 
-    let apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || "";
-    let selectedModel = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-
-    let clubContext = {
-      club_info: {
-        club_name: "AI Club",
-        meeting_times: "Every Tuesday at 6 PM",
-        contact_email: "contact.aiclub@gmail.com",
-        google_classroom_code: "aiclub2026",
-        instagram_handle: "@aiclub.official",
-      },
-      news: [
-        {
-          content: "Welcome to the new semester! Join our Discord and check out our upcoming AI workshop series.",
-          author: "Admin",
-          timestamp: "2026-09-01T12:00:00Z",
-        },
-      ],
-      calendar: [
-        {
-          title: "General Meeting",
-          date: "2026-09-15",
-          time: "18:00",
-          location: "Room 101",
-          description: "Monthly general assembly to discuss upcoming hackathons and workshop sessions.",
-        },
-      ],
-    };
-
-    if (supabaseUrl && supabaseKey) {
-      try {
-        const supabase = createClient(supabaseUrl, supabaseKey);
-        const [infoRes, newsRes, eventsRes, secretRes, modelRes] = await Promise.all([
-          supabase.from("club_info").select("*").single(),
-          supabase.from("news").select("*").order("timestamp", { ascending: false }).limit(5),
-          supabase.from("events").select("*").order("date", { ascending: true }).limit(5),
-          supabase.from("app_secrets").select("value").eq("key", "GOOGLE_GENERATIVE_AI_API_KEY").single(),
-          supabase.from("app_secrets").select("value").eq("key", "GEMINI_MODEL").single(),
-        ]);
-
-        if (infoRes.data) clubContext.club_info = infoRes.data;
-        if (newsRes.data && newsRes.data.length > 0) clubContext.news = newsRes.data;
-        if (eventsRes.data && eventsRes.data.length > 0) clubContext.calendar = eventsRes.data;
-
-        // If the API key exists in Supabase app_secrets table, prioritize it!
-        if (secretRes.data?.value && secretRes.data.value.trim() !== "") {
-          apiKey = secretRes.data.value.trim();
-        }
-
-        // If a model is specified in Supabase app_secrets table (key: 'GEMINI_MODEL'), prioritize it
-        if (modelRes.data?.value && modelRes.data.value.trim() !== "") {
-          selectedModel = modelRes.data.value.trim();
-        }
-      } catch (dbError) {
-        console.error("Failed to query context from Supabase:", dbError);
-      }
-    }
-
-    if (!apiKey) {
+    if (!fastApiResp.ok) {
+      const errorText = await fastApiResp.text();
       return new Response(
         JSON.stringify({
-          error: "Gemini API key is not configured. Add GOOGLE_GENERATIVE_AI_API_KEY in the Supabase 'app_secrets' table or in Vercel environment variables.",
+          error: `Backend error (${fastApiResp.status}): ${errorText}`,
         }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
+        {
+          status: fastApiResp.status,
+          headers: { "Content-Type": "application/json" },
+        }
       );
     }
 
-    const google = createGoogleGenerativeAI({ apiKey });
+    const fastApiData = await fastApiResp.json();
+    const answer = fastApiData.answer || fastApiData.response || "No response received.";
 
-    const model = google(selectedModel);
-
-    const result = streamText({
-      model,
-      messages: sanitizedMessages,
-      maxTokens: 2048,
-      temperature: 0.7,
-      topP: 1,
-      system: `You are a helpful, concise assistant for the AI Club.
-Answer user questions accurately using the club context below.
-If asked follow-up questions, reference the conversation history.
-
-Rules:
-- Do not use em dashes (—); use commas, colons, or periods instead.
-- If you don't know the answer or it's not in the context, say you don't have that information.
-- Be friendly, clear, and direct. Keep answers under 150 words.
-
-Club Context Data:
-${JSON.stringify(clubContext, null, 2)}`,
+    // Return using AI SDK Data Stream protocol for seamless compatibility with frontend useChat
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(answer)}\n`));
+        controller.enqueue(new TextEncoder().encode(`d:{"finishReason":"stop"}\n`));
+        controller.close();
+      },
     });
 
-    return result.toDataStreamResponse();
+    return new Response(stream, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "x-vercel-ai-data-stream": "v1",
+      },
+    });
   } catch (error: any) {
-    console.error("AI Chat handler exception:", error);
+    console.error("Gateway error forwarding to Python backend:", error);
     return new Response(
-      JSON.stringify({ error: "Failed to process chat request. Please try again shortly." }),
+      JSON.stringify({
+        error: "Failed to connect to Python FastAPI backend. Ensure the backend server is running.",
+        details: error.message,
+      }),
       {
-        status: 500,
+        status: 502,
         headers: { "Content-Type": "application/json" },
       }
     );
