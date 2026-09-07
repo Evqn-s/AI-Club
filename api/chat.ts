@@ -134,7 +134,7 @@ export default async function handler(req: Request) {
 
     // 2. Stream answer using Vercel AI SDK and Google Gemini with token limits
     const result = streamText({
-      model: google("gemini-3.7-flash"),
+      model: google("gemini-2.5-flash-lite"),
       maxTokens: 500,
       system: `You are a helpful, concise assistant for the AI Club.
 Answer user questions accurately using the club context below.
