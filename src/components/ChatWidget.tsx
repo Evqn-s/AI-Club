@@ -275,9 +275,9 @@ export function ChatWidget() {
                   <Bot className="h-3 w-3" />
                 </div>
                 <div className="rounded-2xl px-4 py-2.5 bg-[#141213] text-[#9B98A0] text-xs flex items-center gap-1.5 border border-[#242021]">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#E0A3AA] animate-bounce"></span>
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#E0A3AA] animate-bounce [animation-delay:0.2s]"></span>
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#E0A3AA] animate-bounce [animation-delay:0.4s]"></span>
+                  <span className="thinking-dot inline-block h-1.5 w-1.5 rounded-full bg-[#E0A3AA] animate-bounce"></span>
+                  <span className="thinking-dot inline-block h-1.5 w-1.5 rounded-full bg-[#E0A3AA] animate-bounce [animation-delay:0.2s]"></span>
+                  <span className="thinking-dot inline-block h-1.5 w-1.5 rounded-full bg-[#E0A3AA] animate-bounce [animation-delay:0.4s]"></span>
                   <span className="ml-1 text-[11px] uppercase tracking-[0.06em]">Processing</span>
                 </div>
               </div>

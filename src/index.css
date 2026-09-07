@@ -218,3 +218,8 @@ html.light [class*="hover:text-"]:hover {
 html.light .typing-cursor {
   background-color: #2563EB !important;
 }
+
+/* 3 thinking dots (AI processing): rose in dark mode, blue in light mode */
+html.light .thinking-dot {
+  background-color: #2563EB !important;
+}

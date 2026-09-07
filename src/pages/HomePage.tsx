@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { supabase, isSupabaseConfigured, type ClubInfo } from "@/lib/supabase";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Clock, Mail, ArrowRight, GraduationCap, Instagram, ExternalLink } from "lucide-react";
@@ -95,7 +95,6 @@ export function HomePage() {
               <span className="text-[11px] font-medium tracking-[0.08em] uppercase text-[#9B98A0]">Schedule</span>
             </div>
             <CardTitle className="text-xl text-[#E5E5E7]">Regular Meetings</CardTitle>
-            <CardDescription>Assemble with active project members</CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -116,7 +115,6 @@ export function HomePage() {
               <span className="text-[11px] font-medium tracking-[0.08em] uppercase text-[#9B98A0]">Connect</span>
             </div>
             <CardTitle className="text-xl text-[#E5E5E7]">Get in Touch</CardTitle>
-            <CardDescription>Managed dynamically via SQL database</CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
