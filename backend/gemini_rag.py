@@ -1,23 +1,13 @@
 import os
 import json
 from datetime import datetime
-from zoneinfo import ZoneInfo
 from typing import List, Optional
-
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
-
-try:
-    from google import genai
-    from google.genai import types as genai_types
-    HAS_GENAI = True
-except ImportError:
-    HAS_GENAI = False
-
+from dotenv import load_dotenv
+from google import genai
+from google.genai import types as genai_types
 from backend.sql_db import get_club_info, get_calendar, get_news, get_secret
+
+load_dotenv()
 
 
 def generate_rag_answer(query: str, history: Optional[List[dict]] = None) -> str:
@@ -29,20 +19,13 @@ def generate_rag_answer(query: str, history: Optional[List[dict]] = None) -> str
     if not api_key:
         return "Error: Gemini API key is not configured. Please set GOOGLE_GENERATIVE_AI_API_KEY in your environment."
 
-    if not HAS_GENAI:
-        return "Error: google-genai library is not installed. Run 'pip install google-genai'."
-
-    # Fetch live club data from SQL database
     context = {
         "club_info": get_club_info() or {},
         "calendar": get_calendar(limit=5) or [],
         "news": get_news(limit=5) or [],
     }
 
-    try:
-        now_str = datetime.now(ZoneInfo("America/Toronto")).strftime("%A, %B %d, %Y at %I:%M %p %Z")
-    except Exception:
-        now_str = datetime.utcnow().strftime("%A, %B %d, %Y at %I:%M %p UTC")
+    now_str = datetime.now().strftime("%A, %B %d, %Y at %I:%M %p")
 
     formatted_history = ""
     if history:
@@ -69,20 +52,15 @@ User Query: {query}
 """
 
     model_name = "gemini-3.1-flash-lite"
+    client = genai.Client(api_key=api_key)
+    response = client.models.generate_content(
+        model=model_name,
+        contents=prompt,
+        config=genai_types.GenerateContentConfig(
+            max_output_tokens=1024,
+            temperature=0.7,
+            top_p=1.0,
+        ),
+    )
 
-    try:
-        client = genai.Client(api_key=api_key)
-        response = client.models.generate_content(
-            model=model_name,
-            contents=prompt,
-            config=genai_types.GenerateContentConfig(
-                max_output_tokens=1024,
-                temperature=0.7,
-                top_p=1.0,
-            ),
-        )
-        return response.text.strip() if response.text else "I don't have information about that."
-
-    except Exception as e:
-        print(f"[RAG] Gemini API Error with {model_name}: {e}")
-        return f"Error connecting to AI: {str(e)}"
+    return response.text.strip() if response.text else "I don't have information about that."
