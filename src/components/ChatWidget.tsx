@@ -21,11 +21,15 @@ function TypewriterMessage({
   onProgress?: () => void;
 }) {
   const [displayedCount, setDisplayedCount] = useState(alreadyCompleted ? content.length : 0);
+  const completedRef = useRef(alreadyCompleted);
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
+  const onProgressRef = useRef(onProgress);
+  onProgressRef.current = onProgress;
 
   useEffect(() => {
     if (alreadyCompleted) {
+      completedRef.current = true;
       setDisplayedCount(content.length);
       return;
     }
@@ -34,24 +38,19 @@ function TypewriterMessage({
 
     if (displayedCount < content.length) {
       const timer = setTimeout(() => {
-        setDisplayedCount((prev) => {
-          const next = prev + 1;
-          if (next >= content.length && !isLoading) {
-            onCompleteRef.current();
-          }
-          return next;
-        });
-        onProgress?.();
+        setDisplayedCount((prev) => Math.min(prev + 1, content.length));
+        onProgressRef.current?.();
       }, CHAR_INTERVAL_MS);
 
       return () => clearTimeout(timer);
-    } else if (displayedCount >= content.length && !isLoading && content.length > 0) {
+    } else if (!isLoading && !completedRef.current && content.length > 0) {
+      completedRef.current = true;
       onCompleteRef.current();
     }
-  }, [content, displayedCount, alreadyCompleted, isLoading, onProgress]);
+  }, [content, displayedCount, alreadyCompleted, isLoading]);
 
   const displayedText = alreadyCompleted ? content : content.slice(0, displayedCount);
-  const isTyping = !alreadyCompleted && displayedCount < content.length;
+  const isTyping = !alreadyCompleted && !completedRef.current && displayedCount < content.length;
 
   return (
     <>
@@ -90,6 +89,13 @@ export function ChatWidget() {
       setIsTyping(true);
     }
   }, [isLatestUnfinished]);
+
+  // If there's an error, ensure typing state is cleared so user isn't stuck
+  useEffect(() => {
+    if (error) {
+      setIsTyping(false);
+    }
+  }, [error]);
 
   // Scroll on open or new messages
   useEffect(() => {
@@ -151,7 +157,8 @@ export function ChatWidget() {
     // Notice: Cooldown does NOT start here. It starts only after the entire text is displayed.
   }
 
-  const isSendBlocked = isLoading || isTyping || cooldown > 0 || !input.trim();
+  const isInputDisabled = isLoading || isTyping || cooldown > 0;
+  const isSubmitDisabled = isInputDisabled || !input.trim();
 
   let placeholderText = "Ask about club details...";
   if (cooldown > 0) {
@@ -290,14 +297,14 @@ export function ChatWidget() {
               value={input}
               onChange={handleInputChange}
               placeholder={placeholderText}
-              disabled={isSendBlocked}
+              disabled={isInputDisabled}
               maxLength={1000}
               aria-label="Chat query input"
               className="bg-[#0A090A] border-[#382D30] text-[#E5E5E7] text-xs h-11 px-4 placeholder:text-[#67646C]"
             />
             <Button
               type="submit"
-              disabled={isSendBlocked}
+              disabled={isSubmitDisabled}
               size="icon"
               aria-label={cooldown > 0 ? `Cooldown: ${cooldown}s remaining` : isTyping ? "AI is typing" : "Send message"}
               className="shrink-0 h-11 w-11 min-h-[44px] min-w-[44px] bg-[#241416] hover:bg-[#33181C] border border-[#5E2C32] text-[#E0A3AA] transition-all"
