@@ -9,7 +9,8 @@ import {
 export const fallbackClubInfo: ClubInfo = {
   id: "club_main",
   club_name: "AI Club",
-  mission: "",
+  mission: "Empowering students to explore, build, and innovate with artificial intelligence.",
+  vision: "Empowering students to explore, build, and innovate with artificial intelligence.",
   meeting_times: "Every Tuesday at 6 PM",
   rules: [],
   contact_email: "contact.aiclub@gmail.com",

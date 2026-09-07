@@ -13,6 +13,7 @@ export interface ClubInfo {
   id: string;
   club_name: string;
   mission?: string;
+  vision?: string;
   meeting_times: string;
   rules?: string[];
   contact_email: string;

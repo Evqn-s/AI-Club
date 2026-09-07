@@ -43,6 +43,7 @@ def init_local_db():
             id TEXT PRIMARY KEY,
             club_name TEXT NOT NULL DEFAULT 'AI Club',
             mission TEXT,
+            vision TEXT,
             meeting_times TEXT NOT NULL DEFAULT 'Every Tuesday at 6 PM',
             rules TEXT,
             contact_email TEXT NOT NULL DEFAULT 'contact.aiclub@gmail.com',
@@ -52,6 +53,15 @@ def init_local_db():
             instagram_url TEXT,
             updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
+    """)
+    try:
+        cursor.execute("ALTER TABLE club_info ADD COLUMN vision TEXT")
+    except Exception:
+        pass
+    cursor.execute("""
+        UPDATE club_info
+        SET vision = COALESCE(vision, mission, 'Empowering students to explore, build, and innovate with artificial intelligence.')
+        WHERE id = 'club_main' AND (vision IS NULL OR vision = '')
     """)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS news (

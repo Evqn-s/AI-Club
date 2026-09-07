@@ -10,7 +10,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Clock, Mail, ArrowRight, GraduationCap, Instagram, ExternalLink } from "lucide-react";
+import { Clock, Mail, ArrowRight, GraduationCap, Instagram, ExternalLink, Sparkles } from "lucide-react";
 
 export function HomePage() {
   const cached = getCachedHome();
@@ -37,12 +37,17 @@ export function HomePage() {
   const classroomUrl = info?.google_classroom_url || fallbackClubInfo.google_classroom_url;
   const instagramHandle = info?.instagram_handle || fallbackClubInfo.instagram_handle;
   const instagramUrl = info?.instagram_url || fallbackClubInfo.instagram_url;
+  const visionText =
+    info?.vision ||
+    info?.mission ||
+    fallbackClubInfo.vision ||
+    "Empowering students to explore, build, and innovate with artificial intelligence.";
 
   return (
     <div className="space-y-16 py-12">
       {/* Editorial Centered Hero with Bold Scale & Negative Space */}
-      <section className="text-center max-w-4xl mx-auto space-y-8 pt-6 pb-2">
-        <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-[-0.04em] font-display text-[#E5E5E7] leading-[0.98] select-none">
+      <section className="text-center max-w-5xl mx-auto space-y-8 pt-4 pb-2">
+        <h1 className="text-7xl sm:text-8xl md:text-9xl lg:text-[10.5rem] xl:text-[12.5rem] font-black tracking-[-0.04em] font-display text-[#E5E5E7] leading-[0.9] select-none">
           {info?.club_name || "AI Club"}
         </h1>
 
@@ -163,6 +168,27 @@ export function HomePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Vision Statement Section - Controlled via SQL Database */}
+      <section className="relative overflow-hidden rounded-3xl border border-[#242021] bg-[#141213] p-8 sm:p-12 text-center transition-colors">
+        <div className="relative z-10 space-y-4 max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-[#5E2C32] bg-[#241416] text-[10px] sm:text-xs font-mono font-semibold uppercase tracking-[0.14em] text-[#E0A3AA] shadow-sm">
+            <Sparkles className="h-3.5 w-3.5 text-[#E0A3AA]" />
+            <span>Our Vision</span>
+          </div>
+
+          {loading ? (
+            <div className="space-y-2 py-2">
+              <Skeleton className="h-8 w-3/4 mx-auto rounded-lg" />
+              <Skeleton className="h-6 w-1/2 mx-auto rounded-lg" />
+            </div>
+          ) : (
+            <blockquote className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-display font-extrabold tracking-tight text-[#E5E5E7] leading-snug sm:leading-tight">
+              “{visionText}”
+            </blockquote>
+          )}
+        </div>
+      </section>
     </div>
   );
 }
