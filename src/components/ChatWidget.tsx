@@ -5,76 +5,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const COOLDOWN_SECONDS = 5;
-const TYPE_INTERVAL_MS = 333; // 3 characters per second (1 char every 333ms)
 
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [cooldown, setCooldown] = useState(0);
-  const [displayedChars, setDisplayedChars] = useState(0);
-  const [isTyping, setIsTyping] = useState(false);
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const completedMessageIds = useRef<Set<string>>(new Set());
 
   const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
     api: "/api/chat",
   });
 
-  const lastMessage = messages[messages.length - 1];
-  const isLatestAssistant = lastMessage?.role === "assistant";
-  const latestAssistantId = isLatestAssistant ? lastMessage.id : null;
-  const targetContent = isLatestAssistant ? lastMessage.content : "";
-
-  // ── Typewriter effect: 3 characters per second, then start 5s cooldown ──
-  useEffect(() => {
-    if (!isLatestAssistant || !latestAssistantId) {
-      setDisplayedChars(0);
-      setIsTyping(false);
-      return;
-    }
-
-    // Already completed typing this message previously
-    if (completedMessageIds.current.has(latestAssistantId)) {
-      setDisplayedChars(targetContent.length);
-      setIsTyping(false);
-      return;
-    }
-
-    // Still typing out characters
-    if (displayedChars < targetContent.length) {
-      setIsTyping(true);
-      const timer = setTimeout(() => {
-        setDisplayedChars((prev) => prev + 1);
-      }, TYPE_INTERVAL_MS);
-      return () => clearTimeout(timer);
-    }
-
-    // Finished typing all characters AND stream is complete (!isLoading)
-    if (displayedChars >= targetContent.length && targetContent.length > 0 && !isLoading) {
-      setIsTyping(false);
-      if (!completedMessageIds.current.has(latestAssistantId)) {
-        completedMessageIds.current.add(latestAssistantId);
-        // Start 5-second cooldown timer only after finishing the entire sentence
-        startCooldown();
-      }
-    }
-  }, [isLatestAssistant, latestAssistantId, targetContent, displayedChars, isLoading]);
-
-  // Scroll on open, new messages, or typing advance
+  // Scroll + focus on open / new messages
   useEffect(() => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [isOpen, messages, displayedChars]);
-
-  // Focus input when opened or when cooldown expires
-  useEffect(() => {
-    if (isOpen && cooldown === 0 && !isLoading && !isTyping) {
       inputRef.current?.focus();
     }
-  }, [isOpen, cooldown, isLoading, isTyping]);
+  }, [isOpen, messages]);
 
   // Escape key closes chat
   useEffect(() => {
@@ -85,7 +34,7 @@ export function ChatWidget() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen]);
 
-  // Clean up timer on unmount
+  // Clean up interval on unmount
   useEffect(() => {
     return () => {
       if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
@@ -109,27 +58,16 @@ export function ChatWidget() {
 
   function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (cooldown > 0 || isLoading || isTyping || !input.trim()) return;
-    setDisplayedChars(0);
-    setIsTyping(false);
+    if (cooldown > 0 || isLoading || !input.trim()) return;
     handleSubmit(e);
-    // Cooldown is NOT started here; it starts only after the entire sentence finishes typing
+    startCooldown();
   }
 
-  const isSendBlocked = isLoading || isTyping || cooldown > 0 || !input.trim();
-
-  let placeholderText = "Ask about club details...";
-  if (cooldown > 0) {
-    placeholderText = `Wait ${cooldown}s before sending again…`;
-  } else if (isTyping) {
-    placeholderText = "Typing response…";
-  } else if (isLoading) {
-    placeholderText = "Processing…";
-  }
+  const isSendBlocked = isLoading || cooldown > 0 || !input.trim();
 
   return (
     <aside aria-label="AI Club Assistant" className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
-      {/* Floating Toggle Button */}
+      {/* Floating Toggle Button (Pill shape, minimum 48px touch target) */}
       {!isOpen && (
         <Button
           onClick={() => setIsOpen(true)}
@@ -141,7 +79,7 @@ export function ChatWidget() {
         </Button>
       )}
 
-      {/* Chat Window Panel */}
+      {/* Chat Window Panel with fluid mobile bounds */}
       {isOpen && (
         <div
           role="dialog"
@@ -178,19 +116,8 @@ export function ChatWidget() {
               </div>
             )}
 
-            {messages.map((m, idx) => {
+            {messages.map((m) => {
               const isUser = m.role === "user";
-              const isThisLatestAssistant = !isUser && idx === messages.length - 1;
-              const contentToDisplay =
-                isThisLatestAssistant && !completedMessageIds.current.has(m.id)
-                  ? m.content.slice(0, displayedChars)
-                  : m.content;
-
-              // Hide empty assistant bubble before first character is typed
-              if (!isUser && isThisLatestAssistant && contentToDisplay.length === 0) {
-                return null;
-              }
-
               return (
                 <div
                   key={m.id}
@@ -208,10 +135,7 @@ export function ChatWidget() {
                         : "bg-[#141213] text-[#E5E5E7] border border-[#242021]"
                     }`}
                   >
-                    {contentToDisplay}
-                    {isThisLatestAssistant && isTyping && (
-                      <span className="inline-block w-1.5 h-3 ml-0.5 bg-[#E0A3AA] animate-pulse align-middle" />
-                    )}
+                    {m.content}
                   </div>
                   {isUser && (
                     <div className="h-6 w-6 rounded-full bg-[#1E1A1B] border border-[#382D30] text-[#9B98A0] flex items-center justify-center shrink-0 mt-0.5">
@@ -222,8 +146,7 @@ export function ChatWidget() {
               );
             })}
 
-            {/* Show processing indicator only when waiting for the first character */}
-            {isLoading && displayedChars === 0 && (
+            {isLoading && (
               <div className="flex gap-2.5 justify-start">
                 <div className="h-6 w-6 rounded-full bg-[#241416] border border-[#5E2C32] text-[#E0A3AA] flex items-center justify-center shrink-0 mt-0.5">
                   <Bot className="h-3 w-3" />
@@ -246,14 +169,14 @@ export function ChatWidget() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Chat Input with 5-second cooldown after typing completes */}
+          {/* Chat Input with 5-second cooldown */}
           <form onSubmit={handleFormSubmit} className="p-3 bg-[#141213] border-t border-[#242021] flex gap-2">
             <Input
               ref={inputRef}
               value={input}
               onChange={handleInputChange}
-              placeholder={placeholderText}
-              disabled={isSendBlocked}
+              placeholder={cooldown > 0 ? `Wait ${cooldown}s before sending again…` : "Ask about club details..."}
+              disabled={isLoading || cooldown > 0}
               maxLength={1000}
               aria-label="Chat query input"
               className="bg-[#0A090A] border-[#382D30] text-[#E5E5E7] text-xs h-11 px-4 placeholder:text-[#67646C]"
