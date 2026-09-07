@@ -79,7 +79,7 @@ export function HomePage() {
       {/* Structured Minimalist Cards Grid */}
       <div className="grid gap-6 sm:grid-cols-2">
         {/* Schedule */}
-        <Card className="border-[#242021] bg-[#141213]">
+        <Card className="border-[#242021] bg-[#141213]/85 backdrop-blur-md transition-colors">
           <CardHeader>
             <div className="flex items-center gap-2 text-[#E0A3AA] mb-1">
               <Clock className="h-4 w-4 text-[#E0A3AA]" />
@@ -91,7 +91,7 @@ export function HomePage() {
             {loading ? (
               <Skeleton className="h-6 w-3/4" />
             ) : (
-              <div className="p-4 rounded-xl border border-[#242021] bg-[#0A090A] text-[#E5E5E7] text-sm font-medium">
+              <div className="p-4 rounded-xl border border-[#242021] bg-[#0A090A]/85 backdrop-blur-sm text-[#E5E5E7] text-sm font-medium">
                 {info?.meeting_times || "Every Tuesday at 6 PM"}
               </div>
             )}
@@ -99,7 +99,7 @@ export function HomePage() {
         </Card>
 
         {/* Contact & Social Links (Managed directly via Supabase PostgreSQL club_info table) */}
-        <Card className="border-[#242021] bg-[#141213]">
+        <Card className="border-[#242021] bg-[#141213]/85 backdrop-blur-md transition-colors">
           <CardHeader>
             <div className="flex items-center gap-2 text-[#E0A3AA] mb-1">
               <Mail className="h-4 w-4 text-[#E0A3AA]" />
@@ -170,7 +170,7 @@ export function HomePage() {
       </div>
 
       {/* Vision Statement Section - Controlled via SQL Database */}
-      <section className="relative overflow-hidden rounded-3xl border border-[#242021] bg-[#141213] p-8 sm:p-12 text-center transition-colors">
+      <section className="relative overflow-hidden rounded-3xl border border-[#242021] bg-[#141213]/85 backdrop-blur-md p-8 sm:p-12 text-center transition-colors">
         <div className="relative z-10 space-y-4 max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-[#5E2C32] bg-[#241416] text-[10px] sm:text-xs font-mono font-semibold uppercase tracking-[0.14em] text-[#E0A3AA] shadow-sm">
             <Sparkles className="h-3.5 w-3.5 text-[#E0A3AA]" />

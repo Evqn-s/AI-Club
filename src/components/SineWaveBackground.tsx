@@ -74,6 +74,35 @@ export function SineWaveBackground() {
       // Detect theme on each frame so theme-switching is reactive
       const isLight = document.documentElement.classList.contains("light");
 
+      // 0. Environmental proximity glow pass:
+      // Casts a soft radiant aura that illuminates elements (title, buttons, cards) close to the wave as it moves
+      ctx.save();
+      const primaryGlow = isLight ? "rgba(59, 130, 246, 0.48)" : "rgba(239, 68, 68, 0.52)";
+      const ambientGlow = isLight ? "rgba(96, 165, 250, 0.28)" : "rgba(244, 63, 94, 0.3)";
+      const midStrandIdx = Math.floor(NUM_STRANDS / 2);
+      const leadStrandPoints = points[midStrandIdx];
+
+      if (leadStrandPoints && leadStrandPoints.length > 0) {
+        // Broad environmental halo (washes light onto nearby text & cards)
+        ctx.beginPath();
+        for (let i = 0; i < leadStrandPoints.length; i++) {
+          const pt = leadStrandPoints[i];
+          if (i === 0) ctx.moveTo(pt.x, pt.y);
+          else ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.strokeStyle = ambientGlow;
+        ctx.lineWidth = 16;
+        ctx.shadowColor = primaryGlow;
+        ctx.shadowBlur = 54;
+        ctx.stroke();
+
+        // Focused inner radiance
+        ctx.lineWidth = 5;
+        ctx.shadowBlur = 26;
+        ctx.stroke();
+      }
+      ctx.restore();
+
       // 1. Draw subtle 3D transverse ribs
       const numSteps = points[0]?.length || 0;
       for (let pIdx = 0; pIdx < numSteps; pIdx += Math.round(RIB_SPACING / X_STEP)) {
@@ -88,19 +117,20 @@ export function SineWaveBackground() {
           else ctx.lineTo(pt.x, pt.y);
         }
         const ribColor = isLight
-          ? `rgba(37, 99, 235, ${(0.07 * edgeFactor).toFixed(3)})`
-          : `rgba(180, 50, 70, ${(0.07 * edgeFactor).toFixed(3)})`;
+          ? `rgba(37, 99, 235, ${(0.09 * edgeFactor).toFixed(3)})`
+          : `rgba(180, 50, 70, ${(0.09 * edgeFactor).toFixed(3)})`;
         ctx.strokeStyle = ribColor;
-        ctx.lineWidth = 0.75;
-        ctx.shadowBlur = 0;
+        ctx.lineWidth = 0.85;
+        ctx.shadowColor = ribColor;
+        ctx.shadowBlur = 6;
         ctx.stroke();
       }
 
-      // 2. Draw longitudinal 3D ribbon strands from back to front
+      // 2. Draw longitudinal 3D ribbon strands from back to front with luminous glow
       for (let s = 0; s < NUM_STRANDS; s++) {
         const d = s / (NUM_STRANDS - 1);
         const strandPoints = points[s];
-        const maxAlpha = 0.12 + d * 0.36;
+        const maxAlpha = 0.16 + d * 0.42;
 
         let r: number, g: number, b: number;
         if (isLight) {
@@ -124,13 +154,18 @@ export function SineWaveBackground() {
 
         ctx.beginPath();
         ctx.strokeStyle = grad;
-        ctx.lineWidth = 0.9 + d * 0.8;
+        ctx.lineWidth = 1.0 + d * 1.2;
 
-        if (s >= NUM_STRANDS - 3) {
-          ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.35)`;
-          ctx.shadowBlur = 6;
+        if (s >= NUM_STRANDS - 4) {
+          ctx.shadowColor = isLight
+            ? `rgba(59, 130, 246, ${(0.45 + d * 0.4).toFixed(2)})`
+            : `rgba(244, 63, 94, ${(0.45 + d * 0.4).toFixed(2)})`;
+          ctx.shadowBlur = Math.round(16 + d * 22); // 16px to 38px radiant bloom
         } else {
-          ctx.shadowBlur = 0;
+          ctx.shadowColor = isLight
+            ? `rgba(37, 99, 235, 0.2)`
+            : `rgba(180, 50, 70, 0.2)`;
+          ctx.shadowBlur = 8;
         }
 
         for (let i = 0; i < strandPoints.length; i++) {
