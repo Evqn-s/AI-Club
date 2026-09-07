@@ -39,6 +39,7 @@ def fetch_calendar():
 
 
 @router.post("/api/chat", response_model=None)
+@router.post("/api/chat/", response_model=None)
 async def chat_with_bot(payload: Union[ChatQuery, Dict[str, Any]], request: Request = None):
     if isinstance(payload, dict):
         messages = payload.get("messages")
@@ -63,8 +64,9 @@ async def chat_with_bot(payload: Union[ChatQuery, Dict[str, Any]], request: Requ
     accept = request.headers.get("accept", "") if request else ""
     if is_stream_client or "text/plain" in accept or "stream" in accept:
         def stream_generator():
+            # Properly encode string chunk for Vercel AI Data Stream Protocol (0: format)
             yield f"0:{json.dumps(answer)}\n"
-            yield 'd:{"finishReason":"stop"}\n'
+            yield 'e:{"finishReason":"stop"}\n'
 
         return StreamingResponse(
             stream_generator(),

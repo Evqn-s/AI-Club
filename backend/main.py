@@ -9,6 +9,13 @@ app = FastAPI(
     version="1.0.0"
 )
 
+@app.middleware("http")
+async def log_requests(request, call_next):
+    response = await call_next(request)
+    if response.status_code == 404:
+        print(f"[404 DETECTED] Path requested: {request.method} {request.url.path}")
+    return response
+
 # Allow all origins for seamless pairing with Vite frontend or external deployments
 app.add_middleware(
     CORSMiddleware,
