@@ -68,7 +68,7 @@ Context Data (from SQL Database):
 User Query: {query}
 """
 
-    model_name = (os.getenv("GEMINI_MODEL") or "gemini-3.1-flash-lite").strip()
+    model_name = "gemini-3.1-flash-lite"
 
     try:
         client = genai.Client(api_key=api_key)
