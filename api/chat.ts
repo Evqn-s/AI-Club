@@ -29,6 +29,86 @@ function isRateLimited(ip: string): boolean {
 }
 
 export default async function handler(req: Request) {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+
+  // Diagnostic GET route: lets you visit /api/chat in the browser to test the key and see all available models
+  if (req.method === "GET") {
+    let apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || "";
+    let keySource = apiKey ? "process.env" : "none";
+    let customModel = "gemini-2.5-flash";
+
+    if (supabaseUrl && supabaseKey) {
+      try {
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        const [secretRes, modelRes] = await Promise.all([
+          supabase.from("app_secrets").select("value").eq("key", "GOOGLE_GENERATIVE_AI_API_KEY").single(),
+          supabase.from("app_secrets").select("value").eq("key", "GEMINI_MODEL").single(),
+        ]);
+        if (secretRes.data?.value && secretRes.data.value.trim() !== "") {
+          apiKey = secretRes.data.value.trim();
+          keySource = "supabase.app_secrets";
+        }
+        if (modelRes.data?.value && modelRes.data.value.trim() !== "") {
+          customModel = modelRes.data.value.trim();
+        }
+      } catch (dbErr: any) {
+        return new Response(
+          JSON.stringify({ error: "Failed connecting to Supabase", details: dbErr.message }),
+          { status: 500, headers: { "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({
+          status: "missing_key",
+          message: "No Google Generative AI API key found in Supabase 'app_secrets' or environment variables.",
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    try {
+      const googleResp = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`
+      );
+      const data = await googleResp.json();
+
+      if (!googleResp.ok) {
+        return new Response(
+          JSON.stringify({
+            status: "google_api_error",
+            httpStatus: googleResp.status,
+            keySource,
+            error: data,
+          }, null, 2),
+          { status: googleResp.status, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      const availableModels = (data.models || [])
+        .filter((m: any) => m.supportedGenerationMethods?.includes("generateContent"))
+        .map((m: any) => m.name.replace("models/", ""));
+
+      return new Response(
+        JSON.stringify({
+          status: "connected",
+          keySource,
+          configuredModel: customModel,
+          availableModels,
+        }, null, 2),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    } catch (err: any) {
+      return new Response(
+        JSON.stringify({ status: "fetch_error", error: err.message }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+  }
+
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
@@ -65,11 +145,8 @@ export default async function handler(req: Request) {
       return { role, content };
     });
 
-    // 1. Initialize Supabase if keys exist, else fallback to static context
-    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-
     let apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || "";
+    let selectedModel = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
     let clubContext = {
       club_info: {
@@ -100,11 +177,12 @@ export default async function handler(req: Request) {
     if (supabaseUrl && supabaseKey) {
       try {
         const supabase = createClient(supabaseUrl, supabaseKey);
-        const [infoRes, newsRes, eventsRes, secretRes] = await Promise.all([
+        const [infoRes, newsRes, eventsRes, secretRes, modelRes] = await Promise.all([
           supabase.from("club_info").select("*").single(),
           supabase.from("news").select("*").order("timestamp", { ascending: false }).limit(5),
           supabase.from("events").select("*").order("date", { ascending: true }).limit(5),
           supabase.from("app_secrets").select("value").eq("key", "GOOGLE_GENERATIVE_AI_API_KEY").single(),
+          supabase.from("app_secrets").select("value").eq("key", "GEMINI_MODEL").single(),
         ]);
 
         if (infoRes.data) clubContext.club_info = infoRes.data;
@@ -112,9 +190,13 @@ export default async function handler(req: Request) {
         if (eventsRes.data && eventsRes.data.length > 0) clubContext.calendar = eventsRes.data;
 
         // If the API key exists in Supabase app_secrets table, prioritize it!
-        // This allows changing the API key in Supabase Table Editor without redeploying Vercel.
         if (secretRes.data?.value && secretRes.data.value.trim() !== "") {
           apiKey = secretRes.data.value.trim();
+        }
+
+        // If a model is specified in Supabase app_secrets table (key: 'GEMINI_MODEL'), prioritize it
+        if (modelRes.data?.value && modelRes.data.value.trim() !== "") {
+          selectedModel = modelRes.data.value.trim();
         }
       } catch (dbError) {
         console.error("Failed to query context from Supabase:", dbError);
@@ -132,12 +214,12 @@ export default async function handler(req: Request) {
 
     const google = createGoogleGenerativeAI({ apiKey });
 
-    const model = google("gemini-3.1-flash-lite");
+    const model = google(selectedModel);
 
     const result = streamText({
       model,
       messages: sanitizedMessages,
-      maxTokens: 32500, // as requested
+      maxTokens: 2048,
       temperature: 0.7,
       topP: 1,
       system: `You are a helpful, concise assistant for the AI Club.
