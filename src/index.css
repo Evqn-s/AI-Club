@@ -227,10 +227,20 @@ html.light .thinking-dot {
   background-color: #2563EB !important;
 }
 
-/* Very slight title glow in light mode */
-html.light h1,
+/* Clean, illuminated title glow in light mode:
+   Uses crisp white backlighting and a diffuse soft sky-blue ambient aura
+   so black glyphs stay razor sharp without looking smeared or fuzzy. */
+html.light h1 {
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.95), 0 0 24px rgba(255, 255, 255, 0.8), 0 0 36px rgba(59, 130, 246, 0.22), 0 0 64px rgba(96, 165, 250, 0.14) !important;
+}
+
 html.light h2,
 html.light h3,
 html.light .font-display {
-  text-shadow: 0 0 10px rgba(37, 99, 235, 0.25), 0 0 22px rgba(37, 99, 235, 0.12) !important;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.9), 0 0 22px rgba(59, 130, 246, 0.14) !important;
+}
+
+/* Keep small navbar brand text perfectly crisp without shadow */
+html.light header a .font-display {
+  text-shadow: none !important;
 }
