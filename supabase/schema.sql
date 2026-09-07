@@ -66,3 +66,6 @@ create policy "Public read events"
   on public.events for select
   to anon, authenticated
   using (true);
+
+
+ALTER TABLE public.news ADD COLUMN discord_message_id text UNIQUE;

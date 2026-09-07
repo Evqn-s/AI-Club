@@ -5,38 +5,27 @@ from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Header, Request
 from fastapi.responses import StreamingResponse
 
-from backend.sql_db import get_club_info, get_news, get_calendar, add_news
+from backend.sql_db import get_club_info, get_news, get_calendar
 from backend.gemini_rag import generate_rag_answer
 
 router = APIRouter()
-WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET") or os.getenv("DISCORD_BOT_TOKEN") or "default_secret"
-
 
 class ChatQuery(BaseModel):
     query: Optional[str] = None
     history: Optional[List[Dict[str, Any]]] = []
     messages: Optional[List[Dict[str, Any]]] = None
 
-
-class DiscordMessage(BaseModel):
-    content: str
-    author: str
-
-
 @router.get("/api/club-info")
 def fetch_club_info():
     return get_club_info()
-
 
 @router.get("/api/news")
 def fetch_news():
     return get_news(limit=10)
 
-
 @router.get("/api/calendar")
 def fetch_calendar():
     return get_calendar(limit=10)
-
 
 @router.post("/api/chat", response_model=None)
 @router.post("/api/chat/", response_model=None)
@@ -64,7 +53,6 @@ async def chat_with_bot(payload: Union[ChatQuery, Dict[str, Any]], request: Requ
     accept = request.headers.get("accept", "") if request else ""
     if is_stream_client or "text/plain" in accept or "stream" in accept:
         def stream_generator():
-            # Properly encode string chunk for Vercel AI Data Stream Protocol (0: format)
             yield f"0:{json.dumps(answer)}\n"
             yield 'e:{"finishReason":"stop"}\n'
 
@@ -75,13 +63,3 @@ async def chat_with_bot(payload: Union[ChatQuery, Dict[str, Any]], request: Requ
         )
 
     return {"answer": answer}
-
-
-@router.post("/api/discord-webhook")
-def discord_webhook(msg: DiscordMessage, authorization: Optional[str] = Header(None)):
-    token = authorization.split("Bearer ", 1)[1].strip() if authorization and authorization.startswith("Bearer ") else authorization
-    if token != WEBHOOK_SECRET:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    if not msg.content or not msg.author:
-        raise HTTPException(status_code=400, detail="Content and author are required")
-    return {"status": "success", "data": add_news(content=msg.content, author=msg.author)}

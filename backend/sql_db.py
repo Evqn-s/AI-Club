@@ -68,7 +68,8 @@ def init_local_db():
             id TEXT PRIMARY KEY,
             content TEXT NOT NULL,
             author TEXT NOT NULL,
-            timestamp TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            timestamp TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            discord_message_id TEXT UNIQUE
         )
     """)
     cursor.execute("""
@@ -157,32 +158,6 @@ def get_calendar(limit: int = 10) -> List[Dict[str, Any]]:
     rows = cursor.fetchall()
     conn.close()
     return [dict(r) for r in rows]
-
-def add_news(content: str, author: str) -> Dict[str, Any]:
-    new_item = {
-        "id": f"msg_{int(datetime.now(timezone.utc).timestamp())}_{str(uuid.uuid4())[:8]}",
-        "content": content,
-        "author": author,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    }
-    sb = get_supabase_client()
-    if sb:
-        try:
-            res = sb.table("news").insert(new_item).execute()
-            if res.data:
-                return res.data[0]
-        except Exception:
-            pass
-
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO news (id, content, author, timestamp) VALUES (?, ?, ?, ?)",
-        (new_item["id"], new_item["content"], new_item["author"], new_item["timestamp"]),
-    )
-    conn.commit()
-    conn.close()
-    return new_item
 
 def get_secret(key: str) -> Optional[str]:
     sb = get_supabase_client()

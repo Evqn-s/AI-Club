@@ -1,24 +1,9 @@
-// supabase/functions/discord-sync/index.ts
-//
-// Supabase Edge Function (Deno runtime)
-// Receives messages from a Discord bot and writes them to the Supabase "news" table.
-//
-// SETUP:
-//   1. Deploy:  supabase functions deploy discord-sync
-//   2. Set secrets in Supabase dashboard (Settings → Edge Functions → Secrets):
-//        DISCORD_BOT_TOKEN  — paste your Discord bot token here when ready
-//   3. Point your bot to POST:
-//        https://<project-ref>.supabase.co/functions/v1/discord-sync
-//        Authorization: <DISCORD_BOT_TOKEN>
-//        Content-Type: application/json
-//        Body: { "content": "announcement text", "author": "username" }
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Authorization, Content-Type",
 };
 
@@ -28,9 +13,10 @@ serve(async (req: Request) => {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
   }
 
-  if (req.method !== "POST") {
+  // Allow only POST and DELETE
+  if (req.method !== "POST" && req.method !== "DELETE") {
     return new Response(
-      JSON.stringify({ error: "Method not allowed. Use POST." }),
+      JSON.stringify({ error: "Method not allowed. Use POST or DELETE." }),
       { status: 405, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
     );
   }
@@ -38,7 +24,6 @@ serve(async (req: Request) => {
   // --- Auth: validate Discord bot token ---
   const botToken = Deno.env.get("DISCORD_BOT_TOKEN");
   if (!botToken) {
-    console.error("DISCORD_BOT_TOKEN secret is not set in Supabase Edge Function secrets.");
     return new Response(
       JSON.stringify({ error: "Server not configured: DISCORD_BOT_TOKEN missing." }),
       { status: 500, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
@@ -53,8 +38,8 @@ serve(async (req: Request) => {
     );
   }
 
-  // --- Parse + validate body ---
-  let body: { content?: unknown; author?: unknown } | null = null;
+  // --- Parse body ---
+  let body: any = null;
   try {
     body = await req.json();
   } catch {
@@ -64,57 +49,78 @@ serve(async (req: Request) => {
     );
   }
 
-  const { content, author } = body ?? {};
-
-  if (typeof content !== "string" || typeof author !== "string") {
-    return new Response(
-      JSON.stringify({ error: "Both 'content' and 'author' must be non-empty strings." }),
-      { status: 400, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
-    );
-  }
-
-  const cleanContent = content.trim();
-  const cleanAuthor = author.trim();
-
-  if (!cleanContent || !cleanAuthor) {
-    return new Response(
-      JSON.stringify({ error: "'content' and 'author' cannot be blank." }),
-      { status: 400, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
-    );
-  }
-
-  if (cleanContent.length > 4000 || cleanAuthor.length > 100) {
-    return new Response(
-      JSON.stringify({ error: "Payload too large: content max 4000 chars, author max 100 chars." }),
-      { status: 400, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
-    );
-  }
-
-  // --- Write to Supabase PostgreSQL ---
-  // These env vars are automatically injected by Supabase — no setup needed.
+  // --- Initialize Supabase ---
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
   const supabase = createClient(supabaseUrl, serviceKey);
 
-  const newId = `msg_${Date.now()}`;
-  const timestamp = new Date().toISOString();
+  // ==========================================
+  // HANDLE NEW MESSAGES (POST)
+  // ==========================================
+  if (req.method === "POST") {
+    const { content, author, discord_message_id } = body;
 
-  const { error: insertError } = await supabase
-    .from("news")
-    .insert([{ id: newId, content: cleanContent, author: cleanAuthor, timestamp }]);
+    if (!content || !author || !discord_message_id) {
+      return new Response(
+        JSON.stringify({ error: "Missing required fields: content, author, discord_message_id." }),
+        { status: 400, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
+      );
+    }
 
-  if (insertError) {
-    console.error("Supabase insert failed:", insertError);
+    const newId = `msg_${Date.now()}`;
+    const timestamp = new Date().toISOString();
+
+    const { error: insertError } = await supabase
+      .from("news")
+      .insert([{ 
+        id: newId, 
+        content: String(content).trim(), 
+        author: String(author).trim(), 
+        timestamp,
+        discord_message_id: String(discord_message_id)
+      }]);
+
+    if (insertError) {
+      return new Response(
+        JSON.stringify({ error: "Failed to save announcement.", details: insertError }),
+        { status: 500, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response(
-      JSON.stringify({ error: "Failed to save announcement to database." }),
-      { status: 500, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
+      JSON.stringify({ status: "success", id: newId }),
+      { status: 200, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
     );
   }
 
-  console.log(`Discord sync: inserted news row ${newId} from author "${cleanAuthor}"`);
-  return new Response(
-    JSON.stringify({ status: "success", id: newId }),
-    { status: 200, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
-  );
+  // ==========================================
+  // HANDLE DELETED MESSAGES (DELETE)
+  // ==========================================
+  if (req.method === "DELETE") {
+    const { discord_message_id } = body;
+
+    if (!discord_message_id) {
+      return new Response(
+        JSON.stringify({ error: "Missing required field: discord_message_id." }),
+        { status: 400, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { error: deleteError } = await supabase
+      .from("news")
+      .delete()
+      .eq("discord_message_id", String(discord_message_id));
+
+    if (deleteError) {
+      return new Response(
+        JSON.stringify({ error: "Failed to delete announcement.", details: deleteError }),
+        { status: 500, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ status: "deleted" }),
+      { status: 200, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
+    );
+  }
 });
