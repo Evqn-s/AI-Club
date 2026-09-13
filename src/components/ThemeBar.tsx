@@ -48,12 +48,18 @@ let transitionToken = 0;
 
 /// Run one animated theme switch:
 /// 1. Add `theme-transition` to `<html>` — this arms the CSS transitions in
-///    `src/index.css` (fixed 700ms ease-in-out duration).
-/// 2. Give every element a `--theme-delay` proportional to its vertical
-///    position, producing the top-to-bottom cascade.
-/// 3. Flip the theme class one frame later so the browser reliably animates
-///    from the previous colours to the new ones.
-/// 4. Disarm `.theme-transition` once every element has finished animating.
+///    `src/index.css` (fixed 200ms ease-in-out duration).
+/// 2. Give every element a `--theme-delay` that grows with its document-order
+///    position. Elements are laid out roughly top→bottom in document order, so
+///    this is a free proxy for vertical position (no expensive layout reads) —
+///    the top-to-bottom cascade in BOTH directions.
+/// 3. Force ONE synchronous style/layout pass while the colours are still the
+///    OLD ones, so the browser has the transition armed AND knows the "before"
+///    state. This happens in the same event as the button press — no waiting
+///    for an animation frame.
+/// 4. Flip the theme classes immediately; every element starts its fade from
+///    its old colour right away (top elements first, bottom elements last).
+/// 5. Disarm `.theme-transition` once every element has finished animating.
 function applyThemeTransition(next: Theme): void {
   const root = document.documentElement;
   const token = ++transitionToken;
@@ -61,26 +67,28 @@ function applyThemeTransition(next: Theme): void {
   // 1. Arm the CSS transitions.
   root.classList.add("theme-transition");
 
-  // 2. Top-to-bottom stagger based on where each element sits in the viewport.
+  // 2. Top-to-bottom cascade using document order as a vertical-position proxy.
+  //    Sorted by construction (`querySelectorAll` returns document order), so
+  //    delay grows smoothly from the top of the page to the bottom.
   if (!prefersReducedMotion()) {
-    const viewportHeight = Math.max(window.innerHeight, 1);
     const elements = Array.from(document.querySelectorAll<HTMLElement>("body *"));
-    for (const el of elements) {
-      const rect = el.getBoundingClientRect();
-      const progress = Math.max(0, Math.min(1, rect.top / viewportHeight));
-      el.style.setProperty("--theme-delay", `${(progress * THEME_MAX_STAGGER_MS).toFixed(0)}ms`);
+    const count = Math.max(elements.length, 1);
+    for (let i = 0; i < elements.length; i++) {
+      const progress = i / count; // 0 at the top → 1 at the bottom
+      elements[i].style.setProperty("--theme-delay", `${(progress * THEME_MAX_STAGGER_MS).toFixed(1)}ms`);
     }
   }
 
-  // 3. One frame later, flip the theme classes and tell the background canvas
-  //    to re-evaluate (it fades its palette in parallel).
-  requestAnimationFrame(() => {
-    if (token !== transitionToken) return; // superseded by a newer toggle
-    applyThemeClasses(next);
-    document.documentElement.dispatchEvent(new CustomEvent("theme-change"));
-  });
+  // 3. Force a synchronous reflow so the transition rule + old colours are
+  //    committed for every element BEFORE we change the theme.
+  void document.body.offsetHeight;
 
-  // 4. Disarm once every element (incl. the longest stagger) has settled.
+  // 4. Flip NOW — the switch response is instant; the fade itself then
+  //    cascades from the top of the page to the bottom.
+  applyThemeClasses(next);
+  document.documentElement.dispatchEvent(new CustomEvent("theme-change"));
+
+  // 5. Disarm once every element (incl. the longest stagger) has settled.
   setTimeout(() => {
     if (token === transitionToken) {
       root.classList.remove("theme-transition");
