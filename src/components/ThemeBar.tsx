@@ -7,12 +7,13 @@ type Theme = "dark" | "light";
 // Smooth, cascading theme transition
 // ---------------------------------------------------------------------------
 // Single set transition duration (ease-in-out) shared by every element, plus a
-// vertical stagger: elements near the top of the viewport start first and
+// tiny vertical stagger: elements near the top of the viewport start first and
 // elements further down start later, so colours/elements "drift" together
 // from the top of the page to the bottom on BOTH light↔dark directions.
-const THEME_TRANSITION_MS = 700; // per-element duration (ease-in-out, see index.css)
-const THEME_MAX_STAGGER_MS = 600; // extra delay for elements at the bottom
-const THEME_CLEANUP_GRACE_MS = 120; // safety margin before disarming transitions
+// Fast by design: the whole effect completes well under 0.25s on most devices.
+const THEME_TRANSITION_MS = 200; // per-element duration (ease-in-out, see index.css)
+const THEME_MAX_STAGGER_MS = 40; // extra delay for elements at the bottom (total ≤ 240ms)
+const THEME_CLEANUP_GRACE_MS = 100; // safety margin before disarming transitions
 
 interface ThemeContextType {
   theme: Theme;

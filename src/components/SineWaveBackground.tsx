@@ -53,9 +53,9 @@ export function SineWaveBackground() {
     // snapping to its palette on the very next frame, keep a 0..1 blend
     // (0 = dark crimson/rose, 1 = light blue/sapphire) that eases toward the
     // active theme with the same duration & ease-in-out curve as the CSS
-    // transition in index.css (700ms), so the background ribbons "drift"
+    // transition in index.css (200ms), so the background ribbons "drift"
     // between palettes together with the page elements.
-    const THEME_BLEND_MS = 700; // must match THEME_TRANSITION_MS in ThemeBar.tsx / index.css
+    const THEME_BLEND_MS = 200; // must match THEME_TRANSITION_MS in ThemeBar.tsx / index.css
     let paletteBlend = document.documentElement.classList.contains("light") ? 1.0 : 0.0;
     let blendFrom = paletteBlend;
     let blendTarget = paletteBlend;

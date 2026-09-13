@@ -247,11 +247,16 @@ html.light header a .font-display {
    `ThemeBar.tsx` for the duration of a theme switch), so nothing animates
    on first load or during normal interaction.
 
-   - Every themed property uses ONE set duration (700ms) with an
+   - Every themed property uses ONE set duration (200ms) with an
      ease-in-out curve, so colours gradually drift together instead of
-     snapping per element.
+     snapping per element. The whole effect completes well under 0.25s on
+     most devices.
+   - `!important` guarantees this transition always wins over per-element
+     utilities (`.transition-colors`, `.transition-all`, hover rules...),
+     otherwise text and small elements can bypass the fade and flip
+     instantly.
    - Each element reads its own `--theme-delay` (0ms at the top of the
-     viewport up to ~600ms at the bottom, assigned by ThemeBar.tsx from
+     viewport up to ~40ms at the bottom, assigned by ThemeBar.tsx from
      `getBoundingClientRect().top`), producing a top-to-bottom cascade in
      BOTH directions (dark → light and light → dark).
    - Fully skipped for users who prefer reduced motion.
@@ -262,13 +267,15 @@ html.light header a .font-display {
   html.theme-transition *::before,
   html.theme-transition *::after {
     transition:
-      background-color 700ms ease-in-out var(--theme-delay, 0ms),
-      color 700ms ease-in-out var(--theme-delay, 0ms),
-      border-color 700ms ease-in-out var(--theme-delay, 0ms),
-      fill 700ms ease-in-out var(--theme-delay, 0ms),
-      stroke 700ms ease-in-out var(--theme-delay, 0ms),
-      box-shadow 700ms ease-in-out var(--theme-delay, 0ms),
-      text-shadow 700ms ease-in-out var(--theme-delay, 0ms),
-      opacity 700ms ease-in-out var(--theme-delay, 0ms);
+      background-color 200ms ease-in-out var(--theme-delay, 0ms),
+      background-image 200ms ease-in-out var(--theme-delay, 0ms),
+      color 200ms ease-in-out var(--theme-delay, 0ms),
+      border-color 200ms ease-in-out var(--theme-delay, 0ms),
+      outline-color 200ms ease-in-out var(--theme-delay, 0ms),
+      fill 200ms ease-in-out var(--theme-delay, 0ms),
+      stroke 200ms ease-in-out var(--theme-delay, 0ms),
+      box-shadow 200ms ease-in-out var(--theme-delay, 0ms),
+      text-shadow 200ms ease-in-out var(--theme-delay, 0ms),
+      opacity 200ms ease-in-out var(--theme-delay, 0ms) !important;
   }
 }
