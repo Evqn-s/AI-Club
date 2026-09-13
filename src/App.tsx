@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Route, Switch } from "wouter";
-import { ThemeProvider } from "@/components/ThemeBar";
+import { ThemeProvider } from "@/components/ThemeToggle";
 import { Navbar } from "@/components/Navbar";
 import { ChatWidget } from "@/components/ChatWidget";
 import { OrganicBackground } from "@/components/OrganicBackground";
