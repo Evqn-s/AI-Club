@@ -34,9 +34,42 @@ export function SineWaveBackground() {
     resize();
     window.addEventListener("resize", resize);
 
+    // When the theme is switched, ThemeBar.tsx dispatches "theme-change".
+    // Reduced-motion users have no animation loop, so force a single redraw
+    // that snaps the palette to the newly active theme.
+    const onThemeChange = () => {
+      if (prefersReducedMotion) {
+        paletteBlend = document.documentElement.classList.contains("light") ? 1.0 : 0.0;
+        draw();
+      }
+    };
+    window.addEventListener("theme-change", onThemeChange);
+
     const NUM_STRANDS = 10;
     const X_STEP = 6;
     const RIB_SPACING = 54; // Distance between subtle 3D vertical mesh lines
+
+    // Theme palette blending: rather than reading the current theme and
+    // snapping to its palette on the very next frame, keep a 0..1 blend
+    // (0 = dark crimson/rose, 1 = light blue/sapphire) that eases toward the
+    // active theme with the same duration & ease-in-out curve as the CSS
+    // transition in index.css (700ms), so the background ribbons "drift"
+    // between palettes together with the page elements.
+    const THEME_BLEND_MS = 700; // must match THEME_TRANSITION_MS in ThemeBar.tsx / index.css
+    let paletteBlend = document.documentElement.classList.contains("light") ? 1.0 : 0.0;
+    let blendFrom = paletteBlend;
+    let blendTarget = paletteBlend;
+    let blendStartTime = -1.0;
+
+    // Cubic ease-in-out, identical shape to CSS `ease-in-out`.
+    const easeInOut = (t: number) =>
+      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+    // Dark (crimson/rose) → Light (blue/sapphire) channel pairs per depth step
+    const darkBack = { r: 150, g: 35, b: 55 };
+    const darkFront = { r: 224, g: 163, b: 170 };
+    const lightBack = { r: 30, g: 64, b: 175 };
+    const lightFront = { r: 67, g: 150, b: 235 };
 
     function draw() {
       if (!ctx || !canvas) return;
@@ -71,8 +104,33 @@ export function SineWaveBackground() {
         points.push(strandPoints);
       }
 
-      // Detect theme on each frame so theme-switching is reactive
+      // Ease the palette blend toward the active theme (target 0 or 1) using
+      // the same duration & ease-in-out as the CSS transition.
       const isLight = document.documentElement.classList.contains("light");
+      const nextTarget = isLight ? 1.0 : 0.0;
+      if (nextTarget !== blendTarget) {
+        blendTarget = nextTarget;
+        blendFrom = paletteBlend;
+        blendStartTime = performance.now();
+      }
+
+      if (blendStartTime >= 0) {
+        const progress = Math.min(1, (performance.now() - blendStartTime) / THEME_BLEND_MS);
+        paletteBlend = blendFrom + (blendTarget - blendFrom) * easeInOut(progress);
+        if (progress >= 1) blendStartTime = -1;
+      } else {
+        paletteBlend = blendTarget;
+      }
+
+      const mix = (a: number, b: number, t: number) => a + (b - a) * t;
+
+      // Blend between the two palette families once per depth
+      const backR = mix(darkBack.r, lightBack.r, paletteBlend);
+      const backG = mix(darkBack.g, lightBack.g, paletteBlend);
+      const backB = mix(darkBack.b, lightBack.b, paletteBlend);
+      const frontR = mix(darkFront.r, lightFront.r, paletteBlend);
+      const frontG = mix(darkFront.g, lightFront.g, paletteBlend);
+      const frontB = mix(darkFront.b, lightFront.b, paletteBlend);
 
       // 1. Draw subtle 3D transverse ribs
       const numSteps = points[0]?.length || 0;
@@ -87,10 +145,10 @@ export function SineWaveBackground() {
           if (s === 0) ctx.moveTo(pt.x, pt.y);
           else ctx.lineTo(pt.x, pt.y);
         }
-        const ribColor = isLight
-          ? `rgba(37, 99, 235, ${(0.07 * edgeFactor).toFixed(3)})`
-          : `rgba(180, 50, 70, ${(0.07 * edgeFactor).toFixed(3)})`;
-        ctx.strokeStyle = ribColor;
+        const ribR = Math.round(mix(180, 37, paletteBlend));
+        const ribG = Math.round(mix(50, 99, paletteBlend));
+        const ribB = Math.round(mix(70, 235, paletteBlend));
+        ctx.strokeStyle = `rgba(${ribR}, ${ribG}, ${ribB}, ${(0.07 * edgeFactor).toFixed(3)})`;
         ctx.lineWidth = 0.75;
         ctx.shadowBlur = 0;
         ctx.stroke();
@@ -102,18 +160,9 @@ export function SineWaveBackground() {
         const strandPoints = points[s];
         const maxAlpha = 0.12 + d * 0.36;
 
-        let r: number, g: number, b: number;
-        if (isLight) {
-          // Blue palette: deep navy (back) → vivid sapphire (front)
-          r = Math.round(30 + d * 37);    // 30 → 67
-          g = Math.round(64 + d * 86);   // 64 → 150
-          b = Math.round(175 + d * 60);  // 175 → 235
-        } else {
-          // Crimson/rose palette: dark maroon (back) → glowing rose (front)
-          r = Math.round(150 + d * 74);  // 150 → 224
-          g = Math.round(35 + d * 128);  // 35 → 163
-          b = Math.round(55 + d * 115);  // 55 → 170
-        }
+        const r = Math.round(mix(backR, frontR, d));
+        const g = Math.round(mix(backG, frontG, d));
+        const b = Math.round(mix(backB, frontB, d));
 
         const grad = ctx.createLinearGradient(0, 0, width, 0);
         grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0)`);
@@ -151,6 +200,7 @@ export function SineWaveBackground() {
 
     return () => {
       window.removeEventListener("resize", resize);
+      window.removeEventListener("theme-change", onThemeChange);
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }

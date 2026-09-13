@@ -239,3 +239,36 @@ html.light .font-display {
 html.light header a .font-display {
   text-shadow: none !important;
 }
+
+/* =====================================================================
+   SMOOTH LIGHT ↔ DARK THEME TRANSITION
+   ---------------------------------------------------------------------
+   Armed only while `html.theme-transition` is present (added by
+   `ThemeBar.tsx` for the duration of a theme switch), so nothing animates
+   on first load or during normal interaction.
+
+   - Every themed property uses ONE set duration (700ms) with an
+     ease-in-out curve, so colours gradually drift together instead of
+     snapping per element.
+   - Each element reads its own `--theme-delay` (0ms at the top of the
+     viewport up to ~600ms at the bottom, assigned by ThemeBar.tsx from
+     `getBoundingClientRect().top`), producing a top-to-bottom cascade in
+     BOTH directions (dark → light and light → dark).
+   - Fully skipped for users who prefer reduced motion.
+   ===================================================================== */
+@media (prefers-reduced-motion: no-preference) {
+  html.theme-transition,
+  html.theme-transition *,
+  html.theme-transition *::before,
+  html.theme-transition *::after {
+    transition:
+      background-color 700ms ease-in-out var(--theme-delay, 0ms),
+      color 700ms ease-in-out var(--theme-delay, 0ms),
+      border-color 700ms ease-in-out var(--theme-delay, 0ms),
+      fill 700ms ease-in-out var(--theme-delay, 0ms),
+      stroke 700ms ease-in-out var(--theme-delay, 0ms),
+      box-shadow 700ms ease-in-out var(--theme-delay, 0ms),
+      text-shadow 700ms ease-in-out var(--theme-delay, 0ms),
+      opacity 700ms ease-in-out var(--theme-delay, 0ms);
+  }
+}
