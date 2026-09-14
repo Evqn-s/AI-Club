@@ -20,6 +20,8 @@ import {
   X,
   CalendarDays,
   CalendarRange,
+  List,
+  ArrowUpDown,
 } from "lucide-react";
 
 // Date math helper functions anchored to noon (12:00) to prevent DST day rollover
@@ -485,10 +487,10 @@ const MonthDayCell = memo(function MonthDayCell({
         {dayEvents.map((evt) => (
           <span
             key={evt.id}
-            className={`h-1.5 w-1.5 rounded-full transition-all ${
+            className={`h-2.5 w-2.5 rounded-full transition-all ${
               evt.id === highlightedEventId || isAnyHighlighted || isDateSearched
-                ? "bg-[#E0A3AA] ring-2 ring-[#E0A3AA] scale-125 shadow-[0_0_6px_#E0A3AA]"
-                : "bg-[#E0A3AA] shadow-[0_0_4px_rgba(224,163,170,0.4)]"
+                ? "bg-[#E0A3AA] ring-2 ring-[#E0A3AA] scale-125 shadow-[0_0_8px_#E0A3AA]"
+                : "bg-[#E0A3AA] shadow-[0_0_6px_rgba(224,163,170,0.6)]"
             }`}
           />
         ))}
@@ -586,11 +588,11 @@ const MobileWeekView = memo(function MobileWeekView({
                 {d.dayNumber}
               </span>
               <span
-                className={`h-1 w-1 rounded-full ${
+                className={`h-2 w-2 rounded-full ${
                   hasEvents
                     ? isSelected
-                      ? "bg-[#E0A3AA]"
-                      : "bg-[#E0A3AA]/60"
+                      ? "bg-[#E0A3AA] shadow-[0_0_6px_rgba(224,163,170,0.7)]"
+                      : "bg-[#E0A3AA]/70 shadow-[0_0_4px_rgba(224,163,170,0.4)]"
                     : "bg-transparent"
                 }`}
               />
@@ -628,7 +630,6 @@ const MobileWeekView = memo(function MobileWeekView({
                       }
                     : { y: 0, opacity: 1 }
                 }
-                style={{ willChange: "transform, opacity" }}
                 onClick={(e) => {
                   if (!isInteractive) return;
                   e.stopPropagation();
@@ -674,7 +675,7 @@ const MobileWeekView = memo(function MobileWeekView({
                     variant="outline"
                     size="sm"
                     asChild
-                    className="w-full text-xs bg-[#241416] text-white border-[#5E2C32] hover:bg-[#3D1E22]"
+                    className="w-full text-xs bg-[#241416]/80 text-white glass border border-[#5E2C32] hover:bg-[#3D1E22]/80"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <a
@@ -859,15 +860,24 @@ export function CalendarPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Active view mode and date navigation state
-  const [viewMode, setViewMode] = useState<"month" | "week">("month");
+  const [viewMode, setViewMode] = useState<"month" | "week" | "list">("month");
   const [activeIndex, setActiveIndex] = useState<number>(0);
+  // List view sort direction: newest-first (default) or oldest-first
+  const [listSortNewest, setListSortNewest] = useState<boolean>(true);
 
   // Transition state: activates the cylindrical ring display during arrow navigation
   const [isTransitioning, setIsTransitioning] = useState(false);
   const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Month ⇄ Week mode transition state ("deck of cards" unfold / fold)
-  const [modeTransition, setModeTransition] = useState<"month" | "week-fold" | "week" | null>(null);
+  // Month ⇄ Week ⇄ List mode transition state ("deck of cards" unfold / fold)
+  // "week-fold" = month rows collapsing into the active week (month → week)
+  // "week" = week view zooming in with event float-up
+  // "week-shrink" = week view shrinking away (week → month)
+  // "month" = month grid fanning out / zooming out into place
+  // "list" = list view zooming in
+  const [modeTransition, setModeTransition] = useState<
+    "month" | "week-fold" | "week" | "week-shrink" | "list" | null
+  >(null);
   const [modeAnchorWeek, setModeAnchorWeek] = useState<string | null>(null);
   const modeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -1202,67 +1212,103 @@ export function CalendarPage() {
   );
 
   // View switch handler — "deck of cards / horizontal blinds" unfold.
-  // To Week: the month grid folds back into the active week, then the week's
-  // events float up into place. To Month: the active week stays stationary
-  // while the remaining weeks fan out vertically from underneath it.
+  // View-switch orchestrator. Each direction has a symmetrical two-phase
+  // transition so the outgoing view visibly shrinks/fades while the incoming
+  // view zooms into place:
+  //   month → week : week-fold (rows collapse)  → week (events float up)
+  //   week  → month: week-shrink (week shrinks) → month (rows fan out)
+  //   *    → list : list (zoom in)
+  //   list → *    : the target's own zoom transition plays
   const handleViewToggle = useCallback(
-    (newMode: "month" | "week") => {
+    (newMode: "month" | "week" | "list") => {
       if (newMode === viewMode && modeTransition === null) return;
       notifyAnimationStart();
       clearModeTimer();
 
+      if (newMode === "list") {
+        setViewMode("list");
+        setModeTransition("list");
+        modeTimerRef.current = setTimeout(() => {
+          setModeTransition(null);
+          notifyAnimationComplete();
+        }, MODE_UNFOLD_MS);
+        return;
+      }
+
       if (newMode === "week") {
-        if (viewMode === "week") {
-          // Already switching — restart the settle timer
-          setModeTransition("week");
+        if (viewMode === "list" || viewMode === "month") {
+          // Phase 1: fold the current view back into the active week
+          setModeTransition("week-fold");
           modeTimerRef.current = setTimeout(() => {
-            setModeTransition(null);
-            notifyAnimationComplete();
-          }, MODE_WEEK_SETTLE_MS);
+            clearModeTimer();
+            let diffWeeks: number;
+            if (viewMode === "month") {
+              const monthDate = getDateForMonth(activeIndex);
+              const targetDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), 13, 12, 0, 0);
+              diffWeeks = Math.round(
+                (targetDate.getTime() - new Date(2026, 8, 13, 12, 0, 0).getTime()) / (7 * 86400000)
+              );
+            } else {
+              diffWeeks = activeIndex;
+            }
+            // Phase 2: swap to the week view — events float up into place
+            setActiveIndex(diffWeeks);
+            setViewMode("week");
+            setModeTransition("week");
+            modeTimerRef.current = setTimeout(() => {
+              setModeTransition(null);
+              notifyAnimationComplete();
+            }, MODE_WEEK_SETTLE_MS);
+          }, MODE_FOLD_MS);
           return;
         }
-
-        const monthDate = getDateForMonth(activeIndex);
-        const targetDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), 13, 12, 0, 0);
-        const diffWeeks = Math.round(
-          (targetDate.getTime() - new Date(2026, 8, 13, 12, 0, 0).getTime()) / (7 * 86400000)
-        );
-
-        // Phase 1: fold the month grid back into the active week
-        setModeTransition("week-fold");
+        // Already week — restart the settle timer
+        setModeTransition("week");
         modeTimerRef.current = setTimeout(() => {
-          // Phase 2: swap to the week view — events float up into place
+          setModeTransition(null);
+          notifyAnimationComplete();
+        }, MODE_WEEK_SETTLE_MS);
+        return;
+      }
+
+      // newMode === "month"
+      if (viewMode === "week") {
+        // Phase 1: shrink the week view away
+        setModeTransition("week-shrink");
+        modeTimerRef.current = setTimeout(() => {
           clearModeTimer();
-          setActiveIndex(diffWeeks);
-          setViewMode("week");
-          setModeTransition("week");
-          modeTimerRef.current = setTimeout(() => {
-            setModeTransition(null);
-            notifyAnimationComplete();
-          }, MODE_WEEK_SETTLE_MS);
-        }, MODE_FOLD_MS);
-      } else {
-        if (viewMode === "month") {
-          // Already unfolding — reverse the in-flight fold and restart
+          const weekDate = getDateForWeek(activeIndex);
+          setModeAnchorWeek(getWeekData(weekDate).weekDays[0].dateString);
+          const diffMonths = (weekDate.getFullYear() - 2026) * 12 + (weekDate.getMonth() - 8);
+          // Phase 2: swap to month — rows fan out from the active week
+          setActiveIndex(diffMonths);
+          setViewMode("month");
           setModeTransition("month");
           modeTimerRef.current = setTimeout(() => {
             setModeTransition(null);
             notifyAnimationComplete();
           }, MODE_UNFOLD_MS);
-          return;
-        }
+        }, MODE_FOLD_MS);
+        return;
+      }
 
-        const weekDate = getDateForWeek(activeIndex);
-        setModeAnchorWeek(getWeekData(weekDate).weekDays[0].dateString);
-        const diffMonths = (weekDate.getFullYear() - 2026) * 12 + (weekDate.getMonth() - 8);
-        setActiveIndex(diffMonths);
+      if (viewMode === "list") {
+        setModeAnchorWeek(null);
         setViewMode("month");
         setModeTransition("month");
         modeTimerRef.current = setTimeout(() => {
           setModeTransition(null);
           notifyAnimationComplete();
         }, MODE_UNFOLD_MS);
+        return;
       }
+
+      // Already month — reverse the in-flight fold and restart
+      setModeTransition("month");
+      modeTimerRef.current = setTimeout(() => {
+        setModeTransition(null);
+        notifyAnimationComplete();
+      }, MODE_UNFOLD_MS);
     },
     [
       viewMode,
@@ -1290,6 +1336,88 @@ export function CalendarPage() {
       const enteringMonth = isCenter && modeTransition === "month";
       const foldingMonth = isCenter && modeTransition === "week-fold";
       const enteringWeek = isCenter && modeTransition === "week";
+      const enteringList = isCenter && modeTransition === "list";
+
+      if (viewMode === "list") {
+        const sorted = [...events].sort((a, b) => {
+          const da = new Date(a.date).getTime();
+          const db = new Date(b.date).getTime();
+          return listSortNewest ? db - da : da - db;
+        });
+        return (
+          <div className="flex flex-col gap-2 select-text">
+            {sorted.length === 0 ? (
+              <div className="text-center py-10 space-y-2">
+                <CalendarIcon className="h-8 w-8 text-[#67646C] mx-auto opacity-40" />
+                <p className="text-sm font-mono text-[#9B98A0]">No events scheduled</p>
+              </div>
+            ) : (
+              sorted.map((evt, evtIdx) => (
+                <motion.div
+                  key={evt.id}
+                  initial={enteringList ? { y: 12, opacity: 0.4 } : { y: 0, opacity: 1 }}
+                  animate={
+                    enteringList
+                      ? {
+                          y: 0,
+                          opacity: 1,
+                          transition: {
+                            duration: 0.26,
+                            delay: Math.min(evtIdx * 0.05, 0.35),
+                            ease: [0.16, 1, 0.3, 1],
+                          },
+                        }
+                      : { y: 0, opacity: 1 }
+                  }
+                  onClick={() => {
+                    if (!isInteractive) return;
+                    setSelectedEvent(evt);
+                  }}
+                  className={`p-4 rounded-xl border transition-all cursor-pointer space-y-2.5 ${
+                    evt.id === highlightedEventId
+                      ? "bg-[#241416] border-[#E0A3AA] ring-2 ring-[#E0A3AA]"
+                      : "bg-[#1E1A1B] border-[#242021] hover:border-[#382D30]"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-mono font-bold text-[#E0A3AA] flex items-center gap-1.5">
+                      <CalendarIcon className="h-3.5 w-3.5 text-[#E0A3AA]" />
+                      {evt.date}
+                    </span>
+                    <span className="text-xs font-mono text-[#9B98A0] flex items-center gap-1">
+                      <Clock className="h-3 w-3 text-[#9B98A0]" />
+                      {evt.time}
+                    </span>
+                  </div>
+                  <h4 className="font-display font-extrabold text-sm text-[#E5E5E7] leading-snug">
+                    {evt.title}
+                  </h4>
+                  {evt.description && (
+                    <p className="text-xs text-[#9B98A0] leading-relaxed line-clamp-2">
+                      {evt.description}
+                    </p>
+                  )}
+                  <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-[#242021]/80">
+                    {evt.location ? (
+                      <div className="flex items-center gap-1.5 text-xs text-[#9B98A0] truncate">
+                        <MapPin className="h-3 w-3 text-[#E0A3AA] shrink-0" />
+                        <span className="truncate">{evt.location}</span>
+                      </div>
+                    ) : (
+                      <span />
+                    )}
+                    {evt.category && (
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#241416] border border-[#5E2C32] text-[#E0A3AA] shrink-0">
+                        {evt.category}
+                      </span>
+                    )}
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </div>
+        );
+      }
 
       if (viewMode === "month") {
         const monthDate = getDateForMonth(itemIndex);
@@ -1419,6 +1547,7 @@ export function CalendarPage() {
       generateGoogleCalendarUrl,
       modeTransition,
       modeAnchorWeek,
+      listSortNewest,
     ]
   );
 
@@ -1434,16 +1563,8 @@ export function CalendarPage() {
         viewMode === "month" ? "max-w-3xl lg:max-w-4xl" : "max-w-5xl lg:max-w-6xl"
       }`}
     >
-      {/* Page Header — Clean without sync button */}
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-2">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#241416] border border-[#5E2C32] text-[10px] font-mono font-bold text-[#E0A3AA]">
-            03
-          </span>
-          <span className="text-[11px] uppercase tracking-widest text-[#E0A3AA] font-mono">
-            Upcoming Schedule
-          </span>
-        </div>
+      {/* Page Header */}
+      <div className="flex flex-col gap-1">
         <h1 className="text-2xl sm:text-3xl font-display font-extrabold tracking-tight text-[#E5E5E7]">
           Event Calendar
         </h1>
@@ -1468,7 +1589,7 @@ export function CalendarPage() {
       )}
 
       {/* Top Toolbar: Live Search, View Toggle, and Date Steppers */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 p-2.5 rounded-2xl border border-[#242021] bg-[#141213]">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 p-2.5 rounded-2xl glass glass-panel">
         {/* Live Database Search Input */}
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#67646C]" />
@@ -1520,10 +1641,32 @@ export function CalendarPage() {
               <CalendarRange className="h-3.5 w-3.5" />
               <span>Week</span>
             </button>
+            <button
+              onClick={() => handleViewToggle("list")}
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono uppercase tracking-wider rounded-full transition-all ${
+                viewMode === "list"
+                  ? "bg-[#241416] text-[#E0A3AA] font-bold shadow-sm border border-[#5E2C32]"
+                  : "text-[#9B98A0] hover:text-[#E5E5E7]"
+              }`}
+            >
+              <List className="h-3.5 w-3.5" />
+              <span>List</span>
+            </button>
           </div>
 
+          {/* List Sort Toggle — only in list view */}
+          {viewMode === "list" && (
+            <button
+              onClick={() => setListSortNewest((v) => !v)}
+              className="flex items-center gap-1.5 px-3 py-1 text-xs font-mono uppercase tracking-wider rounded-full transition-all text-[#9B98A0] hover:text-[#E5E5E7] glass glass-panel"
+            >
+              <ArrowUpDown className="h-3.5 w-3.5" />
+              <span>{listSortNewest ? "Newest first" : "Oldest first"}</span>
+            </button>
+          )}
+
           {/* Stepper Controls */}
-          <div className="flex items-center gap-1 border border-[#242021] rounded-full p-1 bg-[#1E1A1B]">
+          <div className="flex items-center gap-1 rounded-full p-1 glass glass-panel">
             <button
               onClick={handlePrev}
               aria-label="Previous Period"
@@ -1589,6 +1732,8 @@ export function CalendarPage() {
                 ? { scale: 1.14, opacity: 0.3 }
                 : modeTransition === "week"
                 ? { scale: 0.93, opacity: 0.4 }
+                : modeTransition === "list"
+                ? { scale: 0.94, opacity: 0.4 }
                 : { scale: 1, opacity: 1 }
             }
             animate={
@@ -1604,11 +1749,17 @@ export function CalendarPage() {
                     opacity: 1,
                     transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
                   }
-                : modeTransition === "week-fold"
+                : modeTransition === "week-fold" || modeTransition === "week-shrink"
                 ? {
-                    scale: 0.93,
-                    opacity: 0.4,
-                    transition: { duration: 0.2, ease: [0.7, 0, 0.85, 0.36] },
+                    scale: 0.9,
+                    opacity: 0.25,
+                    transition: { duration: 0.22, ease: [0.7, 0, 0.85, 0.36] },
+                  }
+                : modeTransition === "list"
+                ? {
+                    scale: 1,
+                    opacity: 1,
+                    transition: { duration: 0.32, ease: [0.16, 1, 0.3, 1] },
                   }
                 : { scale: 1, opacity: 1 }
             }
@@ -1624,8 +1775,8 @@ export function CalendarPage() {
                   {renderCalendarContent(activeIndex, false)}
                 </div>
 
-                {/* Cylindrical Coverflow Arc Carousel Ring Slides */}
-                {[-2, -1, 0, 1, 2].map((offset) => {
+                {/* Cylindrical Coverflow Arc Carousel Ring Slides — list view shows only the center slide */}
+                {(viewMode === "list" ? [0] : [-2, -1, 0, 1, 2]).map((offset) => {
                   const itemIndex = activeIndex + offset;
                   const transform = getCoverflowArcTransform(offset, isTransitioning);
                   const isCenter = offset === 0;
@@ -1657,18 +1808,18 @@ export function CalendarPage() {
       {selectedEvent && (
         <div
           onClick={() => setSelectedEvent(null)}
-          className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-black/40 glass-heavy flex items-center justify-center p-4 animate-in fade-in duration-200"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-2xl border border-[#382D30] bg-[#141213] p-5 shadow-2xl relative overflow-hidden"
+            className="w-full max-w-lg rounded-2xl glass glass-panel-solid p-5 shadow-2xl relative overflow-hidden"
             style={{ boxShadow: "0 0 35px rgba(224, 163, 170, 0.25)" }}
           >
             {/* Close Button */}
             <button
               onClick={() => setSelectedEvent(null)}
               aria-label="Close details"
-              className="absolute top-4 right-4 p-1.5 rounded-full border border-[#242021] bg-[#1E1A1B] text-[#9B98A0] hover:text-[#E5E5E7] transition-colors"
+              className="absolute top-4 right-4 p-1.5 rounded-full glass glass-panel text-[#9B98A0] hover:text-[#E5E5E7] transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
@@ -1710,7 +1861,7 @@ export function CalendarPage() {
                   variant="outline"
                   size="sm"
                   asChild
-                  className="flex-1 gap-2 bg-[#241416] text-[#FFFFFF] border-[#5E2C32] hover:bg-[#3D1E22]"
+                  className="flex-1 gap-2 bg-[#241416]/80 text-[#FFFFFF] glass hover:bg-[#3D1E22]/80 border border-[#5E2C32]"
                 >
                   <a
                     href={generateGoogleCalendarUrl(selectedEvent)}
