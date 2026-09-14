@@ -1582,8 +1582,36 @@ export function CalendarPage() {
           className="relative w-full overflow-hidden select-none py-1"
         >
           <motion.div
+            key={viewMode}
             onPanEnd={handlePanEnd}
-            initial={false}
+            initial={
+              modeTransition === "month"
+                ? { scale: 1.08, opacity: 0.2 }
+                : modeTransition === "week"
+                ? { scale: 0.93, opacity: 0.4 }
+                : { scale: 1, opacity: 1 }
+            }
+            animate={
+              modeTransition === "month"
+                ? {
+                    scale: 1,
+                    opacity: 1,
+                    transition: { duration: 0.34, ease: [0.16, 1, 0.3, 1] },
+                  }
+                : modeTransition === "week"
+                ? {
+                    scale: 1,
+                    opacity: 1,
+                    transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+                  }
+                : modeTransition === "week-fold"
+                ? {
+                    scale: 0.93,
+                    opacity: 0.4,
+                    transition: { duration: 0.2, ease: [0.7, 0, 0.85, 0.36] },
+                  }
+                : { scale: 1, opacity: 1 }
+            }
             style={{ willChange: "transform, opacity" }}
             className="w-full"
           >
