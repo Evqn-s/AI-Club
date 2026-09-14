@@ -10,7 +10,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Clock, Mail, ArrowRight, GraduationCap, Instagram, ExternalLink } from "lucide-react";
+import { Clock, Mail, ArrowRight, GraduationCap, Instagram, ExternalLink, MessageSquare } from "lucide-react";
 
 export function HomePage() {
   const cached = getCachedHome();
@@ -63,15 +63,14 @@ export function HomePage() {
               <ArrowRight className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] ml-1.5" />
             </Link>
           </Button>
-          <Button variant="outline" size="lg" asChild>
-            <Link
-              href="/news"
-              onMouseEnter={() => prefetchRoute("/news")}
-              onFocus={() => prefetchRoute("/news")}
-              onTouchStart={() => prefetchRoute("/news")}
-            >
-              <span>Announcements</span>
-            </Link>
+          <Button
+            variant="outline"
+            size="lg"
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent("aiclub:open-chat"))}
+          >
+            <MessageSquare className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)]" />
+            <span>Ask AI</span>
           </Button>
         </div>
       </section>

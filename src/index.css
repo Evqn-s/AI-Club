@@ -273,8 +273,8 @@ html {
 
 :root {
   /* Layout */
-  --fluid-container-max: clamp(20rem, 92vw, 64rem);
-  --fluid-container-narrow: clamp(18rem, 90vw, 48rem);
+  --fluid-container-max: clamp(20rem, 90vw, 60rem);
+  --fluid-container-narrow: clamp(18rem, 88vw, 45rem);
   --fluid-pad-x: clamp(1rem, 4vw, 2rem);
   --fluid-section-y: clamp(2rem, 6vw, 3.5rem);
   --fluid-stack: clamp(1.5rem, 5vw, 4rem);
@@ -289,8 +289,9 @@ html {
   --fluid-control-h: clamp(2.75rem, 2.25rem + 2vw, 3.25rem);
   --fluid-control-h-sm: clamp(2.25rem, 2rem + 1.5vw, 2.5rem);
   --fluid-icon-box: clamp(2.5rem, 2.25rem + 1.5vw, 2.75rem);
-  /* Chat widget */
-  --fluid-chat-w: clamp(20rem, calc(100vw - 2rem), 25rem);
+  /* Chat widget: max width trimmed slightly so the panel and its
+     floating button keep clear of neighbouring content */
+  --fluid-chat-w: clamp(20rem, calc(100vw - 3rem), 23.5rem);
   --fluid-chat-h: clamp(28rem, 70vh, 32.5rem);
 }
 

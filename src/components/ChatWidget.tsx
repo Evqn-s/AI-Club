@@ -98,6 +98,14 @@ export function ChatWidget() {
     }
   }, [error]);
 
+  // Allow other components (e.g. HomePage hero button) to open the chat
+  // via: window.dispatchEvent(new CustomEvent("aiclub:open-chat"))
+  useEffect(() => {
+    const open = () => setIsOpen(true);
+    window.addEventListener("aiclub:open-chat", open);
+    return () => window.removeEventListener("aiclub:open-chat", open);
+  }, []);
+
   // Scroll on open or new messages
   useEffect(() => {
     if (isOpen) {
@@ -175,7 +183,7 @@ export function ChatWidget() {
     isLoading && (!lastMessage || lastMessage.role !== "assistant" || !lastMessage.content);
 
   return (
-    <aside aria-label="AI Club Assistant" className="fixed bottom-[clamp(1rem,3vw,1.5rem)] right-[clamp(1rem,3vw,1.5rem)] z-50">
+    <aside aria-label="AI Club Assistant" className="fixed bottom-[clamp(1.25rem,4vw,2rem)] right-[clamp(1.25rem,4vw,2rem)] z-50">
       {/* Floating Toggle Button */}
       {!isOpen && (
         <Button
