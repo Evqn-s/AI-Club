@@ -547,32 +547,23 @@ const MobileWeekView = memo(function MobileWeekView({
     if (highlightedDateString && weekDays.some((d) => d.dateString === highlightedDateString)) {
       return highlightedDateString;
     }
+    const dayWithEvent = weekDays.find((d) => events.some((e) => e.date === d.dateString));
+    if (dayWithEvent) return dayWithEvent.dateString;
     const todayMatch = weekDays.find((d) => d.isToday);
     return todayMatch ? todayMatch.dateString : weekDays[0]?.dateString || "";
   });
 
-  const selectedDayString = propSelectedDayString || internalSelectedDay;
-
+  // Sync internal state when highlighted date changes
   useEffect(() => {
     if (highlightedDateString && weekDays.some((d) => d.dateString === highlightedDateString)) {
-      if (onSelectDay) {
-        onSelectDay(highlightedDateString);
-      } else {
-        setInternalSelectedDay(highlightedDateString);
-      }
-      return;
+      setInternalSelectedDay(highlightedDateString);
     }
-    const exists = weekDays.some((d) => d.dateString === selectedDayString);
-    if (!exists) {
-      const todayMatch = weekDays.find((d) => d.isToday);
-      const fallback = todayMatch ? todayMatch.dateString : weekDays[0]?.dateString || "";
-      if (onSelectDay) {
-        onSelectDay(fallback);
-      } else {
-        setInternalSelectedDay(fallback);
-      }
-    }
-  }, [weekDays, selectedDayString, highlightedDateString, onSelectDay]);
+  }, [highlightedDateString, weekDays]);
+
+  const selectedDayString =
+    propSelectedDayString && weekDays.some((d) => d.dateString === propSelectedDayString)
+      ? propSelectedDayString
+      : internalSelectedDay;
 
   const activeDayObj = weekDays.find((d) => d.dateString === selectedDayString) || weekDays[0];
   const dayEvents = events.filter((e) => e.date === selectedDayString);
@@ -588,11 +579,11 @@ const MobileWeekView = memo(function MobileWeekView({
             <button
               key={d.dateString}
               onClick={() => {
+                if (!isInteractive) return;
                 if (onSelectDay) {
                   onSelectDay(d.dateString);
-                } else {
-                  setInternalSelectedDay(d.dateString);
                 }
+                setInternalSelectedDay(d.dateString);
               }}
               className={`flex-1 min-w-[44px] py-1.5 px-1 rounded-xl border flex flex-col items-center gap-0.5 transition-all ${
                 isSelected
@@ -945,6 +936,30 @@ export function CalendarPage() {
   const [highlightedEventId, setHighlightedEventId] = useState<string | null>(null);
   const [highlightedDateString, setHighlightedDateString] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+
+  // Unified event selection handler: opens details and syncs active day
+  const handleSelectEvent = useCallback((evt: CalendarEvent) => {
+    setSelectedEvent(evt);
+    setMobileSelectedDay(evt.date);
+  }, []);
+
+  // Compute active week selected day cleanly without cascade re-render overwrites
+  const currentWeekSelectedDay = useMemo(() => {
+    const weekDate = getDateForWeek(activeIndex);
+    const { weekDays } = getWeekData(weekDate);
+
+    if (highlightedDateString && weekDays.some((d) => d.dateString === highlightedDateString)) {
+      return highlightedDateString;
+    }
+    if (mobileSelectedDay && weekDays.some((d) => d.dateString === mobileSelectedDay)) {
+      return mobileSelectedDay;
+    }
+    const dayWithEvent = weekDays.find((d) => events.some((e) => e.date === d.dateString));
+    if (dayWithEvent) return dayWithEvent.dateString;
+    const todayMatch = weekDays.find((d) => d.isToday);
+    if (todayMatch) return todayMatch.dateString;
+    return weekDays[0]?.dateString || "";
+  }, [activeIndex, highlightedDateString, mobileSelectedDay, events]);
 
   // Filtered & Sorted events for list view and search
   const filteredListEvents = useMemo(() => {
@@ -1515,7 +1530,7 @@ export function CalendarPage() {
                     }}
                     onClick={() => {
                       setListActiveIndex(evtIdx);
-                      setSelectedEvent(evt);
+                      handleSelectEvent(evt);
                     }}
                     className={`p-5 sm:p-6 rounded-2xl border transition-all cursor-pointer space-y-3.5 shadow-xl relative overflow-hidden ${
                       isHighlighted
@@ -1605,7 +1620,7 @@ export function CalendarPage() {
                   }}
                   onClick={() => {
                     setListActiveIndex(evtIdx);
-                    setSelectedEvent(evt);
+                    handleSelectEvent(evt);
                   }}
                   className={`p-4 rounded-xl border transition-all cursor-pointer space-y-2.5 ${
                     isHighlighted
@@ -1750,7 +1765,7 @@ export function CalendarPage() {
                           highlightedEventId={highlightedEventId}
                           highlightedDateString={highlightedDateString}
                           isInteractive={isInteractive}
-                          onSelectEvent={setSelectedEvent}
+                          onSelectEvent={handleSelectEvent}
                           entering={enteringMonth}
                         />
                       );
@@ -1765,6 +1780,7 @@ export function CalendarPage() {
 
       const weekDate = getDateForWeek(itemIndex);
       const { weekDays } = getWeekData(weekDate);
+      const isActiveWeek = itemIndex === activeIndex;
 
       return (
         <>
@@ -1775,11 +1791,11 @@ export function CalendarPage() {
             highlightedEventId={highlightedEventId}
             highlightedDateString={highlightedDateString}
             isInteractive={isInteractive}
-            onSelectEvent={setSelectedEvent}
+            onSelectEvent={handleSelectEvent}
             generateGoogleCalendarUrl={generateGoogleCalendarUrl}
             entering={enteringWeek}
-            selectedDayString={mobileSelectedDay}
-            onSelectDay={setMobileSelectedDay}
+            selectedDayString={isActiveWeek ? currentWeekSelectedDay : undefined}
+            onSelectDay={isActiveWeek && isInteractive ? setMobileSelectedDay : undefined}
           />
 
           {/* Desktop View: Compact 7-column grid */}
@@ -1789,7 +1805,7 @@ export function CalendarPage() {
             highlightedEventId={highlightedEventId}
             highlightedDateString={highlightedDateString}
             isInteractive={isInteractive}
-            onSelectEvent={setSelectedEvent}
+            onSelectEvent={handleSelectEvent}
             entering={enteringWeek}
           />
         </>
@@ -1806,7 +1822,8 @@ export function CalendarPage() {
       modeAnchorWeek,
       listSortNewest,
       renderListContent,
-      mobileSelectedDay,
+      currentWeekSelectedDay,
+      handleSelectEvent,
     ]
   );
 
@@ -2063,22 +2080,21 @@ export function CalendarPage() {
         </div>
       </div>
 
-      {/* Shared Layout Event Modal Overlay (Light & Dark mode perfected) */}
+      {/* Shared Layout Event Modal Overlay (Clean solid dark styling without liquid glass) */}
       {selectedEvent && (
         <div
           onClick={() => setSelectedEvent(null)}
-          className="fixed inset-0 z-50 bg-black/40 glass-heavy flex items-center justify-center p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 animate-in fade-in duration-200"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-2xl glass glass-panel-solid p-5 shadow-2xl relative overflow-hidden"
-            style={{ boxShadow: "0 0 35px rgba(224, 163, 170, 0.25)" }}
+            className="w-full max-w-lg rounded-2xl bg-[#141213] border border-[#242021] p-5 sm:p-6 shadow-2xl relative overflow-hidden"
           >
             {/* Close Button */}
             <button
               onClick={() => setSelectedEvent(null)}
               aria-label="Close details"
-              className="absolute top-4 right-4 p-1.5 rounded-full glass glass-panel text-[#9B98A0] hover:text-[#E5E5E7] transition-colors"
+              className="absolute top-4 right-4 p-1.5 rounded-full bg-[#1E1A1B] border border-[#242021] text-[#9B98A0] hover:text-[#E5E5E7] hover:border-[#382D30] transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
