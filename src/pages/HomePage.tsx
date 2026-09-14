@@ -44,12 +44,9 @@ export function HomePage() {
     "Empowering students to explore, build, and innovate with artificial intelligence.";
 
   return (
-    <div className="flex-1 flex flex-col justify-between min-h-[calc(100dvh-4rem)] gap-[var(--fluid-stack)] py-[var(--fluid-section-y)]">
-      {/* Editorial Centered Hero with Bold Scale & Negative Space.
-          Desktop: pt/pb scale WITH the viewport (+vw) like the old pt-6/pb-2
-          rhythm, recreated as fluid blank-space that breathes on wide screens.
-          Mobile: tight, so the (now larger) title owns the screen. */}
-      <section className="text-center max-w-[var(--fluid-container-max)] mx-auto w-full space-y-[var(--fluid-gap)] pt-[clamp(0.5rem,0.25rem_+_3vw,1.5rem)] pb-[clamp(0.25rem,3rem_-_4vw,1.5rem)]">
+    <div className="flex-1 flex flex-col justify-between gap-[clamp(1rem,2vw,1.75rem)] py-[clamp(0.75rem,2vw,1.25rem)]">
+      {/* Editorial Centered Hero with Bold Scale & Negative Space */}
+      <section className="text-center max-w-[var(--fluid-container-max)] mx-auto w-full space-y-[var(--fluid-gap)] pt-[clamp(0.5rem,1vw,1rem)] pb-[clamp(0.25rem,1vw,0.75rem)]">
         <h1 className="text-fluid-hero font-black tracking-[-0.04em] font-display text-[#E5E5E7] leading-[0.95] select-none">
           {info?.club_name || "AI Club"}
         </h1>
@@ -171,9 +168,8 @@ export function HomePage() {
         </Card>
       </div>
 
-      {/* Vision Statement — bottom anchor. pt scales WITH the viewport (+vw)
-          so the blank space above it breathes on desktop like the old pb-8. */}
-      <div className="text-center pt-[clamp(0.5rem,0.25rem_+_4vw,2rem)] pb-[clamp(1rem,4vw,2rem)] max-w-[var(--fluid-container-narrow)] mx-auto px-[var(--fluid-pad-x)]">
+      {/* Vision Statement — bottom anchor */}
+      <div className="text-center pt-[clamp(0.25rem,1vw,0.75rem)] pb-[clamp(0.5rem,1.5vw,1rem)] max-w-[var(--fluid-container-narrow)] mx-auto px-[var(--fluid-pad-x)]">
         <p className="text-fluid-body text-[#9B98A0] font-normal tracking-wide leading-relaxed">
           {visionText}
         </p>

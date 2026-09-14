@@ -48,11 +48,31 @@ body::after {
   color-scheme: light;
 }
 
+/* Globally remove scrollbars across all browsers while keeping content scrollable */
+*,
+*::before,
+*::after {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+html,
+body {
+  overflow-x: hidden;
+  overscroll-behavior: none;
+}
+
 body {
   font-family: "Inter", system-ui, -apple-system, sans-serif;
   color: var(--text-main);
   background-color: var(--bg-main);
-  overflow-x: hidden;
 }
 
 /* Light, vibrant red text selection */

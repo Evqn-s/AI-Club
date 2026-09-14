@@ -879,6 +879,21 @@ export function CalendarPage() {
   const [mobileSelectedDay, setMobileSelectedDay] = useState<string>("2026-09-13");
   const [listActiveIndex, setListActiveIndex] = useState<number>(0);
   const listContainerRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
+
+  // Smoothly scroll selected event card to the top of the list container
+  const scrollEventToTop = useCallback((index: number) => {
+    if (!listContainerRef.current) return;
+    const container = listContainerRef.current;
+    const el = container.querySelector<HTMLElement>(`[data-event-index="${index}"]`);
+    if (el) {
+      const topOffset = el.offsetTop - container.offsetTop;
+      container.scrollTo({
+        top: Math.max(0, topOffset),
+        behavior: "smooth",
+      });
+    }
+  }, []);
 
   // Transition state: activates the cylindrical ring display during arrow navigation
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -929,6 +944,17 @@ export function CalendarPage() {
       notifyAnimationComplete();
     };
   }, [notifyAnimationComplete]);
+
+  // When switching to list view, ensure the current selected event is aligned at the top
+  useEffect(() => {
+    if (viewMode === "list") {
+      const timer = setTimeout(() => {
+        scrollEventToTop(listActiveIndex);
+      }, 60);
+      return () => clearTimeout(timer);
+    }
+  }, [viewMode, scrollEventToTop]);
+
 
   // Search & Database lookup state
   const [searchQuery, setSearchQuery] = useState("");
@@ -1218,30 +1244,28 @@ export function CalendarPage() {
     if (viewMode === "list") {
       setListActiveIndex((prev) => {
         const next = Math.max(0, prev - 1);
-        const el = document.querySelector(`[data-event-index="${next}"]`);
-        el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        scrollEventToTop(next);
         return next;
       });
       return;
     }
     triggerTransition();
     setActiveIndex((prev) => prev - 1);
-  }, [viewMode, triggerTransition]);
+  }, [viewMode, triggerTransition, scrollEventToTop]);
 
   const handleNext = useCallback(() => {
     if (viewMode === "list") {
       setListActiveIndex((prev) => {
         const maxIdx = Math.max(0, filteredListEvents.length - 1);
         const next = Math.min(maxIdx, prev + 1);
-        const el = document.querySelector(`[data-event-index="${next}"]`);
-        el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        scrollEventToTop(next);
         return next;
       });
       return;
     }
     triggerTransition();
     setActiveIndex((prev) => prev + 1);
-  }, [viewMode, filteredListEvents.length, triggerTransition]);
+  }, [viewMode, filteredListEvents.length, triggerTransition, scrollEventToTop]);
 
   const handleToday = useCallback(() => {
     if (viewMode === "list") {
@@ -1258,14 +1282,13 @@ export function CalendarPage() {
         }
       });
       setListActiveIndex(bestIdx);
-      const el = document.querySelector(`[data-event-index="${bestIdx}"]`);
-      el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      scrollEventToTop(bestIdx);
       return;
     }
     if (activeIndex === 0) return;
     triggerTransition();
     setActiveIndex(0);
-  }, [viewMode, activeIndex, filteredListEvents, triggerTransition]);
+  }, [viewMode, activeIndex, filteredListEvents, triggerTransition, scrollEventToTop]);
 
   // Swipe gestures for all devices (touch, mouse drag, trackpad)
   const touchStartX = useRef<number | null>(null);
@@ -1313,39 +1336,54 @@ export function CalendarPage() {
   // Desktop Mouse Wheel navigation: scrolling changes week/month
   const lastWheelTime = useRef<number>(0);
 
-  const handleWheel = useCallback(
-    (e: React.WheelEvent) => {
-      if (viewMode === "list") return;
-      if (typeof window !== "undefined" && window.innerWidth < 1024) return;
+  // Non-passive native wheel listener: completely prevents window scrolling while interacting with the calendar
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+
+    const handleNativeWheel = (e: WheelEvent) => {
+      if (viewMode === "list") return; // List view handles its own internal snapping scroll
+
+      // Stop page from scrolling while scrolling the calendar
+      e.preventDefault();
+      e.stopPropagation();
 
       const now = Date.now();
-      if (now - lastWheelTime.current < 380) return;
+      if (now - lastWheelTime.current < 320) return;
 
-      if (Math.abs(e.deltaY) > 25 || Math.abs(e.deltaX) > 25) {
+      if (Math.abs(e.deltaY) > 15 || Math.abs(e.deltaX) > 15) {
         lastWheelTime.current = now;
-        if (e.deltaY > 25 || e.deltaX > 25) {
+        if (e.deltaY > 15 || e.deltaX > 15) {
           handleNext();
-        } else if (e.deltaY < -25 || e.deltaX < -25) {
+        } else if (e.deltaY < -15 || e.deltaX < -15) {
           handlePrev();
         }
       }
-    },
-    [viewMode, handleNext, handlePrev]
-  );
+    };
 
-  // List scroll listener: dynamically updates listActiveIndex and stepper date header
+    el.addEventListener("wheel", handleNativeWheel, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", handleNativeWheel);
+    };
+  }, [viewMode, handleNext, handlePrev]);
+
+  // List scroll listener: dynamically updates listActiveIndex based on snapped top item
   const handleListScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const container = e.currentTarget;
     const items = container.querySelectorAll<HTMLElement>("[data-event-item]");
     const containerTop = container.getBoundingClientRect().top;
+    let closestIdx = 0;
+    let minDistance = Infinity;
+
     for (let i = 0; i < items.length; i++) {
       const rect = items[i].getBoundingClientRect();
-      if (rect.bottom >= containerTop + 60) {
-        const idx = parseInt(items[i].getAttribute("data-event-index") || "0", 10);
-        setListActiveIndex(idx);
-        break;
+      const distance = Math.abs(rect.top - containerTop);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestIdx = parseInt(items[i].getAttribute("data-event-index") || "0", 10);
       }
     }
+    setListActiveIndex(closestIdx);
   }, []);
 
   // View switch handler — symmetrical multi-phase transitions
@@ -1480,13 +1518,18 @@ export function CalendarPage() {
     }
   }, [viewMode, activeIndex, filteredListEvents, listActiveIndex, searchQuery]);
 
-  // Dedicated List View Content Renderer: First item is bigger/featured, with smooth layout animations
+  // Dedicated List View Content Renderer: Selected item is on top and snapped, with smooth layout animations
   const renderListContent = useCallback(() => {
     return (
       <div
         ref={listContainerRef}
         onScroll={handleListScroll}
-        className="flex flex-col gap-3 select-text w-full"
+        onWheel={(e) => e.stopPropagation()}
+        className="flex flex-col gap-3.5 select-text w-full overflow-y-auto max-h-[calc(100dvh-13.5rem)] min-h-[420px] snap-y snap-mandatory scroll-smooth overscroll-contain pr-1"
+        style={{
+          scrollSnapType: "y mandatory",
+          scrollbarWidth: "none",
+        }}
       >
         {filteredListEvents.length === 0 ? (
           <div className="text-center py-14 px-4 rounded-2xl border border-[#242021] bg-[#141213] space-y-3">
@@ -1510,39 +1553,39 @@ export function CalendarPage() {
         ) : (
           <AnimatePresence mode="popLayout">
             {filteredListEvents.map((evt, evtIdx) => {
-              const isFirst = evtIdx === 0;
-              const isCurrentActive = evtIdx === listActiveIndex;
-              const isHighlighted = evt.id === highlightedEventId || isCurrentActive;
+              const isSelectedAtTop = evtIdx === listActiveIndex;
+              const isHighlighted = evt.id === highlightedEventId || isSelectedAtTop;
 
-              if (isFirst) {
+              if (isSelectedAtTop) {
                 return (
                   <motion.div
                     key={evt.id}
                     layout
                     data-event-item
                     data-event-index={evtIdx}
-                    initial={{ opacity: 0, y: 14 }}
+                    initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.96 }}
                     transition={{
                       layout: { type: "spring", stiffness: 320, damping: 28 },
-                      opacity: { duration: 0.22 },
+                      opacity: { duration: 0.2 },
+                    }}
+                    style={{
+                      scrollSnapAlign: "start",
+                      scrollSnapStop: "always",
                     }}
                     onClick={() => {
                       setListActiveIndex(evtIdx);
                       handleSelectEvent(evt);
+                      scrollEventToTop(evtIdx);
                     }}
-                    className={`p-5 sm:p-6 rounded-2xl border transition-all cursor-pointer space-y-3.5 shadow-xl relative overflow-hidden ${
-                      isHighlighted
-                        ? "bg-gradient-to-br from-[#2D1619] via-[#201718] to-[#141213] border-[#E0A3AA] ring-2 ring-[#E0A3AA]/70 shadow-[0_0_26px_rgba(224,163,170,0.22)]"
-                        : "bg-gradient-to-br from-[#241416] via-[#1E1A1B] to-[#141213] border-[#5E2C32] hover:border-[#8A3D46] shadow-[0_0_18px_rgba(224,163,170,0.08)]"
-                    }`}
+                    className="snap-start snap-always scroll-mt-0 p-5 sm:p-6 rounded-2xl border transition-all cursor-pointer space-y-3.5 shadow-xl relative overflow-hidden bg-gradient-to-br from-[#2D1619] via-[#201718] to-[#141213] border-[#E0A3AA] ring-2 ring-[#E0A3AA]/70 shadow-[0_0_26px_rgba(224,163,170,0.22)]"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#E0A3AA] text-[#141213] flex items-center gap-1 shadow-sm">
                           <CalendarIcon className="h-3 w-3" />
-                          Featured Event
+                          Selected Event
                         </span>
                         {evt.category && (
                           <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#241416] border border-[#5E2C32] text-[#E0A3AA]">
@@ -1618,11 +1661,16 @@ export function CalendarPage() {
                     layout: { type: "spring", stiffness: 320, damping: 28 },
                     opacity: { duration: 0.2 },
                   }}
+                  style={{
+                    scrollSnapAlign: "start",
+                    scrollSnapStop: "always",
+                  }}
                   onClick={() => {
                     setListActiveIndex(evtIdx);
                     handleSelectEvent(evt);
+                    scrollEventToTop(evtIdx);
                   }}
-                  className={`p-4 rounded-xl border transition-all cursor-pointer space-y-2.5 ${
+                  className={`snap-start snap-always scroll-mt-0 p-4 rounded-xl border transition-all cursor-pointer space-y-2.5 ${
                     isHighlighted
                       ? "bg-[#241416] border-[#E0A3AA] ring-2 ring-[#E0A3AA]"
                       : "bg-[#1E1A1B] border-[#242021] hover:border-[#382D30]"
@@ -1675,6 +1723,8 @@ export function CalendarPage() {
     searchQuery,
     generateGoogleCalendarUrl,
     handleListScroll,
+    handleSelectEvent,
+    scrollEventToTop,
   ]);
 
   // Render content helper for Month or Week view for any period index
@@ -1703,7 +1753,7 @@ export function CalendarPage() {
             : 0;
 
         return (
-          <div className="space-y-1.5 select-text">
+          <div className="space-y-1.5 select-text max-w-4xl mx-auto w-full">
             {/* Weekday Labels Header */}
             <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center py-1 md:py-1.5 border-b border-[#242021]/80">
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
@@ -1835,9 +1885,7 @@ export function CalendarPage() {
   return (
     <div
       data-page="calendar"
-      className={`space-y-4 py-4 mx-auto w-full ${
-        viewMode === "month" ? "max-w-3xl lg:max-w-4xl" : "max-w-5xl lg:max-w-6xl"
-      }`}
+      className="space-y-3 py-2 sm:py-3 mx-auto w-full max-w-5xl lg:max-w-6xl select-none"
     >
       {/* Page Header */}
       <div className="flex flex-col gap-1">
@@ -1976,11 +2024,11 @@ export function CalendarPage() {
           - Side arrow buttons on desktop (>= xl) when ample space is available
           - Swiping left/right on all devices navigates periods */}
       <div className="relative w-full">
-        {/* Desktop Floating Side Navigation Arrows */}
+        {/* Desktop Floating Side Navigation Arrows — completely stable fixed coordinates */}
         <button
           onClick={handlePrev}
           aria-label="Previous Period"
-          className="cal-nav-arrow hidden xl:flex absolute -left-12 top-1/2 -translate-y-1/2 z-30 h-10 w-10 items-center justify-center rounded-full shadow-xl backdrop-blur-sm group cursor-pointer"
+          className="cal-nav-arrow hidden xl:flex absolute -left-12 top-48 -translate-y-1/2 z-30 h-10 w-10 items-center justify-center rounded-full shadow-xl group cursor-pointer"
         >
           <ChevronLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
         </button>
@@ -1988,17 +2036,17 @@ export function CalendarPage() {
         <button
           onClick={handleNext}
           aria-label="Next Period"
-          className="cal-nav-arrow hidden xl:flex absolute -right-12 top-1/2 -translate-y-1/2 z-30 h-10 w-10 items-center justify-center rounded-full shadow-xl backdrop-blur-sm group cursor-pointer"
+          className="cal-nav-arrow hidden xl:flex absolute -right-12 top-48 -translate-y-1/2 z-30 h-10 w-10 items-center justify-center rounded-full shadow-xl group cursor-pointer"
         >
           <ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
         </button>
 
         {/* Viewport with swipe, pan, and desktop wheel support */}
         <div
+          ref={viewportRef}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          onWheel={handleWheel}
-          className="relative w-full overflow-hidden select-none py-1"
+          className="relative w-full overflow-hidden select-none py-1 overscroll-contain"
         >
           <motion.div
             key={viewMode}

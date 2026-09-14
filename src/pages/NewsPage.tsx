@@ -83,7 +83,7 @@ export function NewsPage() {
   }, [news, sortNewest]);
 
   return (
-    <div className="w-full max-w-[var(--fluid-container-narrow)] mx-auto px-[var(--fluid-pad-x)] py-[var(--fluid-section-y)] space-y-[var(--fluid-gap)]">
+    <div className="w-full max-w-[var(--fluid-container-narrow)] mx-auto px-[var(--fluid-pad-x)] py-4 sm:py-6 space-y-[var(--fluid-gap)]">
       {/* Header */}
       <div className="border-b border-[#242021] pb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
