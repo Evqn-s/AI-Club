@@ -97,7 +97,7 @@ export function NewsPage() {
         <button
           onClick={() => setSortNewest((v) => !v)}
           aria-label={`Sort announcements: currently ${sortNewest ? "newest first" : "oldest first"}`}
-          className="self-start sm:self-auto flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-mono uppercase tracking-wider rounded-full transition-all text-[#9B98A0] hover:text-[#E5E5E7] bg-[#1E1A1B] border border-[#242021] hover:border-[#382D30] cursor-pointer active:scale-95"
+          className="self-start sm:self-auto flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-mono uppercase tracking-wider rounded-full transition-all text-[#9B98A0] hover:text-[#E5E5E7] backdrop-blur-xl bg-black/30 border border-white/10 border-t-white/20 hover:border-t-white/35 shadow-lg hover:shadow-xl cursor-pointer active:scale-95"
         >
           <ArrowUpDown className="h-3.5 w-3.5 text-[#E0A3AA]" />
           <span>{sortNewest ? "Newest first" : "Oldest first"}</span>
@@ -124,7 +124,7 @@ export function NewsPage() {
           <Skeleton className="h-[clamp(6rem,20vw,8rem)] w-full rounded-[var(--fluid-radius-lg)]" />
         </div>
       ) : sortedNews.length === 0 ? (
-        <Card className="border-[#242021] bg-[#131214]">
+        <Card className="backdrop-blur-xl bg-black/30 border border-white/10 border-t-white/20 shadow-xl">
           <CardContent className="py-[clamp(2.5rem,10vw,4rem)] text-center text-[#9B98A0]">
             <p className="font-display text-fluid-body font-bold text-[#E5E5E7]">No announcements recorded</p>
             <p className="text-fluid-label uppercase tracking-[0.06em] mt-1.5 text-[#67646C]">New posts will appear automatically here.</p>
@@ -145,7 +145,7 @@ export function NewsPage() {
                   opacity: { duration: 0.2 },
                 }}
               >
-                <Card className="border-[#242021] bg-[#131214] hover:border-[#382D30] transition-colors">
+                <Card className="backdrop-blur-xl bg-black/30 border border-white/10 border-t-white/20 hover:border-t-white/35 shadow-2xl hover:shadow-[0_16px_40px_rgba(0,0,0,0.6)] hover:bg-black/45 transition-all">
                   <CardHeader className="pb-[clamp(0.5rem,2vw,0.75rem)]">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <Badge variant="default">{item.author}</Badge>

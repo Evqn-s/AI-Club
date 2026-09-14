@@ -394,10 +394,10 @@ const MonthEventCard = memo(function MonthEventCard({
           e.stopPropagation();
           onSelect(evt);
         }}
-        className={`w-full text-left p-1 md:p-1.5 rounded-lg border transition-all flex flex-col justify-between ${
+        className={`w-full text-left p-1 md:p-1.5 rounded-lg border transition-all flex flex-col justify-between backdrop-blur-xl shadow-md ${
           isHighlighted
-            ? "bg-[#241416] border-[#E0A3AA] ring-2 ring-[#E0A3AA] shadow-[0_0_16px_rgba(224,163,170,0.5)]"
-            : "bg-[#1E1A1B] border-[#242021] hover:border-[#5E2C32]/80"
+            ? "bg-[#241416]/90 border-[#E0A3AA] border-t-white/40 ring-2 ring-[#E0A3AA] shadow-[0_0_16px_rgba(224,163,170,0.5)]"
+            : "bg-black/40 border-white/10 border-t-white/20 hover:border-t-white/35 hover:bg-black/55 shadow-sm"
         }`}
       >
         <div className="space-y-0.5 w-full">
@@ -460,17 +460,17 @@ const MonthDayCell = memo(function MonthDayCell({
         if (!isInteractive || !hasEvents) return;
         onSelectEvent(dayEvents[0]);
       }}
-      className={`min-h-[46px] sm:min-h-[54px] md:min-h-[85px] lg:min-h-[96px] xl:min-h-[105px] rounded-lg md:rounded-xl border p-1 md:p-1.5 flex flex-col justify-between transition-colors ${
+      className={`min-h-[46px] sm:min-h-[54px] md:min-h-[85px] lg:min-h-[96px] xl:min-h-[105px] rounded-lg md:rounded-xl border p-1 md:p-1.5 flex flex-col justify-between transition-all backdrop-blur-xl shadow-lg hover:shadow-xl ${
         hasEvents ? "cursor-pointer md:cursor-default" : ""
       } ${
         dayObj.isCurrentMonth
-          ? "bg-[#141213] border-[#242021]"
-          : "bg-[#141213]/40 border-[#242021]/30 opacity-40"
+          ? "bg-black/30 border-white/10 border-t-white/25 hover:border-t-white/40 hover:bg-black/40"
+          : "bg-black/15 border-white/5 border-t-white/10 opacity-40"
       } ${
         isDateSearched
-          ? "ring-2 ring-[#E0A3AA] border-[#E0A3AA] shadow-[0_0_18px_rgba(224,163,170,0.4)]"
+          ? "ring-2 ring-[#E0A3AA] border-[#E0A3AA] border-t-[#E0A3AA] shadow-[0_0_18px_rgba(224,163,170,0.4)]"
           : dayObj.isToday
-          ? "ring-1 ring-[#E0A3AA] border-[#5E2C32] shadow-[0_0_10px_rgba(224,163,170,0.15)]"
+          ? "ring-1 ring-[#E0A3AA] border-[#5E2C32] border-t-white/40 shadow-[0_0_12px_rgba(224,163,170,0.2)]"
           : ""
       }`}
     >
@@ -597,10 +597,10 @@ const MobileWeekView = memo(function MobileWeekView({
                 }
                 setInternalSelectedDay(d.dateString);
               }}
-              className={`flex-1 min-w-[44px] py-1.5 px-1 rounded-xl border flex flex-col items-center gap-0.5 transition-all ${
+              className={`flex-1 min-w-[44px] py-1.5 px-1 rounded-xl border flex flex-col items-center gap-0.5 transition-all backdrop-blur-xl shadow-md ${
                 isSelected
-                  ? "bg-[#241416] border-[#E0A3AA] text-[#E0A3AA] shadow-sm"
-                  : "bg-[#141213] border-[#242021] text-[#9B98A0] hover:border-[#382D30]"
+                  ? "bg-black/45 border-[#E0A3AA] border-t-white/40 text-[#E0A3AA] shadow-[0_0_12px_rgba(224,163,170,0.25)]"
+                  : "bg-black/30 border-white/10 border-t-white/20 hover:border-t-white/35 text-[#9B98A0]"
               }`}
             >
               <span className="text-[10px] font-mono uppercase">{d.dayName}</span>
@@ -626,7 +626,7 @@ const MobileWeekView = memo(function MobileWeekView({
       </div>
 
       {/* Selected Day Activities or Blank Space with ample bottom padding */}
-      <div className="p-4 sm:p-5 rounded-2xl border border-[#242021] bg-[#141213] min-h-fit h-auto flex flex-col justify-center pb-8">
+      <div className="p-4 sm:p-5 rounded-2xl backdrop-blur-xl bg-black/30 border border-white/10 border-t-white/25 shadow-2xl min-h-fit h-auto flex flex-col justify-center pb-8">
         {dayEvents.length === 0 ? (
           <div className="text-center py-6 space-y-2">
             <CalendarIcon className="h-8 w-8 text-[#67646C] mx-auto opacity-40" />
@@ -659,10 +659,10 @@ const MobileWeekView = memo(function MobileWeekView({
                   e.stopPropagation();
                   onSelectEvent(evt);
                 }}
-                className={`p-4 rounded-xl border transition-all cursor-pointer space-y-3 ${
+                className={`p-4 rounded-xl border transition-all cursor-pointer space-y-3 backdrop-blur-xl shadow-lg hover:shadow-xl ${
                   evt.id === highlightedEventId
-                    ? "bg-[#241416] border-[#E0A3AA] ring-2 ring-[#E0A3AA]"
-                    : "bg-[#1E1A1B] border-[#242021]"
+                    ? "bg-[#241416]/90 border-[#E0A3AA] border-t-white/35 ring-2 ring-[#E0A3AA]"
+                    : "bg-black/30 border-white/10 border-t-white/20 hover:border-t-white/35 hover:bg-black/45"
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -762,12 +762,12 @@ const DesktopWeekView = memo(function DesktopWeekView({
                 : { y: 0, opacity: 1 }
             }
             style={{ willChange: "transform, opacity" }}
-            className={`rounded-2xl border p-2.5 flex flex-col gap-2.5 min-h-[350px] lg:min-h-[380px] transition-colors ${
+            className={`rounded-2xl border p-2.5 flex flex-col gap-2.5 min-h-[350px] lg:min-h-[380px] transition-all backdrop-blur-xl shadow-2xl ${
               isDateSearched
-                ? "bg-[#241416]/70 border-[#E0A3AA] ring-2 ring-[#E0A3AA] shadow-[0_0_18px_rgba(224,163,170,0.35)]"
+                ? "bg-black/45 border-[#E0A3AA] border-t-[#E0A3AA] ring-2 ring-[#E0A3AA] shadow-[0_0_18px_rgba(224,163,170,0.35)]"
                 : dayObj.isToday
-                ? "bg-[#241416]/50 border-[#5E2C32] ring-1 ring-[#E0A3AA]/60 shadow-[0_0_14px_rgba(224,163,170,0.15)]"
-                : "bg-[#141213] border-[#242021]"
+                ? "bg-black/40 border-[#5E2C32] border-t-white/40 ring-1 ring-[#E0A3AA]/60 shadow-[0_0_14px_rgba(224,163,170,0.15)]"
+                : "bg-black/30 border-white/10 border-t-white/25 hover:border-t-white/40 hover:bg-black/40"
             }`}
           >
             <div className="border-b border-[#242021] pb-1.5 flex items-center justify-between">
@@ -821,10 +821,10 @@ const DesktopWeekView = memo(function DesktopWeekView({
                         e.stopPropagation();
                         onSelectEvent(evt);
                       }}
-                      className={`p-3 rounded-xl border cursor-pointer flex flex-col justify-between transition-all min-h-[75%] ${
+                      className={`p-3 rounded-xl border cursor-pointer flex flex-col justify-between transition-all min-h-[75%] backdrop-blur-xl shadow-lg hover:shadow-xl ${
                         isHighlighted
-                          ? "bg-[#241416] border-[#E0A3AA] ring-2 ring-[#E0A3AA] shadow-[0_0_20px_rgba(224,163,170,0.5)]"
-                          : "bg-[#1E1A1B] border-[#242021] hover:border-[#382D30]"
+                          ? "bg-[#241416]/90 border-[#E0A3AA] border-t-white/40 ring-2 ring-[#E0A3AA] shadow-[0_0_20px_rgba(224,163,170,0.5)]"
+                          : "bg-black/35 border-white/10 border-t-white/20 hover:border-t-white/35 hover:bg-black/50"
                       }`}
                     >
                       <div className="space-y-1.5">
@@ -1645,7 +1645,7 @@ export function CalendarPage() {
                       y: { type: "spring", stiffness: 320, damping: 28 },
                     }}
                     onClick={() => handleSelectEvent(evt)}
-                    className="p-5 sm:p-6 rounded-2xl border cursor-pointer space-y-3.5 shadow-xl relative overflow-hidden bg-gradient-to-br from-[#2D1619] via-[#201718] to-[#141213] border-[#E0A3AA] ring-2 ring-[#E0A3AA]/70 shadow-[0_0_26px_rgba(224,163,170,0.22)] shrink-0"
+                    className="p-5 sm:p-6 rounded-2xl backdrop-blur-xl border cursor-pointer space-y-3.5 shadow-2xl relative overflow-hidden bg-gradient-to-br from-[#2D1619]/80 via-black/40 to-black/30 border-[#E0A3AA] border-t-white/40 ring-2 ring-[#E0A3AA]/70 shadow-[0_12px_40px_rgba(0,0,0,0.6),0_0_26px_rgba(224,163,170,0.25)] shrink-0 hover:border-t-white/60 transition-all"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
@@ -1731,10 +1731,10 @@ export function CalendarPage() {
                     setListActiveIndex(evtIdx);
                     handleSelectEvent(evt);
                   }}
-                  className={`p-4 rounded-xl border cursor-pointer space-y-2.5 shrink-0 ${
+                  className={`p-4 rounded-xl border cursor-pointer space-y-2.5 shrink-0 backdrop-blur-xl shadow-xl transition-all ${
                     isHighlighted
-                      ? "bg-[#241416] border-[#E0A3AA] ring-2 ring-[#E0A3AA]"
-                      : "bg-[#1E1A1B] border-[#242021] hover:border-[#382D30]"
+                      ? "bg-black/45 border-[#E0A3AA] border-t-white/40 ring-2 ring-[#E0A3AA]"
+                      : "bg-black/30 border-white/10 border-t-white/20 hover:border-t-white/35 hover:bg-black/45"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -1974,7 +1974,7 @@ export function CalendarPage() {
       )}
 
       {/* Top Toolbar: Live Search, View Toggle, and Date Steppers */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 p-2.5 rounded-2xl border border-[#242021] bg-[#141213]">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 p-2.5 rounded-2xl backdrop-blur-xl bg-black/30 border border-white/10 border-t-white/20 shadow-xl">
         {/* Live Database Search Input */}
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#67646C]" />
@@ -1983,7 +1983,7 @@ export function CalendarPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search event title or day (e.g. 'Workshop', 'Sep 15', '22')..."
-            className="w-full pl-9 pr-9 py-1.5 text-xs bg-[#1E1A1B] border border-[#242021] rounded-full text-[#E5E5E7] placeholder:text-[#67646C] focus:outline-none focus:border-[#E0A3AA] focus:ring-1 focus:ring-[#E0A3AA] transition-all"
+            className="w-full pl-9 pr-9 py-1.5 text-xs bg-black/40 border border-white/10 border-t-white/20 rounded-full text-[#E5E5E7] placeholder:text-[#67646C] focus:outline-none focus:border-[#E0A3AA] focus:ring-1 focus:ring-[#E0A3AA] transition-all"
           />
           {searchQuery && (
             <button
@@ -2003,12 +2003,12 @@ export function CalendarPage() {
         {/* View Switcher & Date Controls */}
         <div className="flex items-center justify-between md:justify-end gap-2.5 flex-wrap">
           {/* View Mode Switcher (Triggers Depth Zoom Parallax Dive) */}
-          <div className="flex items-center p-1 rounded-full border border-[#242021] bg-[#1E1A1B]">
+          <div className="flex items-center p-1 rounded-full backdrop-blur-xl bg-black/40 border border-white/10 border-t-white/20 shadow-inner">
             <button
               onClick={() => handleViewToggle("month")}
               className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono uppercase tracking-wider rounded-full transition-all ${
                 viewMode === "month"
-                  ? "bg-[#241416] text-[#E0A3AA] font-bold shadow-sm border border-[#5E2C32]"
+                  ? "bg-[#241416] text-[#E0A3AA] font-bold shadow-sm border border-[#5E2C32] border-t-white/30"
                   : "text-[#9B98A0] hover:text-[#E5E5E7]"
               }`}
             >
@@ -2019,7 +2019,7 @@ export function CalendarPage() {
               onClick={() => handleViewToggle("week")}
               className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono uppercase tracking-wider rounded-full transition-all ${
                 viewMode === "week"
-                  ? "bg-[#241416] text-[#E0A3AA] font-bold shadow-sm border border-[#5E2C32]"
+                  ? "bg-[#241416] text-[#E0A3AA] font-bold shadow-sm border border-[#5E2C32] border-t-white/30"
                   : "text-[#9B98A0] hover:text-[#E5E5E7]"
               }`}
             >
@@ -2030,7 +2030,7 @@ export function CalendarPage() {
               onClick={() => handleViewToggle("list")}
               className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono uppercase tracking-wider rounded-full transition-all ${
                 viewMode === "list"
-                  ? "bg-[#241416] text-[#E0A3AA] font-bold shadow-sm border border-[#5E2C32]"
+                  ? "bg-[#241416] text-[#E0A3AA] font-bold shadow-sm border border-[#5E2C32] border-t-white/30"
                   : "text-[#9B98A0] hover:text-[#E5E5E7]"
               }`}
             >
@@ -2043,7 +2043,7 @@ export function CalendarPage() {
           {viewMode === "list" && (
             <button
               onClick={() => setListSortNewest((v) => !v)}
-              className="flex items-center gap-1.5 px-3 py-1 text-xs font-mono uppercase tracking-wider rounded-full transition-all text-[#9B98A0] hover:text-[#E5E5E7] border border-[#242021]"
+              className="flex items-center gap-1.5 px-3 py-1 text-xs font-mono uppercase tracking-wider rounded-full transition-all text-[#9B98A0] hover:text-[#E5E5E7] backdrop-blur-xl bg-black/30 border border-white/10 border-t-white/20 hover:border-t-white/35 shadow-md active:scale-95"
             >
               <ArrowUpDown className="h-3.5 w-3.5" />
               <span>{listSortNewest ? "Newest first" : "Oldest first"}</span>
@@ -2201,13 +2201,13 @@ export function CalendarPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-2xl bg-[#141213] border border-[#242021] p-5 sm:p-6 shadow-2xl relative overflow-hidden"
+            className="w-full max-w-lg rounded-2xl backdrop-blur-2xl bg-black/45 border border-white/10 border-t-white/30 p-5 sm:p-6 shadow-2xl relative overflow-hidden"
           >
             {/* Close Button */}
             <button
               onClick={() => setSelectedEvent(null)}
               aria-label="Close details"
-              className="absolute top-4 right-4 p-1.5 rounded-full bg-[#1E1A1B] border border-[#242021] text-[#9B98A0] hover:text-[#E5E5E7] hover:border-[#382D30] transition-colors"
+              className="absolute top-4 right-4 p-1.5 rounded-full backdrop-blur-xl bg-black/40 border border-white/10 border-t-white/25 text-[#9B98A0] hover:text-[#E5E5E7] hover:border-t-white/40 hover:bg-black/60 transition-all shadow-md"
             >
               <X className="h-4 w-4" />
             </button>

@@ -52,7 +52,11 @@ export function HomePage() {
         </h1>
 
         <div className="flex flex-wrap items-center justify-center gap-[clamp(0.5rem,2vw,0.75rem)] pt-[clamp(0.25rem,1.5vw,0.5rem)]">
-          <Button asChild size="lg">
+          <Button
+            asChild
+            size="lg"
+            className="backdrop-blur-xl bg-black/30 hover:bg-black/50 border border-white/10 border-t-white/25 hover:border-t-white/40 shadow-xl hover:shadow-2xl text-[#FFFFFF] transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
             <Link
               href="/calendar"
               onMouseEnter={() => prefetchRoute("/calendar")}
@@ -68,6 +72,7 @@ export function HomePage() {
             size="lg"
             type="button"
             onClick={() => window.dispatchEvent(new CustomEvent("aiclub:open-chat"))}
+            className="backdrop-blur-xl bg-black/30 hover:bg-black/50 border border-white/10 border-t-white/25 hover:border-t-white/40 shadow-xl hover:shadow-2xl text-[#E5E5E7] hover:text-[#FFFFFF] transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <MessageSquare className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)]" />
             <span>Ask AI</span>

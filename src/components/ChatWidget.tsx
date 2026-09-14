@@ -194,7 +194,7 @@ export function ChatWidget() {
         >
           <Button
             onClick={() => setIsOpen(true)}
-            className="rounded-full gap-2.5 bg-[#241416] border border-[#5E2C32] text-[#FFFFFF] hover:bg-[#33181C] shadow-lg"
+            className="rounded-full gap-2.5 backdrop-blur-xl bg-black/30 hover:bg-black/50 border border-white/10 border-t-white/25 hover:border-t-white/40 text-[#FFFFFF] shadow-2xl hover:shadow-[0_12px_36px_rgba(0,0,0,0.7)] transition-all hover:scale-[1.03] active:scale-[0.97]"
             aria-label="Open club AI chat assistant"
           >
             <MessageSquare className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA]" />
