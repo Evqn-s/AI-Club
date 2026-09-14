@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback, useRef, memo } from "react";
-import { motion, AnimatePresence, type Variants } from "framer-motion";
+import { motion } from "framer-motion";
 import { supabase, isSupabaseConfigured, type CalendarEvent } from "@/lib/supabase";
 import {
   prefetchCalendar,
@@ -291,32 +291,59 @@ const coverflowSpring = {
   damping: 28,
 };
 
-// Pure GPU accelerated Depth Zoom / Parallax Dive Variants (Month ↔ Week view toggling)
-const diveVariants: Variants = {
-  enter: (viewMode: "month" | "week") => ({
-    scale: viewMode === "week" ? 0.88 : 1.12,
-    y: viewMode === "week" ? 18 : -18,
-    opacity: 0,
-  }),
-  center: {
-    scale: 1,
-    y: 0,
-    opacity: 1,
-    transition: {
-      duration: 0.32,
-      ease: [0.16, 1, 0.3, 1],
-    },
-  },
-  exit: (viewMode: "month" | "week") => ({
-    scale: viewMode === "week" ? 1.12 : 0.88,
-    y: viewMode === "week" ? -18 : 18,
-    opacity: 0,
-    transition: {
-      duration: 0.26,
-      ease: [0.16, 1, 0.3, 1],
-    },
-  }),
-};
+// ==========================================
+// MONTH ⇄ WEEK MODE TRANSITION ("deck of cards" / "horizontal blinds")
+// Switching to Month keeps the active week's row stationary and fans the
+// remaining weeks out vertically from underneath it; switching back folds
+// them in again. Animated with Framer Motion (inline transforms) so it works
+// on the calendar page where CSS transitions are disabled for instant theming.
+// ==========================================
+
+const MODE_FOLD_MS = 240; // month rows collapse back into the active week
+const MODE_UNFOLD_MS = 660; // month rows fan out from the active week
+const MODE_WEEK_SETTLE_MS = 560; // week events float up and settle
+
+// Splits the flat month-day array into Sun–Sat week rows so each row can be
+// animated independently during a mode switch.
+function chunkCalendarDays<T>(arr: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    out.push(arr.slice(i, i + size));
+  }
+  return out;
+}
+
+// The month rows use Tailwind breakpoint day-cell min-heights + row gaps;
+// mirror those rules in JS so the fold/unfold displacement stays in step
+// with the actual layout at every viewport width.
+function getMonthRowHeightPx(): number {
+  const vw = window.innerWidth || 1440;
+  // html { font-size: clamp(0.875rem, 0.8125rem + 0.3125vw, 1.125rem) } → px
+  const rootFont = Math.min(18, Math.max(14, 13 + vw * 0.003125));
+  let cell = 46;
+  if (vw >= 1280) cell = 105;
+  else if (vw >= 1024) cell = 96;
+  else if (vw >= 768) cell = 85;
+  else if (vw >= 640) cell = 54;
+  let gap = rootFont * 0.25; // gap-1
+  if (vw >= 768) gap = rootFont * 0.5; // md:gap-2
+  else if (vw >= 640) gap = rootFont * 0.375; // sm:gap-1.5
+  return cell + gap;
+}
+
+// Finds the month-grid row containing the active week (the week that was on
+// screen just before the switch). Falls back to today's row, then row 0.
+function resolveActiveRow(
+  weeks: { dateString: string }[][],
+  anchorSunday: string | null
+): number {
+  if (anchorSunday) {
+    const idx = weeks.findIndex((week) => week.some((d) => d.dateString === anchorSunday));
+    if (idx >= 0) return idx;
+  }
+  const todayIdx = weeks.findIndex((week) => week.some((d) => d.dateString === "2026-09-13"));
+  return todayIdx >= 0 ? todayIdx : 0;
+}
 
 // ==========================================
 // MEMOIZED CALENDAR SUBCOMPONENTS
@@ -328,47 +355,60 @@ const MonthEventCard = memo(function MonthEventCard({
   isHighlighted,
   isInteractive,
   onSelect,
+  entering,
 }: {
   evt: CalendarEvent;
   isHighlighted: boolean;
   isInteractive: boolean;
   onSelect: (evt: CalendarEvent) => void;
+  entering: boolean;
 }) {
   return (
-    <button
-      onClick={(e) => {
-        if (!isInteractive) return;
-        e.stopPropagation();
-        onSelect(evt);
-      }}
-      className={`w-full text-left p-1 md:p-1.5 rounded-lg border transition-all flex flex-col justify-between ${
-        isHighlighted
-          ? "bg-[#241416] border-[#E0A3AA] ring-2 ring-[#E0A3AA] shadow-[0_0_16px_rgba(224,163,170,0.5)]"
-          : "bg-[#1E1A1B] border-[#242021] hover:border-[#5E2C32]/80"
-      }`}
+    <motion.div
+      initial={entering ? { y: 8, opacity: 0.3 } : { y: 0, opacity: 1 }}
+      animate={
+        entering
+          ? { y: 0, opacity: 1, transition: { duration: 0.22, ease: [0.16, 1, 0.3, 1] } }
+          : { y: 0, opacity: 1 }
+      }
+      style={{ willChange: "transform, opacity" }}
+      className="w-full"
     >
-      <div className="space-y-0.5 w-full">
-        <div className="flex items-start justify-between gap-1 w-full">
-          <span className="text-[11px] font-bold font-display text-[#E5E5E7] leading-tight truncate">
-            {evt.title}
-          </span>
-          <span className="text-[9px] font-mono text-[#E0A3AA] shrink-0 font-semibold">
-            {evt.time}
-          </span>
+      <button
+        onClick={(e) => {
+          if (!isInteractive) return;
+          e.stopPropagation();
+          onSelect(evt);
+        }}
+        className={`w-full text-left p-1 md:p-1.5 rounded-lg border transition-all flex flex-col justify-between ${
+          isHighlighted
+            ? "bg-[#241416] border-[#E0A3AA] ring-2 ring-[#E0A3AA] shadow-[0_0_16px_rgba(224,163,170,0.5)]"
+            : "bg-[#1E1A1B] border-[#242021] hover:border-[#5E2C32]/80"
+        }`}
+      >
+        <div className="space-y-0.5 w-full">
+          <div className="flex items-start justify-between gap-1 w-full">
+            <span className="text-[11px] font-bold font-display text-[#E5E5E7] leading-tight truncate">
+              {evt.title}
+            </span>
+            <span className="text-[9px] font-mono text-[#E0A3AA] shrink-0 font-semibold">
+              {evt.time}
+            </span>
+          </div>
+          {evt.description && (
+            <p className="hidden lg:block text-[10px] text-[#9B98A0] leading-snug line-clamp-2 break-words">
+              {evt.description}
+            </p>
+          )}
         </div>
-        {evt.description && (
-          <p className="hidden lg:block text-[10px] text-[#9B98A0] leading-snug line-clamp-2 break-words">
-            {evt.description}
-          </p>
+        {evt.location && (
+          <div className="hidden lg:flex items-center gap-1 mt-1 pt-0.5 border-t border-[#242021]/60 text-[9px] text-[#67646C] truncate">
+            <MapPin className="h-2 w-2 shrink-0 text-[#E0A3AA]" />
+            <span className="truncate">{evt.location}</span>
+          </div>
         )}
-      </div>
-      {evt.location && (
-        <div className="hidden lg:flex items-center gap-1 mt-1 pt-0.5 border-t border-[#242021]/60 text-[9px] text-[#67646C] truncate">
-          <MapPin className="h-2 w-2 shrink-0 text-[#E0A3AA]" />
-          <span className="truncate">{evt.location}</span>
-        </div>
-      )}
-    </button>
+      </button>
+    </motion.div>
   );
 });
 
@@ -380,6 +420,7 @@ const MonthDayCell = memo(function MonthDayCell({
   highlightedDateString,
   isInteractive,
   onSelectEvent,
+  entering,
 }: {
   dayObj: {
     date: Date;
@@ -393,6 +434,7 @@ const MonthDayCell = memo(function MonthDayCell({
   highlightedDateString: string | null;
   isInteractive: boolean;
   onSelectEvent: (evt: CalendarEvent) => void;
+  entering: boolean;
 }) {
   const hasEvents = dayEvents.length > 0;
   const isAnyHighlighted = dayEvents.some((e) => e.id === highlightedEventId);
@@ -461,6 +503,7 @@ const MonthDayCell = memo(function MonthDayCell({
             isHighlighted={evt.id === highlightedEventId}
             isInteractive={isInteractive}
             onSelect={onSelectEvent}
+            entering={entering}
           />
         ))}
       </div>
@@ -477,6 +520,7 @@ const MobileWeekView = memo(function MobileWeekView({
   isInteractive,
   onSelectEvent,
   generateGoogleCalendarUrl,
+  entering,
 }: {
   weekDays: {
     date: Date;
@@ -491,6 +535,7 @@ const MobileWeekView = memo(function MobileWeekView({
   isInteractive: boolean;
   onSelectEvent: (evt: CalendarEvent) => void;
   generateGoogleCalendarUrl: (evt: CalendarEvent) => string;
+  entering: boolean;
 }) {
   const [selectedDayString, setSelectedDayString] = useState<string>(() => {
     if (highlightedDateString && weekDays.some((d) => d.dateString === highlightedDateString)) {
@@ -566,9 +611,24 @@ const MobileWeekView = memo(function MobileWeekView({
           </div>
         ) : (
           <div className="space-y-3">
-            {dayEvents.map((evt) => (
-              <div
+            {dayEvents.map((evt, evtIdx) => (
+              <motion.div
                 key={evt.id}
+                initial={entering ? { y: 14, opacity: 0.35 } : { y: 0, opacity: 1 }}
+                animate={
+                  entering
+                    ? {
+                        y: 0,
+                        opacity: 1,
+                        transition: {
+                          duration: 0.26,
+                          delay: Math.min(evtIdx * 0.06, 0.3),
+                          ease: [0.16, 1, 0.3, 1],
+                        },
+                      }
+                    : { y: 0, opacity: 1 }
+                }
+                style={{ willChange: "transform, opacity" }}
                 onClick={(e) => {
                   if (!isInteractive) return;
                   e.stopPropagation();
@@ -628,7 +688,7 @@ const MobileWeekView = memo(function MobileWeekView({
                     </a>
                   </Button>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         )}
@@ -645,6 +705,7 @@ const DesktopWeekView = memo(function DesktopWeekView({
   highlightedDateString,
   isInteractive,
   onSelectEvent,
+  entering,
 }: {
   weekDays: {
     date: Date;
@@ -658,6 +719,7 @@ const DesktopWeekView = memo(function DesktopWeekView({
   highlightedDateString: string | null;
   isInteractive: boolean;
   onSelectEvent: (evt: CalendarEvent) => void;
+  entering: boolean;
 }) {
   return (
     <div className="hidden md:grid md:grid-cols-7 gap-2.5 w-full select-text">
@@ -666,8 +728,15 @@ const DesktopWeekView = memo(function DesktopWeekView({
         const isDateSearched = dayObj.dateString === highlightedDateString;
 
         return (
-          <div
+          <motion.div
             key={dayObj.dateString}
+            initial={entering ? { y: 10, opacity: 0.55 } : { y: 0, opacity: 1 }}
+            animate={
+              entering
+                ? { y: 0, opacity: 1, transition: { duration: 0.24, ease: [0.16, 1, 0.3, 1] } }
+                : { y: 0, opacity: 1 }
+            }
+            style={{ willChange: "transform, opacity" }}
             className={`rounded-2xl border p-2.5 flex flex-col gap-2.5 min-h-[350px] lg:min-h-[380px] transition-colors ${
               isDateSearched
                 ? "bg-[#241416]/70 border-[#E0A3AA] ring-2 ring-[#E0A3AA] shadow-[0_0_18px_rgba(224,163,170,0.35)]"
@@ -702,11 +771,26 @@ const DesktopWeekView = memo(function DesktopWeekView({
                   <span className="text-xs text-[#67646C] font-mono">No events</span>
                 </div>
               ) : (
-                dayEvents.map((evt) => {
+                dayEvents.map((evt, evtIdx) => {
                   const isHighlighted = evt.id === highlightedEventId;
                   return (
-                    <div
+                    <motion.div
                       key={evt.id}
+                      initial={entering ? { y: 14, opacity: 0.4 } : { y: 0, opacity: 1 }}
+                      animate={
+                        entering
+                          ? {
+                              y: 0,
+                              opacity: 1,
+                              transition: {
+                                duration: 0.26,
+                                delay: Math.min(evtIdx * 0.06, 0.3),
+                                ease: [0.16, 1, 0.3, 1],
+                              },
+                            }
+                          : { y: 0, opacity: 1 }
+                      }
+                      style={{ willChange: "transform, opacity" }}
                       onClick={(e) => {
                         if (!isInteractive) return;
                         e.stopPropagation();
@@ -746,12 +830,12 @@ const DesktopWeekView = memo(function DesktopWeekView({
                         <MapPin className="h-3 w-3 text-[#E0A3AA] shrink-0" />
                         <span className="truncate">{evt.location}</span>
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })
               )}
             </div>
-          </div>
+          </motion.div>
         );
       })}
     </div>
@@ -782,6 +866,18 @@ export function CalendarPage() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Month ⇄ Week mode transition state ("deck of cards" unfold / fold)
+  const [modeTransition, setModeTransition] = useState<"month" | "week-fold" | "week" | null>(null);
+  const [modeAnchorWeek, setModeAnchorWeek] = useState<string | null>(null);
+  const modeTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const clearModeTimer = useCallback(() => {
+    if (modeTimerRef.current) {
+      clearTimeout(modeTimerRef.current);
+      modeTimerRef.current = null;
+    }
+  }, []);
+
   const notifyAnimationStart = useCallback(() => {
     window.dispatchEvent(new CustomEvent("calendar:transition-start"));
   }, []);
@@ -806,6 +902,9 @@ export function CalendarPage() {
     return () => {
       if (transitionTimerRef.current) {
         clearTimeout(transitionTimerRef.current);
+      }
+      if (modeTimerRef.current) {
+        clearTimeout(modeTimerRef.current);
       }
       notifyAnimationComplete();
     };
@@ -1102,26 +1201,77 @@ export function CalendarPage() {
     [handleNext, handlePrev]
   );
 
-  // View switch handler (seamless context preservation + Depth Zoom / Parallax Dive)
+  // View switch handler — "deck of cards / horizontal blinds" unfold.
+  // To Week: the month grid folds back into the active week, then the week's
+  // events float up into place. To Month: the active week stays stationary
+  // while the remaining weeks fan out vertically from underneath it.
   const handleViewToggle = useCallback(
     (newMode: "month" | "week") => {
-      if (newMode === viewMode) return;
+      if (newMode === viewMode && modeTransition === null) return;
       notifyAnimationStart();
+      clearModeTimer();
+
       if (newMode === "week") {
+        if (viewMode === "week") {
+          // Already switching — restart the settle timer
+          setModeTransition("week");
+          modeTimerRef.current = setTimeout(() => {
+            setModeTransition(null);
+            notifyAnimationComplete();
+          }, MODE_WEEK_SETTLE_MS);
+          return;
+        }
+
         const monthDate = getDateForMonth(activeIndex);
         const targetDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), 13, 12, 0, 0);
         const diffWeeks = Math.round(
           (targetDate.getTime() - new Date(2026, 8, 13, 12, 0, 0).getTime()) / (7 * 86400000)
         );
-        setActiveIndex(diffWeeks);
+
+        // Phase 1: fold the month grid back into the active week
+        setModeTransition("week-fold");
+        modeTimerRef.current = setTimeout(() => {
+          // Phase 2: swap to the week view — events float up into place
+          clearModeTimer();
+          setActiveIndex(diffWeeks);
+          setViewMode("week");
+          setModeTransition("week");
+          modeTimerRef.current = setTimeout(() => {
+            setModeTransition(null);
+            notifyAnimationComplete();
+          }, MODE_WEEK_SETTLE_MS);
+        }, MODE_FOLD_MS);
       } else {
+        if (viewMode === "month") {
+          // Already unfolding — reverse the in-flight fold and restart
+          setModeTransition("month");
+          modeTimerRef.current = setTimeout(() => {
+            setModeTransition(null);
+            notifyAnimationComplete();
+          }, MODE_UNFOLD_MS);
+          return;
+        }
+
         const weekDate = getDateForWeek(activeIndex);
+        setModeAnchorWeek(getWeekData(weekDate).weekDays[0].dateString);
         const diffMonths = (weekDate.getFullYear() - 2026) * 12 + (weekDate.getMonth() - 8);
         setActiveIndex(diffMonths);
+        setViewMode("month");
+        setModeTransition("month");
+        modeTimerRef.current = setTimeout(() => {
+          setModeTransition(null);
+          notifyAnimationComplete();
+        }, MODE_UNFOLD_MS);
       }
-      setViewMode(newMode);
     },
-    [viewMode, activeIndex, notifyAnimationStart]
+    [
+      viewMode,
+      modeTransition,
+      activeIndex,
+      notifyAnimationStart,
+      notifyAnimationComplete,
+      clearModeTimer,
+    ]
   );
 
   // Active period title
@@ -1136,9 +1286,23 @@ export function CalendarPage() {
   // Render content helper for Month or Week view for any period index
   const renderCalendarContent = useCallback(
     (itemIndex: number, isInteractive: boolean) => {
+      const isCenter = isInteractive && itemIndex === activeIndex;
+      const enteringMonth = isCenter && modeTransition === "month";
+      const foldingMonth = isCenter && modeTransition === "week-fold";
+      const enteringWeek = isCenter && modeTransition === "week";
+
       if (viewMode === "month") {
         const monthDate = getDateForMonth(itemIndex);
         const { monthDays } = getMonthData(monthDate);
+        const weeks = chunkCalendarDays(monthDays, 7);
+        const rowHeight = enteringMonth || foldingMonth ? getMonthRowHeightPx() : 0;
+        const anchorDateString = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, "0")}-13`;
+        const activeRow =
+          enteringMonth
+            ? resolveActiveRow(weeks, modeAnchorWeek)
+            : foldingMonth
+            ? Math.max(0, weeks.findIndex((week) => week.some((d) => d.dateString === anchorDateString)))
+            : 0;
 
         return (
           <div className="space-y-1.5 select-text">
@@ -1154,56 +1318,108 @@ export function CalendarPage() {
               ))}
             </div>
 
-            {/* 7-Column Days Grid */}
-            <div className="grid grid-cols-7 gap-1 sm:gap-1.5 md:gap-2">
-              {monthDays.map((dayObj, idx) => {
-                const dayEvents = events.filter((e) => e.date === dayObj.dateString);
+            {/* Week rows — fan out of / fold back into the active week */}
+            <div className="flex flex-col gap-1 sm:gap-1.5 md:gap-2">
+              {weeks.map((week, rowIndex) => {
+                const delta = activeRow - rowIndex;
+                const isActiveRow = rowIndex === activeRow;
                 return (
-                  <MonthDayCell
-                    key={`${dayObj.dateString}-${idx}`}
-                    dayObj={dayObj}
-                    dayEvents={dayEvents}
-                    highlightedEventId={highlightedEventId}
-                    highlightedDateString={highlightedDateString}
-                    isInteractive={isInteractive}
-                    onSelectEvent={setSelectedEvent}
-                  />
+                  <motion.div
+                    key={week[0].dateString}
+                    initial={
+                      enteringMonth
+                        ? { y: delta * rowHeight, opacity: isActiveRow ? 0.45 : 0.08 }
+                        : { y: 0, opacity: 1 }
+                    }
+                    animate={
+                      enteringMonth
+                        ? {
+                            y: 0,
+                            opacity: 1,
+                            transition: {
+                              duration: isActiveRow ? 0.2 : 0.36,
+                              delay: Math.abs(delta) * 0.05,
+                              ease: [0.16, 1, 0.3, 1],
+                            },
+                          }
+                        : foldingMonth
+                        ? {
+                            y: delta * rowHeight,
+                            opacity: 0,
+                            transition: {
+                              duration: 0.22,
+                              delay: Math.abs(delta) * 0.03,
+                              ease: [0.7, 0, 0.85, 0.36],
+                            },
+                          }
+                        : { y: 0, opacity: 1 }
+                    }
+                    style={{ willChange: "transform, opacity" }}
+                    className="grid grid-cols-7 gap-1 sm:gap-1.5 md:gap-2"
+                  >
+                    {week.map((dayObj, idx) => {
+                      const dayEvents = events.filter((e) => e.date === dayObj.dateString);
+                      return (
+                        <MonthDayCell
+                          key={`${dayObj.dateString}-${idx}`}
+                          dayObj={dayObj}
+                          dayEvents={dayEvents}
+                          highlightedEventId={highlightedEventId}
+                          highlightedDateString={highlightedDateString}
+                          isInteractive={isInteractive}
+                          onSelectEvent={setSelectedEvent}
+                          entering={enteringMonth}
+                        />
+                      );
+                    })}
+                  </motion.div>
                 );
               })}
             </div>
           </div>
         );
-      } else {
-        const weekDate = getDateForWeek(itemIndex);
-        const { weekDays } = getWeekData(weekDate);
-
-        return (
-          <>
-            {/* Mobile View: Horizontal day strip + Full view activity */}
-            <MobileWeekView
-              weekDays={weekDays}
-              events={events}
-              highlightedEventId={highlightedEventId}
-              highlightedDateString={highlightedDateString}
-              isInteractive={isInteractive}
-              onSelectEvent={setSelectedEvent}
-              generateGoogleCalendarUrl={generateGoogleCalendarUrl}
-            />
-
-            {/* Desktop View: Compact 7-column grid */}
-            <DesktopWeekView
-              weekDays={weekDays}
-              events={events}
-              highlightedEventId={highlightedEventId}
-              highlightedDateString={highlightedDateString}
-              isInteractive={isInteractive}
-              onSelectEvent={setSelectedEvent}
-            />
-          </>
-        );
       }
+
+      const weekDate = getDateForWeek(itemIndex);
+      const { weekDays } = getWeekData(weekDate);
+
+      return (
+        <>
+          {/* Mobile View: Horizontal day strip + Full view activity */}
+          <MobileWeekView
+            weekDays={weekDays}
+            events={events}
+            highlightedEventId={highlightedEventId}
+            highlightedDateString={highlightedDateString}
+            isInteractive={isInteractive}
+            onSelectEvent={setSelectedEvent}
+            generateGoogleCalendarUrl={generateGoogleCalendarUrl}
+            entering={enteringWeek}
+          />
+
+          {/* Desktop View: Compact 7-column grid */}
+          <DesktopWeekView
+            weekDays={weekDays}
+            events={events}
+            highlightedEventId={highlightedEventId}
+            highlightedDateString={highlightedDateString}
+            isInteractive={isInteractive}
+            onSelectEvent={setSelectedEvent}
+            entering={enteringWeek}
+          />
+        </>
+      );
     },
-    [viewMode, events, highlightedEventId, highlightedDateString, generateGoogleCalendarUrl]
+    [
+      viewMode,
+      activeIndex,
+      events,
+      highlightedEventId,
+      highlightedDateString,
+      generateGoogleCalendarUrl,
+      modeTransition,
+      modeAnchorWeek,
+    ]
   );
 
   // Only display Skeleton if cached data is null/empty and network is actively loading
@@ -1335,8 +1551,9 @@ export function CalendarPage() {
         </div>
       </div>
 
-      {/* Main 3D Viewport with Depth Zoom / Parallax Dive + Cylindrical Coverflow Arc
-          - Mode popLayout guarantees ZERO blank pauses when switching Month ↔ Week
+      {/* Main 3D Viewport — Cylindrical Coverflow Arc for period paging; the month ⇄
+          week mode switch is animated by the row/card motions inside
+          renderCalendarContent ("deck of cards / horizontal blinds" unfold).
           - Side arrow buttons on desktop (>= xl) when ample space is available
           - Swiping left/right on all devices navigates periods */}
       <div className="relative w-full">
@@ -1364,20 +1581,12 @@ export function CalendarPage() {
           onWheel={handleWheel}
           className="relative w-full overflow-hidden select-none py-1"
         >
-          <AnimatePresence mode="wait" custom={viewMode} initial={false}>
-            <motion.div
-              key={viewMode}
-              custom={viewMode}
-              variants={diveVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              onPanEnd={handlePanEnd}
-              onAnimationStart={notifyAnimationStart}
-              onAnimationComplete={notifyAnimationComplete}
-              style={{ willChange: "transform, opacity" }}
-              className="w-full"
-            >
+          <motion.div
+            onPanEnd={handlePanEnd}
+            initial={false}
+            style={{ willChange: "transform, opacity" }}
+            className="w-full"
+          >
               <div className="relative w-full">
                 {/* Invisible flow placeholder: guarantees exact, natural height across devices */}
                 <div
@@ -1412,8 +1621,7 @@ export function CalendarPage() {
                   );
                 })}
               </div>
-            </motion.div>
-          </AnimatePresence>
+          </motion.div>
         </div>
       </div>
 
