@@ -37,4 +37,5 @@ export interface CalendarEvent {
   time: string;
   location: string;
   description: string;
+  category?: string;
 }

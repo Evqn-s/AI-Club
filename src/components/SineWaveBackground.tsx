@@ -23,6 +23,18 @@ export function SineWaveBackground() {
       "(prefers-reduced-motion: reduce)"
     ).matches;
 
+    let isPaused = false;
+
+    function handlePause() {
+      isPaused = true;
+    }
+    function handleResume() {
+      isPaused = false;
+    }
+
+    window.addEventListener("calendar:transition-start", handlePause);
+    window.addEventListener("calendar:transition-end", handleResume);
+
     function resize() {
       if (!canvas || !ctx) return;
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -40,6 +52,11 @@ export function SineWaveBackground() {
 
     function draw() {
       if (!ctx || !canvas) return;
+
+      if (isPaused) {
+        animationFrameId = requestAnimationFrame(draw);
+        return;
+      }
 
       const width = window.innerWidth;
       const height = window.innerHeight;
@@ -142,7 +159,9 @@ export function SineWaveBackground() {
       }
 
       if (!prefersReducedMotion) {
-        phase += 0.0035; // Much slower, serene fluid drift (down from 0.014)
+        if (!isPaused) {
+          phase += 0.0035; // Much slower, serene fluid drift (down from 0.014)
+        }
         animationFrameId = requestAnimationFrame(draw);
       }
     }
@@ -150,6 +169,8 @@ export function SineWaveBackground() {
     draw();
 
     return () => {
+      window.removeEventListener("calendar:transition-start", handlePause);
+      window.removeEventListener("calendar:transition-end", handleResume);
       window.removeEventListener("resize", resize);
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);

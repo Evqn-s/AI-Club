@@ -2,6 +2,19 @@ import { Link, useLocation } from "wouter";
 import { ThemeBar } from "@/components/ThemeBar";
 import { prefetchRoute } from "@/lib/cache";
 
+// Module-level cache for the lazy component promise
+export let calendarComponentPromise: Promise<any> | null = null;
+
+export const preloadCalendar = () => {
+  // 1. Fetch Supabase calendar data into lib/cache.ts memory cache
+  prefetchRoute("/calendar");
+
+  // 2. Force browser to download AND evaluate the CalendarPage bundle immediately
+  if (!calendarComponentPromise) {
+    calendarComponentPromise = import("../pages/CalendarPage");
+  }
+};
+
 export function Navbar() {
   const [location] = useLocation();
 
@@ -42,9 +55,27 @@ export function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                onMouseEnter={() => prefetchRoute(link.href)}
-                onFocus={() => prefetchRoute(link.href)}
-                onTouchStart={() => prefetchRoute(link.href)}
+                onMouseEnter={() => {
+                  if (link.href === "/calendar") {
+                    preloadCalendar();
+                  } else {
+                    prefetchRoute(link.href);
+                  }
+                }}
+                onFocus={() => {
+                  if (link.href === "/calendar") {
+                    preloadCalendar();
+                  } else {
+                    prefetchRoute(link.href);
+                  }
+                }}
+                onTouchStart={() => {
+                  if (link.href === "/calendar") {
+                    preloadCalendar();
+                  } else {
+                    prefetchRoute(link.href);
+                  }
+                }}
                 className={`flex items-center justify-center rounded-full font-medium uppercase tracking-[0.06em] transition-colors whitespace-nowrap px-[clamp(0.875rem,2.5vw,1.25rem)] py-[clamp(0.5rem,1.5vw,0.625rem)] min-h-[clamp(2.5rem,2.25rem_+_2vw,2.75rem)] text-fluid-body sm:px-[clamp(0.625rem,2vw,1rem)] sm:py-[clamp(0.25rem,1vw,0.375rem)] sm:min-h-0 sm:text-fluid-small ${
                   isActive
                     ? "bg-[#241416] text-[#FFFFFF] border border-[#5E2C32] shadow-sm"

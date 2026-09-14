@@ -191,6 +191,46 @@ html.light .bg-\[\#3D1E22\] {
   background-color: #F0F0F2 !important;
 }
 
+/* Calendar-specific: opacity-modified dark backgrounds need separate selectors
+   because Tailwind generates distinct classes for bg-[#X]/N vs bg-[#X] */
+html.light .bg-\[\#141213\]\/40 {
+  background-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+html.light .bg-\[\#241416\]\/50 {
+  background-color: rgba(37, 99, 235, 0.06) !important;
+}
+
+html.light .bg-black\/60,
+html.light .bg-black\/75,
+html.light .bg-black\/80 {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Calendar accent rings & glows: crimson ring → blue ring in light mode */
+html.light .ring-\[\#E0A3AA\] {
+  --tw-ring-color: rgba(37, 99, 235, 0.6) !important;
+}
+html.light .ring-\[\#E0A3AA\]\/60 {
+  --tw-ring-color: rgba(37, 99, 235, 0.4) !important;
+}
+
+/* Calendar search highlight badge */
+html.light .bg-\[\#E0A3AA\] {
+  background-color: #2563EB !important;
+  color: #FFFFFF !important;
+}
+
+/* Calendar dot accent */
+html.light .bg-\[\#E0A3AA\] {
+  background-color: #2563EB !important;
+}
+
+/* Calendar shadow glows: neutralize crimson box-shadow in light mode */
+html.light [style*="box-shadow"] {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06) !important;
+}
+
 /* ALL outlines / borders in light mode are blue */
 html.light [class*="border"],
 html.light .border,
@@ -445,4 +485,60 @@ html {
   html {
     font-size: 0.875rem;
   }
+}
+
+/* =========================================================
+   CALENDAR PAGE: INSTANT THEME SWITCHING
+   Kill ALL color/bg/border CSS transitions inside [data-page="calendar"]
+   so switching dark ↔ light is paint-instant with zero transition lag.
+   Transform transitions (Framer Motion animations) are unaffected because
+   they are applied as inline styles, not via the transition-property here.
+   ========================================================= */
+[data-page="calendar"],
+[data-page="calendar"] *,
+[data-page="calendar"] *::before,
+[data-page="calendar"] *::after {
+  transition-property: none !important;
+  transition-duration: 0ms !important;
+}
+
+/* Allow transform-only transitions for Framer Motion chevron hover effects */
+[data-page="calendar"] .group-hover\:-translate-x-0\.5,
+[data-page="calendar"] .group-hover\:translate-x-0\.5 {
+  transition-property: transform !important;
+  transition-duration: 150ms !important;
+}
+
+/* =========================================================
+   CALENDAR NAV ARROW BUTTONS — THEME-AWARE
+   Dark mode: near-black bg with red-tinted border and hover
+   Light mode: white bg with blue-tinted border and hover
+   ========================================================= */
+.cal-nav-arrow {
+  background-color: rgba(20, 18, 19, 0.9);
+  border: 1px solid #242021;
+  color: #9B98A0;
+}
+.cal-nav-arrow:hover {
+  background-color: #241416;
+  border-color: #5E2C32;
+  color: #E5E5E7;
+}
+.cal-nav-arrow svg {
+  color: inherit;
+}
+
+html.light .cal-nav-arrow {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(37, 99, 235, 0.35) !important;
+  color: #4B5563 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+html.light .cal-nav-arrow:hover {
+  background-color: #EEF2FF !important;
+  border-color: rgba(37, 99, 235, 0.7) !important;
+  color: #1D4ED8 !important;
+}
+html.light .cal-nav-arrow svg {
+  color: inherit !important;
 }

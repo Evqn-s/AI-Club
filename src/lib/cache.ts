@@ -46,6 +46,7 @@ export const fallbackEvents: CalendarEvent[] = [
     description:
       "Monthly general assembly to discuss upcoming hackathons and workshop sessions.",
     location: "Room 101",
+    category: "Meeting",
   },
   {
     id: "evt_2",
@@ -55,6 +56,37 @@ export const fallbackEvents: CalendarEvent[] = [
     description:
       "Hands-on session building your first neural network from scratch using Python and PyTorch.",
     location: "Engineering Lab B",
+    category: "Workshop",
+  },
+  {
+    id: "evt_3",
+    title: "Hackathon Prep & Team Formation",
+    date: "2026-09-18",
+    time: "16:00",
+    description:
+      "Brainstorming tracks, pitching project ideas, and finding teammates for the fall AI Hackathon.",
+    location: "Innovation Hub",
+    category: "Hackathon",
+  },
+  {
+    id: "evt_4",
+    title: "AI Research Paper Discussion: Diffusion & Transformers",
+    date: "2026-09-26",
+    time: "15:00",
+    description:
+      "Interactive reading group breaking down breakthrough architectures in generative modeling.",
+    location: "Online (Discord Voice)",
+    category: "Research",
+  },
+  {
+    id: "evt_5",
+    title: "Industry Speaker: ML Engineering in Production",
+    date: "2026-10-02",
+    time: "18:30",
+    description:
+      "Guest tech talk with Q&A on deploying large-scale multimodal models in cloud environments.",
+    location: "Auditorium A",
+    category: "Speaker",
   },
 ];
 
