@@ -1723,47 +1723,68 @@ export function CalendarPage() {
           onTouchEnd={handleTouchEnd}
           onWheel={handleWheel}
           className="relative w-full overflow-hidden select-none py-1"
+          style={{ perspective: "1200px" }}
         >
           <motion.div
             key={viewMode}
             onPanEnd={handlePanEnd}
             initial={
               modeTransition === "month"
-                ? { scale: 1.14, opacity: 0.3 }
+                ? { rotateY: -18, translateZ: -90, opacity: 0.3 }
                 : modeTransition === "week"
-                ? { scale: 0.93, opacity: 0.4 }
+                ? { rotateY: 18, translateZ: 50, opacity: 0.4 }
                 : modeTransition === "list"
-                ? { scale: 0.94, opacity: 0.4 }
-                : { scale: 1, opacity: 1 }
+                ? { rotateY: 0, translateZ: 30, opacity: 0.4 }
+                : { rotateY: 0, translateZ: 0, opacity: 1 }
             }
             animate={
               modeTransition === "month"
                 ? {
-                    scale: 1,
+                    rotateY: 0,
+                    translateZ: 0,
                     opacity: 1,
-                    transition: { duration: 0.38, ease: [0.16, 1, 0.3, 1] },
+                    transition: {
+                      duration: 0.42,
+                      ease: [0.16, 1, 0.3, 1],
+                    },
                   }
                 : modeTransition === "week"
                 ? {
-                    scale: 1,
+                    rotateY: 0,
+                    translateZ: 0,
                     opacity: 1,
-                    transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+                    transition: {
+                      duration: 0.34,
+                      ease: [0.16, 1, 0.3, 1],
+                    },
                   }
                 : modeTransition === "week-fold" || modeTransition === "week-shrink"
                 ? {
-                    scale: 0.9,
+                    rotateY: 22,
+                    translateZ: -70,
                     opacity: 0.25,
-                    transition: { duration: 0.22, ease: [0.7, 0, 0.85, 0.36] },
+                    transition: {
+                      duration: 0.24,
+                      ease: [0.7, 0, 0.85, 0.36],
+                    },
                   }
                 : modeTransition === "list"
                 ? {
-                    scale: 1,
+                    rotateY: 0,
+                    translateZ: 0,
                     opacity: 1,
-                    transition: { duration: 0.32, ease: [0.16, 1, 0.3, 1] },
+                    transition: {
+                      duration: 0.36,
+                      ease: [0.16, 1, 0.3, 1],
+                    },
                   }
-                : { scale: 1, opacity: 1 }
+                : { rotateY: 0, translateZ: 0, opacity: 1 }
             }
-            style={{ willChange: "transform, opacity" }}
+            style={{
+              willChange: "transform, opacity",
+              transformStyle: "preserve-3d",
+              backfaceVisibility: "hidden",
+            }}
             className="w-full"
           >
               <div className="relative w-full">

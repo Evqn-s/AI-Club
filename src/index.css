@@ -32,13 +32,19 @@ body::after {
 
 :root {
   --bg-main: #0A090A;
+  --bg-surface: #141213;
+  --bg-elevated: #0A090A;
   --text-main: #E5E5E7;
+  --color-border-subtle: rgba(36, 32, 33, 1);
   color-scheme: dark;
 }
 
 :root.light {
   --bg-main: #F7F7F8;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #F7F7F8;
   --text-main: #000000;
+  --color-border-subtle: rgba(0, 0, 0, 0.12);
   color-scheme: light;
 }
 

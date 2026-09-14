@@ -30,7 +30,7 @@ export function App() {
 
   return (
     <ThemeProvider>
-      <div className="min-h-screen flex flex-col bg-[#0A090A] text-[#E5E5E7] relative selection:bg-[#DC2626] selection:text-white transition-colors duration-200">
+      <div className="min-h-screen flex flex-col bg-[var(--bg-main)] text-[var(--text-main)] relative selection:bg-[#DC2626] selection:text-white transition-colors duration-200">
         {/* Structural Vector Geometry Background */}
         <OrganicBackground />
 
