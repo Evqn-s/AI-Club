@@ -175,16 +175,16 @@ export function ChatWidget() {
     isLoading && (!lastMessage || lastMessage.role !== "assistant" || !lastMessage.content);
 
   return (
-    <aside aria-label="AI Club Assistant" className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
+    <aside aria-label="AI Club Assistant" className="fixed bottom-[clamp(1rem,3vw,1.5rem)] right-[clamp(1rem,3vw,1.5rem)] z-50">
       {/* Floating Toggle Button */}
       {!isOpen && (
         <Button
           onClick={() => setIsOpen(true)}
-          className="rounded-full h-12 px-6 gap-2.5 bg-[#241416] border border-[#5E2C32] text-[#FFFFFF] hover:bg-[#33181C] shadow-lg min-h-[48px]"
+          className="rounded-full gap-2.5 bg-[#241416] border border-[#5E2C32] text-[#FFFFFF] hover:bg-[#33181C] shadow-lg"
           aria-label="Open club AI chat assistant"
         >
-          <MessageSquare className="h-4 w-4 text-[#E0A3AA]" />
-          <span className="text-xs uppercase tracking-[0.08em] font-medium">Ask AI</span>
+          <MessageSquare className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA]" />
+          <span className="text-fluid-small uppercase tracking-[0.08em] font-medium">Ask AI</span>
         </Button>
       )}
 
@@ -194,34 +194,34 @@ export function ChatWidget() {
           role="dialog"
           aria-modal="true"
           aria-label="Club AI Assistant Chat Window"
-          className="flex flex-col w-[calc(100vw-2rem)] sm:w-[400px] max-w-sm h-[520px] max-h-[85vh] bg-[#0A090A] border border-[#242021] rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150"
+          className="flex flex-col w-[var(--fluid-chat-w)] max-w-[calc(100vw-2rem)] h-[var(--fluid-chat-h)] max-h-[85vh] bg-[#0A090A] border border-[#242021] rounded-[var(--fluid-radius-lg)] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-3.5 bg-[#141213] border-b border-[#242021]">
-            <div className="flex items-center gap-3">
-              <div className="p-1.5 rounded-full bg-[#241416] border border-[#5E2C32] text-[#E0A3AA]">
-                <Bot className="h-4 w-4" />
+          <div className="flex items-center justify-between px-[clamp(1rem,3vw,1.25rem)] py-[clamp(0.75rem,2.5vw,0.875rem)] bg-[#141213] border-b border-[#242021]">
+            <div className="flex items-center gap-[clamp(0.5rem,2vw,0.75rem)]">
+              <div className="p-[clamp(0.25rem,1.5vw,0.375rem)] rounded-full bg-[#241416] border border-[#5E2C32] text-[#E0A3AA]">
+                <Bot className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)]" />
               </div>
               <div>
-                <h2 className="text-xs font-bold font-display uppercase tracking-[0.08em] text-[#E5E5E7]">Club Assistant</h2>
-                <p className="text-[10px] uppercase tracking-[0.06em] text-[#67646C]">Knowledge Retrieval</p>
+                <h2 className="text-fluid-small font-bold font-display uppercase tracking-[0.08em] text-[#E5E5E7]">Club Assistant</h2>
+                <p className="text-fluid-label uppercase tracking-[0.06em] text-[#67646C]">Knowledge Retrieval</p>
               </div>
             </div>
             <button
               onClick={() => setIsOpen(false)}
               aria-label="Close chat window"
-              className="p-2 rounded-full border border-[#242021] bg-[#0A090A] text-[#9B98A0] hover:text-[#E5E5E7] min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors"
+              className="p-[clamp(0.375rem,1.5vw,0.5rem)] rounded-full border border-[#242021] bg-[#0A090A] text-[#9B98A0] hover:text-[#E5E5E7] min-h-[var(--fluid-control-h-sm)] min-w-[var(--fluid-control-h-sm)] flex items-center justify-center transition-colors"
             >
-              <X className="h-4 w-4" />
+              <X className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)]" />
             </button>
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3 bg-[#0A090A]">
+          <div className="flex-1 overflow-y-auto p-[var(--fluid-gap-sm)] space-y-[clamp(0.5rem,2vw,0.75rem)] bg-[#0A090A]">
             {messages.length === 0 && (
-              <div className="text-center py-12 px-4 text-[#9B98A0]">
-                <p className="font-display text-sm font-bold text-[#E5E5E7]">AI Club Knowledge Base</p>
-                <p className="text-xs mt-1 text-[#67646C]">Ask questions about our meetings, agenda, or guidelines.</p>
+              <div className="text-center py-[clamp(2rem,8vw,3rem)] px-[var(--fluid-gap-sm)] text-[#9B98A0]">
+                <p className="font-display text-fluid-body font-bold text-[#E5E5E7]">AI Club Knowledge Base</p>
+                <p className="text-fluid-small mt-1 text-[#67646C]">Ask questions about our meetings, agenda, or guidelines.</p>
               </div>
             )}
 
@@ -233,15 +233,15 @@ export function ChatWidget() {
               return (
                 <div
                   key={m.id}
-                  className={`flex gap-2.5 ${isUser ? "justify-end" : "justify-start"}`}
+                  className={`flex gap-[clamp(0.5rem,2vw,0.625rem)] ${isUser ? "justify-end" : "justify-start"}`}
                 >
                   {!isUser && (
-                    <div className="h-6 w-6 rounded-full bg-[#241416] border border-[#5E2C32] text-[#E0A3AA] flex items-center justify-center shrink-0 mt-0.5">
-                      <Bot className="h-3 w-3" />
+                    <div className="h-[clamp(1.25rem,4vw,1.5rem)] w-[clamp(1.25rem,4vw,1.5rem)] rounded-full bg-[#241416] border border-[#5E2C32] text-[#E0A3AA] flex items-center justify-center shrink-0 mt-0.5">
+                      <Bot className="h-[clamp(0.625rem,2vw,0.75rem)] w-[clamp(0.625rem,2vw,0.75rem)]" />
                     </div>
                   )}
                   <div
-                    className={`rounded-2xl px-4 py-2.5 max-w-[82%] text-xs leading-relaxed ${
+                    className={`rounded-[var(--fluid-radius)] px-[clamp(0.75rem,2.5vw,1rem)] py-[clamp(0.5rem,2vw,0.625rem)] max-w-[82%] text-fluid-small leading-relaxed ${
                       isUser
                         ? "bg-[#241416] text-[#FFFFFF] border border-[#5E2C32]"
                         : "bg-[#141213] text-[#E5E5E7] border border-[#242021]"
@@ -260,8 +260,8 @@ export function ChatWidget() {
                     )}
                   </div>
                   {isUser && (
-                    <div className="h-6 w-6 rounded-full bg-[#1E1A1B] border border-[#382D30] text-[#9B98A0] flex items-center justify-center shrink-0 mt-0.5">
-                      <User className="h-3 w-3" />
+                    <div className="h-[clamp(1.25rem,4vw,1.5rem)] w-[clamp(1.25rem,4vw,1.5rem)] rounded-full bg-[#1E1A1B] border border-[#382D30] text-[#9B98A0] flex items-center justify-center shrink-0 mt-0.5">
+                      <User className="h-[clamp(0.625rem,2vw,0.75rem)] w-[clamp(0.625rem,2vw,0.75rem)]" />
                     </div>
                   )}
                 </div>
@@ -270,21 +270,21 @@ export function ChatWidget() {
 
             {/* Processing indicator while waiting for response */}
             {isWaitingForFirstToken && (
-              <div className="flex gap-2.5 justify-start">
-                <div className="h-6 w-6 rounded-full bg-[#241416] border border-[#5E2C32] text-[#E0A3AA] flex items-center justify-center shrink-0 mt-0.5">
-                  <Bot className="h-3 w-3" />
+              <div className="flex gap-[clamp(0.5rem,2vw,0.625rem)] justify-start">
+                <div className="h-[clamp(1.25rem,4vw,1.5rem)] w-[clamp(1.25rem,4vw,1.5rem)] rounded-full bg-[#241416] border border-[#5E2C32] text-[#E0A3AA] flex items-center justify-center shrink-0 mt-0.5">
+                  <Bot className="h-[clamp(0.625rem,2vw,0.75rem)] w-[clamp(0.625rem,2vw,0.75rem)]" />
                 </div>
-                <div className="rounded-2xl px-4 py-2.5 bg-[#141213] text-[#9B98A0] text-xs flex items-center gap-1.5 border border-[#242021]">
-                  <span className="thinking-dot inline-block h-1.5 w-1.5 rounded-full bg-[#E0A3AA] animate-bounce"></span>
-                  <span className="thinking-dot inline-block h-1.5 w-1.5 rounded-full bg-[#E0A3AA] animate-bounce [animation-delay:0.2s]"></span>
-                  <span className="thinking-dot inline-block h-1.5 w-1.5 rounded-full bg-[#E0A3AA] animate-bounce [animation-delay:0.4s]"></span>
-                  <span className="ml-1 text-[11px] uppercase tracking-[0.06em]">Processing</span>
+                <div className="rounded-[var(--fluid-radius)] px-[clamp(0.75rem,2.5vw,1rem)] py-[clamp(0.5rem,2vw,0.625rem)] bg-[#141213] text-[#9B98A0] text-fluid-small flex items-center gap-1.5 border border-[#242021]">
+                  <span className="thinking-dot inline-block h-[clamp(0.25rem,1vw,0.375rem)] w-[clamp(0.25rem,1vw,0.375rem)] rounded-full bg-[#E0A3AA] animate-bounce"></span>
+                  <span className="thinking-dot inline-block h-[clamp(0.25rem,1vw,0.375rem)] w-[clamp(0.25rem,1vw,0.375rem)] rounded-full bg-[#E0A3AA] animate-bounce [animation-delay:0.2s]"></span>
+                  <span className="thinking-dot inline-block h-[clamp(0.25rem,1vw,0.375rem)] w-[clamp(0.25rem,1vw,0.375rem)] rounded-full bg-[#E0A3AA] animate-bounce [animation-delay:0.4s]"></span>
+                  <span className="ml-1 text-fluid-label uppercase tracking-[0.06em]">Processing</span>
                 </div>
               </div>
             )}
 
             {error && (
-              <div className="rounded-xl bg-[#241416] border border-[#5E2C32] p-3 text-xs text-[#E0A3AA]">
+              <div className="rounded-[var(--fluid-radius)] bg-[#241416] border border-[#5E2C32] p-[var(--fluid-gap-sm)] text-fluid-small text-[#E0A3AA]">
                 Failed to receive answer. Please verify your connection or try again.
               </div>
             )}
@@ -293,7 +293,7 @@ export function ChatWidget() {
           </div>
 
           {/* Chat Input with 5-second cooldown after typing completes */}
-          <form onSubmit={handleFormSubmit} className="p-3 bg-[#141213] border-t border-[#242021] flex gap-2">
+          <form onSubmit={handleFormSubmit} className="p-[var(--fluid-gap-sm)] bg-[#141213] border-t border-[#242021] flex gap-[clamp(0.375rem,1.5vw,0.5rem)]">
             <Input
               ref={inputRef}
               value={input}
@@ -302,19 +302,19 @@ export function ChatWidget() {
               disabled={isInputDisabled}
               maxLength={1000}
               aria-label="Chat query input"
-              className="bg-[#0A090A] border-[#382D30] text-[#E5E5E7] text-xs h-11 px-4 placeholder:text-[#67646C]"
+              className="bg-[#0A090A] border-[#382D30] text-[#E5E5E7] placeholder:text-[#67646C]"
             />
             <Button
               type="submit"
               disabled={isSubmitDisabled}
               size="icon"
               aria-label={cooldown > 0 ? `Cooldown: ${cooldown}s remaining` : isTyping ? "AI is typing" : "Send message"}
-              className="shrink-0 h-11 w-11 min-h-[44px] min-w-[44px] bg-[#241416] hover:bg-[#33181C] border border-[#5E2C32] text-[#E0A3AA] transition-all"
+              className="shrink-0 bg-[#241416] hover:bg-[#33181C] border border-[#5E2C32] text-[#E0A3AA] transition-all"
             >
               {cooldown > 0 ? (
-                <span className="text-[11px] font-mono font-bold text-[#E0A3AA]">{cooldown}s</span>
+                <span className="text-fluid-label font-mono font-bold text-[#E0A3AA]">{cooldown}s</span>
               ) : (
-                <Send className="h-4 w-4 text-[#E0A3AA]" />
+                <Send className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA]" />
               )}
             </Button>
           </form>

@@ -86,23 +86,23 @@ export function CalendarPage() {
   }
 
   return (
-    <div className="space-y-8 py-12 max-w-4xl mx-auto">
+    <div className="space-y-[var(--fluid-gap)] py-[var(--fluid-section-y)] max-w-[var(--fluid-container-max)] mx-auto px-[var(--fluid-pad-x)]">
       {/* Header */}
-      <div className="border-b border-[#242021] pb-6">
-        <span className="text-[11px] font-medium tracking-[0.08em] uppercase text-[#9B98A0]">Schedule</span>
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-[-0.03em] font-display text-[#E5E5E7] mt-1">
+      <div className="border-b border-[#242021] pb-[clamp(1rem,4vw,1.5rem)]">
+        <span className="text-fluid-label font-medium tracking-[0.08em] uppercase text-[#9B98A0]">Schedule</span>
+        <h1 className="text-fluid-h1 font-extrabold tracking-[-0.03em] font-display text-[#E5E5E7] mt-1">
           Club Calendar
         </h1>
       </div>
 
       {/* Explicit Error State Alert if Network Failed */}
       {error && (
-        <div className="flex items-center justify-between p-4 rounded-2xl border border-[#5E2C32] bg-[#241416] text-xs text-[#E0A3AA] animate-in fade-in duration-150">
+        <div className="flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius-lg)] border border-[#5E2C32] bg-[#241416] text-fluid-small text-[#E0A3AA] animate-in fade-in duration-150">
           <div className="flex items-center gap-2.5">
-            <AlertCircle className="h-4 w-4 text-[#E0A3AA] shrink-0" />
+            <AlertCircle className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA] shrink-0" />
             <span>{error}</span>
           </div>
-          <Button variant="outline" size="sm" onClick={() => fetchEvents(true)} className="h-8 px-3 text-xs shrink-0">
+          <Button variant="outline" size="sm" onClick={() => fetchEvents(true)} className="shrink-0">
             <RefreshCw className="h-3 w-3 mr-1" />
             <span>Retry</span>
           </Button>
@@ -110,38 +110,38 @@ export function CalendarPage() {
       )}
 
       {loading ? (
-        <div className="grid gap-6 sm:grid-cols-2">
-          <Skeleton className="h-56 w-full rounded-2xl" />
-          <Skeleton className="h-56 w-full rounded-2xl" />
+        <div className="grid gap-[var(--fluid-gap)] sm:grid-cols-2">
+          <Skeleton className="h-[clamp(10rem,30vw,14rem)] w-full rounded-[var(--fluid-radius-lg)]" />
+          <Skeleton className="h-[clamp(10rem,30vw,14rem)] w-full rounded-[var(--fluid-radius-lg)]" />
         </div>
       ) : events.length === 0 ? (
         <Card className="border-[#242021] bg-[#141213]">
-          <CardContent className="py-16 text-center text-[#9B98A0]">
-            <p className="font-display text-base font-bold text-[#E5E5E7]">No scheduled events</p>
-            <p className="text-xs uppercase tracking-[0.06em] mt-1.5 text-[#67646C]">New workshops and hackathons will be posted soon.</p>
+          <CardContent className="py-[clamp(2.5rem,10vw,4rem)] text-center text-[#9B98A0]">
+            <p className="font-display text-fluid-body font-bold text-[#E5E5E7]">No scheduled events</p>
+            <p className="text-fluid-label uppercase tracking-[0.06em] mt-1.5 text-[#67646C]">New workshops and hackathons will be posted soon.</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2">
+        <div className="grid gap-[var(--fluid-gap)] sm:grid-cols-2">
           {events.map((evt) => (
             <Card key={evt.id} className="border-[#242021] bg-[#141213] flex flex-col justify-between hover:border-[#382D30] transition-colors">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-xl font-bold text-[#E5E5E7]">{evt.title}</CardTitle>
+              <CardHeader className="pb-[clamp(0.75rem,3vw,1rem)]">
+                <CardTitle className="text-[#E5E5E7]">{evt.title}</CardTitle>
                 <CardDescription className="flex flex-col gap-2 pt-2 text-[#9B98A0]">
-                  <span className="flex items-center gap-2">
-                    <CalendarIcon className="h-3.5 w-3.5 text-[#E0A3AA] shrink-0" />
-                    <span className="font-mono text-xs">{evt.date}</span>
-                    <Clock className="h-3.5 w-3.5 text-[#E0A3AA] shrink-0 ml-2" />
-                    <span className="font-mono text-xs">{evt.time}</span>
+                  <span className="flex flex-wrap items-center gap-2">
+                    <CalendarIcon className="h-[clamp(0.75rem,2vw,0.875rem)] w-[clamp(0.75rem,2vw,0.875rem)] text-[#E0A3AA] shrink-0" />
+                    <span className="font-mono text-fluid-small">{evt.date}</span>
+                    <Clock className="h-[clamp(0.75rem,2vw,0.875rem)] w-[clamp(0.75rem,2vw,0.875rem)] text-[#E0A3AA] shrink-0 ml-2" />
+                    <span className="font-mono text-fluid-small">{evt.time}</span>
                   </span>
                   <span className="flex items-center gap-2">
-                    <MapPin className="h-3.5 w-3.5 text-[#E0A3AA] shrink-0" />
-                    <span className="text-xs">{evt.location}</span>
+                    <MapPin className="h-[clamp(0.75rem,2vw,0.875rem)] w-[clamp(0.75rem,2vw,0.875rem)] text-[#E0A3AA] shrink-0" />
+                    <span className="text-fluid-small">{evt.location}</span>
                   </span>
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-[#E5E5E7] leading-relaxed font-normal">{evt.description}</p>
+                <p className="text-fluid-body text-[#E5E5E7] leading-relaxed font-normal">{evt.description}</p>
               </CardContent>
               <CardFooter className="pt-2">
                 <Button variant="outline" size="sm" asChild className="w-full gap-2">

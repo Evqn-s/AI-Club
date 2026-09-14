@@ -73,23 +73,23 @@ export function NewsPage() {
   }, []);
 
   return (
-    <div className="space-y-8 py-12 max-w-3xl mx-auto">
+    <div className="space-y-[var(--fluid-gap)] py-[var(--fluid-section-y)] max-w-[var(--fluid-container-narrow)] mx-auto px-[var(--fluid-pad-x)]">
       {/* Header */}
-      <div className="border-b border-[#242021] pb-6">
-        <span className="text-[11px] font-medium tracking-[0.08em] uppercase text-[#9B98A0]">Announcements</span>
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-[-0.03em] font-display text-[#E5E5E7] mt-1">
+      <div className="border-b border-[#242021] pb-[clamp(1rem,4vw,1.5rem)]">
+        <span className="text-fluid-label font-medium tracking-[0.08em] uppercase text-[#9B98A0]">Announcements</span>
+        <h1 className="text-fluid-h1 font-extrabold tracking-[-0.03em] font-display text-[#E5E5E7] mt-1">
           Latest News
         </h1>
       </div>
 
       {/* Explicit Error State Alert if Network Failed */}
       {error && (
-        <div className="flex items-center justify-between p-4 rounded-2xl border border-[#5E2C32] bg-[#241416] text-xs text-[#E0A3AA] animate-in fade-in duration-150">
+        <div className="flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius-lg)] border border-[#5E2C32] bg-[#241416] text-fluid-small text-[#E0A3AA] animate-in fade-in duration-150">
           <div className="flex items-center gap-2.5">
-            <AlertCircle className="h-4 w-4 text-[#E0A3AA] shrink-0" />
+            <AlertCircle className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA] shrink-0" />
             <span>{error}</span>
           </div>
-          <Button variant="outline" size="sm" onClick={() => fetchNews(true)} className="h-8 px-3 text-xs shrink-0">
+          <Button variant="outline" size="sm" onClick={() => fetchNews(true)} className="shrink-0">
             <RefreshCw className="h-3 w-3 mr-1" />
             <span>Retry</span>
           </Button>
@@ -97,25 +97,25 @@ export function NewsPage() {
       )}
 
       {loading ? (
-        <div className="space-y-4">
-          <Skeleton className="h-32 w-full rounded-2xl" />
-          <Skeleton className="h-32 w-full rounded-2xl" />
+        <div className="space-y-[var(--fluid-gap-sm)]">
+          <Skeleton className="h-[clamp(6rem,20vw,8rem)] w-full rounded-[var(--fluid-radius-lg)]" />
+          <Skeleton className="h-[clamp(6rem,20vw,8rem)] w-full rounded-[var(--fluid-radius-lg)]" />
         </div>
       ) : news.length === 0 ? (
         <Card className="border-[#242021] bg-[#131214]">
-          <CardContent className="py-16 text-center text-[#9B98A0]">
-            <p className="font-display text-base font-bold text-[#E5E5E7]">No announcements recorded</p>
-            <p className="text-xs uppercase tracking-[0.06em] mt-1.5 text-[#67646C]">New posts will appear automatically here.</p>
+          <CardContent className="py-[clamp(2.5rem,10vw,4rem)] text-center text-[#9B98A0]">
+            <p className="font-display text-fluid-body font-bold text-[#E5E5E7]">No announcements recorded</p>
+            <p className="text-fluid-label uppercase tracking-[0.06em] mt-1.5 text-[#67646C]">New posts will appear automatically here.</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-[var(--fluid-gap-sm)]">
           {news.map((item) => (
             <Card key={item.id} className="border-[#242021] bg-[#131214] hover:border-[#382D30] transition-colors">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
+              <CardHeader className="pb-[clamp(0.5rem,2vw,0.75rem)]">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <Badge variant="default">{item.author}</Badge>
-                  <time dateTime={item.timestamp} className="text-xs font-mono text-[#67646C]">
+                  <time dateTime={item.timestamp} className="text-fluid-small font-mono text-[#67646C]">
                     {new Date(item.timestamp).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
@@ -125,7 +125,7 @@ export function NewsPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-[#E5E5E7] leading-relaxed text-sm whitespace-pre-wrap font-normal">
+                <p className="text-[#E5E5E7] leading-relaxed text-fluid-body whitespace-pre-wrap font-normal">
                   {item.content}
                 </p>
               </CardContent>

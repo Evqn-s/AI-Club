@@ -28,15 +28,15 @@ export function App() {
 
         <Navbar />
 
-        <main className="flex-1 mx-auto w-full max-w-5xl px-6 sm:px-8 relative z-10">
+        <main className="flex-1 mx-auto w-full max-w-[var(--fluid-container-max)] px-[var(--fluid-pad-x)] relative z-10">
           <Switch>
             <Route path="/" component={HomePage} />
             <Route path="/news" component={NewsPage} />
             <Route path="/calendar" component={CalendarPage} />
             <Route>
-              <div className="py-24 text-center">
-                <h2 className="text-2xl font-bold font-display text-[#E5E5E7]">Page Not Found</h2>
-                <p className="text-sm uppercase tracking-[0.06em] text-[#67646C] mt-2">The requested route does not exist.</p>
+              <div className="py-[clamp(3rem,10vw,6rem)] text-center">
+                <h2 className="font-bold font-display text-fluid-h3 text-[#E5E5E7]">Page Not Found</h2>
+                <p className="text-fluid-small uppercase tracking-[0.06em] text-[#67646C] mt-2">The requested route does not exist.</p>
               </div>
             </Route>
           </Switch>

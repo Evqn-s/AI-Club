@@ -245,3 +245,176 @@ html.light .font-display {
 html.light header a .font-display {
   text-shadow: none !important;
 }
+
+/* =========================================================
+   FLUID RESPONSIVE SCALING SYSTEM (clamp)
+   - Every element scales with the viewport via clamp(min, fluid, max)
+   - Nothing can shrink below its minimum or grow past its maximum
+   - html font-size is fluid, so all rem-based Tailwind spacing
+     (p-6, gap-6, m-4, etc.) scales automatically site-wide
+   ========================================================= */
+
+/* 1. Fluid root: 14px @ 320px -> 18px @ ~1600px, clamped both ends.
+   Uses rem so it still respects the user's browser font-size setting. */
+html {
+  font-size: clamp(0.875rem, 0.8125rem + 0.3125vw, 1.125rem);
+}
+
+@theme {
+  /* Fluid type scale usable as e.g. `text-fluid-h1`, `text-fluid-body` */
+  --text-fluid-hero: clamp(2.75rem, 0.75rem + 9vw, 8.5rem);
+  --text-fluid-h1: clamp(2.25rem, 1.5rem + 5vw, 3.75rem);
+  --text-fluid-h2: clamp(1.5rem, 1.2rem + 2.5vw, 2.25rem);
+  --text-fluid-h3: clamp(1.125rem, 1rem + 1vw, 1.5rem);
+  --text-fluid-body: clamp(0.875rem, 0.8rem + 0.4vw, 1rem);
+  --text-fluid-small: clamp(0.6875rem, 0.65rem + 0.4vw, 0.8125rem);
+  --text-fluid-label: clamp(0.625rem, 0.6rem + 0.3vw, 0.6875rem);
+}
+
+:root {
+  /* Layout */
+  --fluid-container-max: clamp(20rem, 92vw, 64rem);
+  --fluid-container-narrow: clamp(18rem, 90vw, 48rem);
+  --fluid-pad-x: clamp(1rem, 4vw, 2rem);
+  --fluid-section-y: clamp(2rem, 6vw, 3.5rem);
+  --fluid-stack: clamp(1.5rem, 5vw, 4rem);
+  --fluid-gap: clamp(0.75rem, 2.5vw, 1.5rem);
+  --fluid-gap-sm: clamp(0.5rem, 2vw, 0.75rem);
+  /* Surfaces */
+  --fluid-card-pad: clamp(1rem, 3vw, 2rem);
+  --fluid-radius: clamp(0.75rem, 2vw, 1.25rem);
+  --fluid-radius-lg: clamp(1rem, 3vw, 1.5rem);
+  --fluid-radius-pill: 9999px;
+  /* Controls (mins keep touch targets usable: 44px / 36px at 16px root) */
+  --fluid-control-h: clamp(2.75rem, 2.25rem + 2vw, 3.25rem);
+  --fluid-control-h-sm: clamp(2.25rem, 2rem + 1.5vw, 2.5rem);
+  --fluid-icon-box: clamp(2.5rem, 2.25rem + 1.5vw, 2.75rem);
+  /* Chat widget */
+  --fluid-chat-w: clamp(20rem, calc(100vw - 2rem), 25rem);
+  --fluid-chat-h: clamp(28rem, 70vh, 32.5rem);
+}
+
+/* 2. Fluid base typography: all unstyled headings / body copy scale.
+   NOTE: wrapped in @layer base so Tailwind utilities (e.g. text-fluid-hero,
+   which live in @layer utilities) can override these element defaults.
+   Unlayered CSS would beat ALL layered CSS and pin every h1 to h1 size. */
+@layer base {
+  body {
+    font-size: clamp(0.875rem, 0.8rem + 0.4vw, 1rem);
+    line-height: 1.6;
+  }
+
+  h1 {
+    font-size: clamp(2.25rem, 1.5rem + 5vw, 3.75rem);
+    line-height: 1.05;
+  }
+
+  h2 {
+    font-size: clamp(1.5rem, 1.2rem + 2.5vw, 2.25rem);
+    line-height: 1.1;
+  }
+
+  h3 {
+    font-size: clamp(1.125rem, 1rem + 1vw, 1.5rem);
+    line-height: 1.2;
+  }
+
+  p,
+  li {
+    font-size: clamp(0.875rem, 0.8rem + 0.4vw, 1rem);
+  }
+
+  small,
+  label {
+    font-size: clamp(0.625rem, 0.6rem + 0.3vw, 0.75rem);
+  }
+
+  /* 3. Media always scales down, never overflows or exceeds its cap */
+  img,
+  svg,
+  video,
+  canvas {
+    max-width: 100%;
+  }
+
+  img,
+  video {
+    height: auto;
+  }
+}
+
+/* 4. Reusable fluid layout / surface / control helpers */
+@utility text-fluid-hero {
+  font-size: var(--text-fluid-hero);
+}
+
+@utility text-fluid-h1 {
+  font-size: var(--text-fluid-h1);
+}
+
+@utility text-fluid-h2 {
+  font-size: var(--text-fluid-h2);
+}
+
+@utility text-fluid-h3 {
+  font-size: var(--text-fluid-h3);
+}
+
+@utility text-fluid-body {
+  font-size: var(--text-fluid-body);
+}
+
+@utility text-fluid-small {
+  font-size: var(--text-fluid-small);
+}
+
+@utility text-fluid-label {
+  font-size: var(--text-fluid-label);
+}
+
+.container-fluid {
+  width: 100%;
+  max-width: var(--fluid-container-max);
+  margin-inline: auto;
+  padding-inline: var(--fluid-pad-x);
+}
+
+.container-fluid-narrow {
+  width: 100%;
+  max-width: var(--fluid-container-narrow);
+  margin-inline: auto;
+  padding-inline: var(--fluid-pad-x);
+}
+
+.section-fluid {
+  padding-block: var(--fluid-section-y);
+}
+
+.stack-fluid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fluid-gap);
+}
+
+.card-fluid {
+  padding: var(--fluid-card-pad);
+  border-radius: var(--fluid-radius-lg);
+}
+
+.btn-fluid {
+  min-height: var(--fluid-control-h);
+  padding-inline: clamp(1rem, 3vw, 1.5rem);
+  font-size: clamp(0.6875rem, 0.65rem + 0.4vw, 0.75rem);
+}
+
+.icon-fluid {
+  width: var(--fluid-icon-box);
+  height: var(--fluid-icon-box);
+}
+
+/* 5. Respect users who ask for reduced motion / very small screens */
+@media (max-width: 320px) {
+  html {
+    font-size: 0.875rem;
+  }
+}
