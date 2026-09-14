@@ -28,7 +28,7 @@ export function App() {
 
         <Navbar />
 
-        <main className="flex-1 flex flex-col mx-auto w-full max-w-[var(--fluid-container-max)] px-[var(--fluid-pad-x)] relative z-10">
+        <main className="flex-1 flex flex-col items-stretch w-full max-w-[var(--fluid-container-max)] mx-auto px-[var(--fluid-pad-x)] relative z-10">
           <Switch>
             <Route path="/" component={HomePage} />
             <Route path="/news" component={NewsPage} />

@@ -73,7 +73,7 @@ export function NewsPage() {
   }, []);
 
   return (
-    <div className="space-y-[var(--fluid-gap)] py-[var(--fluid-section-y)] max-w-[var(--fluid-container-narrow)] mx-auto px-[var(--fluid-pad-x)]">
+    <div className="w-full max-w-[var(--fluid-container-narrow)] mx-auto px-[var(--fluid-pad-x)] py-[var(--fluid-section-y)] space-y-[var(--fluid-gap)]">
       {/* Header */}
       <div className="border-b border-[#242021] pb-4">
         <span className="text-fluid-label font-medium tracking-[0.08em] uppercase text-[#9B98A0]">Announcements</span>
