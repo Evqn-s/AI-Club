@@ -13,6 +13,7 @@ const buttonVariants = cva(
         secondary: "bg-[#1E1A1B] text-[#9B98A0] border border-[#382D30] hover:text-[#FFFFFF] hover:border-[#5E2C32]",
         ghost: "hover:bg-[#1E1A1B] text-[#9B98A0] hover:text-[#FFFFFF]",
         link: "text-[#E0A3AA] hover:text-[#FFFFFF] underline-offset-4 hover:underline p-0 min-h-0 normal-case tracking-normal",
+        glass: "backdrop-blur-xl bg-black/30 hover:bg-black/50 border border-white/10 [border-top-color:rgba(255,255,255,0.25)] hover:[border-top-color:rgba(255,255,255,0.4)] text-[#FFFFFF] shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]",
       },
       size: {
         default: "h-[var(--fluid-control-h)] px-[clamp(1rem,3vw,1.5rem)]",
