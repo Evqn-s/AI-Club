@@ -1586,7 +1586,7 @@ export function CalendarPage() {
             onPanEnd={handlePanEnd}
             initial={
               modeTransition === "month"
-                ? { scale: 1.08, opacity: 0.2 }
+                ? { scale: 1.14, opacity: 0.3 }
                 : modeTransition === "week"
                 ? { scale: 0.93, opacity: 0.4 }
                 : { scale: 1, opacity: 1 }
@@ -1596,7 +1596,7 @@ export function CalendarPage() {
                 ? {
                     scale: 1,
                     opacity: 1,
-                    transition: { duration: 0.34, ease: [0.16, 1, 0.3, 1] },
+                    transition: { duration: 0.38, ease: [0.16, 1, 0.3, 1] },
                   }
                 : modeTransition === "week"
                 ? {
