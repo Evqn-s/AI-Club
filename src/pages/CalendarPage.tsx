@@ -675,7 +675,7 @@ const MobileWeekView = memo(function MobileWeekView({
                     variant="outline"
                     size="sm"
                     asChild
-                    className="w-full text-xs bg-[#241416]/80 text-white glass border border-[#5E2C32] hover:bg-[#3D1E22]/80"
+                    className="w-full text-xs bg-[#241416] text-white border-[#5E2C32] hover:bg-[#3D1E22]"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <a
@@ -1589,7 +1589,7 @@ export function CalendarPage() {
       )}
 
       {/* Top Toolbar: Live Search, View Toggle, and Date Steppers */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 p-2.5 rounded-2xl glass glass-panel">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 p-2.5 rounded-2xl border border-[#242021] bg-[#141213]">
         {/* Live Database Search Input */}
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#67646C]" />
@@ -1658,7 +1658,7 @@ export function CalendarPage() {
           {viewMode === "list" && (
             <button
               onClick={() => setListSortNewest((v) => !v)}
-              className="flex items-center gap-1.5 px-3 py-1 text-xs font-mono uppercase tracking-wider rounded-full transition-all text-[#9B98A0] hover:text-[#E5E5E7] glass glass-panel"
+              className="flex items-center gap-1.5 px-3 py-1 text-xs font-mono uppercase tracking-wider rounded-full transition-all text-[#9B98A0] hover:text-[#E5E5E7] border border-[#242021]"
             >
               <ArrowUpDown className="h-3.5 w-3.5" />
               <span>{listSortNewest ? "Newest first" : "Oldest first"}</span>
@@ -1666,7 +1666,7 @@ export function CalendarPage() {
           )}
 
           {/* Stepper Controls */}
-          <div className="flex items-center gap-1 rounded-full p-1 glass glass-panel">
+          <div className="flex items-center gap-1 border border-[#242021] rounded-full p-1 bg-[#1E1A1B]">
             <button
               onClick={handlePrev}
               aria-label="Previous Period"
@@ -1808,18 +1808,18 @@ export function CalendarPage() {
       {selectedEvent && (
         <div
           onClick={() => setSelectedEvent(null)}
-          className="fixed inset-0 z-50 bg-black/40 glass-heavy flex items-center justify-center p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-2xl glass glass-panel-solid p-5 shadow-2xl relative overflow-hidden"
+            className="w-full max-w-lg rounded-2xl bg-[#0A090A] border border-[#242021] p-5 shadow-2xl relative overflow-hidden"
             style={{ boxShadow: "0 0 35px rgba(224, 163, 170, 0.25)" }}
           >
             {/* Close Button */}
             <button
               onClick={() => setSelectedEvent(null)}
               aria-label="Close details"
-              className="absolute top-4 right-4 p-1.5 rounded-full glass glass-panel text-[#9B98A0] hover:text-[#E5E5E7] transition-colors"
+              className="absolute top-4 right-4 p-1.5 rounded-full border border-[#242021] bg-[#0A090A] text-[#9B98A0] hover:text-[#E5E5E7] transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
@@ -1861,7 +1861,7 @@ export function CalendarPage() {
                   variant="outline"
                   size="sm"
                   asChild
-                  className="flex-1 gap-2 bg-[#241416]/80 text-[#FFFFFF] glass hover:bg-[#3D1E22]/80 border border-[#5E2C32]"
+                  className="flex-1 gap-2 bg-[#241416] text-[#FFFFFF] border-[#5E2C32] hover:bg-[#3D1E22]"
                 >
                   <a
                     href={generateGoogleCalendarUrl(selectedEvent)}

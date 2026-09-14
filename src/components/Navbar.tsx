@@ -25,7 +25,7 @@ export function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 glass glass-panel transition-colors">
+    <header className="sticky top-0 z-40 border-b border-[#242021] bg-[#0A090A] transition-colors">
       <div className="mx-auto flex flex-wrap items-center gap-x-3 gap-y-2 px-[var(--fluid-pad-x)] py-[clamp(0.5rem,2vw,0.75rem)] max-w-[var(--fluid-container-max)]">
         {/* Brand identity pill — order 1: top-left (incl. mobile) */}
         <Link
@@ -48,7 +48,7 @@ export function Navbar() {
 
         {/* Navigation Pills — full-width centered row on mobile (below logo/theme),
             inline right-aligned group on desktop */}
-        <nav className="order-3 sm:order-2 flex items-center justify-center w-full sm:w-auto sm:justify-start p-[clamp(0.25rem,1vw,0.375rem)] sm:ml-auto gap-[clamp(0.25rem,1vw,0.375rem)] rounded-full glass glass-panel">
+        <nav className="order-3 sm:order-2 flex items-center justify-center w-full sm:w-auto sm:justify-start p-[clamp(0.25rem,1vw,0.375rem)] sm:ml-auto gap-[clamp(0.25rem,1vw,0.375rem)] rounded-full border border-[#242021] bg-[#141213]">
           {links.map((link) => {
             const isActive = location === link.href;
             return (

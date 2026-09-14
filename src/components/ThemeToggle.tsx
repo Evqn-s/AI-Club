@@ -57,7 +57,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       onClick={() => setTheme(nextTheme)}
       aria-label={`Switch to ${nextTheme} mode`}
       title={`Switch to ${nextTheme} mode`}
-      className={`inline-flex h-[var(--fluid-icon-box)] w-[var(--fluid-icon-box)] items-center justify-center rounded-full glass glass-panel text-[#E0A3AA] transition-colors hover:brightness-125 ${className}`}
+      className={`inline-flex h-[var(--fluid-icon-box)] w-[var(--fluid-icon-box)] items-center justify-center rounded-full border border-[#242021] bg-[#141213] text-[#E0A3AA] transition-colors hover:bg-[#241416] ${className}`}
     >
       <Icon className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)]" aria-hidden="true" />
     </button>
