@@ -75,7 +75,7 @@ export function NewsPage() {
   return (
     <div className="space-y-[var(--fluid-gap)] py-[var(--fluid-section-y)] max-w-[var(--fluid-container-narrow)] mx-auto px-[var(--fluid-pad-x)]">
       {/* Header */}
-      <div className="border-b border-[#242021] pb-[clamp(1rem,4vw,1.5rem)]">
+      <div className="border-b border-[#242021] pb-4">
         <span className="text-fluid-label font-medium tracking-[0.08em] uppercase text-[#9B98A0]">Announcements</span>
         <h1 className="text-fluid-h1 font-extrabold tracking-[-0.03em] font-display text-[#E5E5E7] mt-1">
           Latest News
@@ -84,7 +84,7 @@ export function NewsPage() {
 
       {/* Explicit Error State Alert if Network Failed */}
       {error && (
-        <div className="flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius-lg)] border border-[#5E2C32] bg-[#241416] text-fluid-small text-[#E0A3AA] animate-in fade-in duration-150">
+        <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-[var(--fluid-radius-lg)] border border-[#5E2C32] bg-[#241416] text-fluid-small text-[#E0A3AA] animate-in fade-in duration-150">
           <div className="flex items-center gap-2.5">
             <AlertCircle className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA] shrink-0" />
             <span>{error}</span>
@@ -97,7 +97,7 @@ export function NewsPage() {
       )}
 
       {loading ? (
-        <div className="space-y-[var(--fluid-gap-sm)]">
+        <div className="space-y-3">
           <Skeleton className="h-[clamp(6rem,20vw,8rem)] w-full rounded-[var(--fluid-radius-lg)]" />
           <Skeleton className="h-[clamp(6rem,20vw,8rem)] w-full rounded-[var(--fluid-radius-lg)]" />
         </div>
@@ -109,7 +109,7 @@ export function NewsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-[var(--fluid-gap-sm)]">
+        <div className="space-y-3">
           {news.map((item) => (
             <Card key={item.id} className="border-[#242021] bg-[#131214] hover:border-[#382D30] transition-colors">
               <CardHeader className="pb-[clamp(0.5rem,2vw,0.75rem)]">

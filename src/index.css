@@ -261,33 +261,38 @@ html {
 }
 
 @theme {
-  /* MAIN-SITE fluid type scale — inverted clamp(Desktop_Min, Base - Xvw, Mobile_Max).
-     As the viewport SHRINKS, the middle term GROWS toward the larger
-     Mobile_Max; on desktop it settles back to the Desktop_Min floor.
-     Chatbot sizing is driven by --fluid-chat-* tokens and is untouched. */
-  --text-fluid-hero: clamp(2.75rem, 0.75rem + 9vw, 8.5rem);
-  --text-fluid-h1: clamp(2.25rem, 5.5rem - 6vw, 3.75rem);
-  --text-fluid-h2: clamp(1.5rem, 3.75rem - 4vw, 2.75rem);
-  --text-fluid-h3: clamp(1.125rem, 2.375rem - 2.2vw, 1.875rem);
-  --text-fluid-body: clamp(0.875rem, 1.8125rem - 1.65vw, 1.3125rem);
-  --text-fluid-small: clamp(0.6875rem, 1.375rem - 1.2vw, 1rem);
-  --text-fluid-label: clamp(0.625rem, 1.125rem - 0.9vw, 0.875rem);
+  /* MAIN-SITE fluid type scale — softened mobile curve.
+     Inverted (Base - Xvw) so phones render a touch ABOVE desktop, but the
+     ceilings now sit just ~8-15% over the desktop floor (was ~30-65% over),
+     so mobile text reads comfortably instead of shouting.
+     Hero keeps its classic +vw display curve; chatbot tokens untouched. */
+  --text-fluid-hero: clamp(3.25rem, 1.5rem + 10vw, 8.5rem);
+  --text-fluid-h1: clamp(2.25rem, 3.375rem - 2vw, 2.75rem);
+  --text-fluid-h2: clamp(1.5rem, 2.25rem - 1.3vw, 1.875rem);
+  --text-fluid-h3: clamp(1.125rem, 1.5625rem - 0.75vw, 1.3125rem);
+  --text-fluid-body: clamp(0.875rem, 1.125rem - 0.45vw, 1rem);
+  --text-fluid-small: clamp(0.6875rem, 0.875rem - 0.35vw, 0.78125rem);
+  --text-fluid-label: clamp(0.625rem, 0.75rem - 0.25vw, 0.6875rem);
 }
 
 :root {
-  /* MAIN-SITE layout — inverted clamp(Desktop_Min, Base - Xvw, Mobile_Max):
-     narrow viewports push spacing/padding toward the Mobile_Max so touch
-     targets and breathing room stay generous; desktop settles to the floor.
+  /* MAIN-SITE layout — Desktop_Min floor, fluid middle, Mobile_Max ceiling.
+     - --fluid-stack / section-y / gaps / card-pad GROW with the viewport
+       (+vw curves, like the old space-y-16/py-12 rhythm), so desktop gets
+       the tall airy spread of the previous commits.
+     - --fluid-pad-x SHRINKS on mobile (0.75rem) and widens on desktop
+       (2rem), so phone content spreads edge-to-edge instead of sitting
+       in a narrow centered column.
      --fluid-chat-* tokens (chatbot only) are deliberately NOT touched. */
   --fluid-container-max: clamp(20rem, 90vw, 60rem);
   --fluid-container-narrow: clamp(18rem, 88vw, 45rem);
-  --fluid-pad-x: clamp(1rem, 3.375rem - 4.2vw, 2.375rem);
-  --fluid-section-y: clamp(2rem, 6.5rem - 8vw, 4.25rem);
-  --fluid-stack: clamp(1.5rem, 7rem - 9.5vw, 5rem);
-  --fluid-gap: clamp(0.75rem, 2.875rem - 3.75vw, 1.875rem);
-  --fluid-gap-sm: clamp(0.5rem, 1.625rem - 2vw, 1rem);
+  --fluid-pad-x: clamp(0.75rem, 0.375rem + 2vw, 2rem);
+  --fluid-section-y: clamp(1.5rem, 1rem + 4vw, 3.5rem);
+  --fluid-stack: clamp(1.5rem, 1rem + 5vw, 4rem);
+  --fluid-gap: clamp(0.75rem, 0.5rem + 2.5vw, 1.875rem);
+  --fluid-gap-sm: clamp(0.5rem, 0.375rem + 1.5vw, 1rem);
   /* Surfaces */
-  --fluid-card-pad: clamp(1rem, 3.75rem - 4.8vw, 2.375rem);
+  --fluid-card-pad: clamp(1rem, 0.75rem + 3vw, 2.375rem);
   --fluid-radius: clamp(0.75rem, 2.1875rem - 2.5vw, 1.5rem);
   --fluid-radius-lg: clamp(1rem, 2.8125rem - 3.2vw, 1.875rem);
   --fluid-radius-pill: 9999px;
@@ -311,37 +316,37 @@ html {
    which live in @layer utilities) can override these element defaults.
    Unlayered CSS would beat ALL layered CSS and pin every h1 to h1 size. */
 @layer base {
-  /* MAIN-SITE base typography — inverted clamp(Desktop_Min, Base - Xvw, Mobile_Max).
-     Mobile viewports push toward the larger Mobile_Max; desktop settles to the floor.
-     The chatbot's own classes are untouched (see ChatWidget.tsx / --fluid-chat-*). */
+  /* MAIN-SITE base typography — softened inverted curve (mirrors @theme).
+     Phones render slightly above desktop, not far above it.
+     Chatbot classes untouched (see ChatWidget.tsx / --fluid-chat-*). */
   body {
-    font-size: clamp(0.875rem, 1.8125rem - 1.65vw, 1.3125rem);
+    font-size: clamp(0.875rem, 1.125rem - 0.45vw, 1rem);
     line-height: 1.6;
   }
 
   h1 {
-    font-size: clamp(2.25rem, 5.5rem - 6vw, 3.75rem);
+    font-size: clamp(2.25rem, 3.375rem - 2vw, 2.75rem);
     line-height: 1.05;
   }
 
   h2 {
-    font-size: clamp(1.5rem, 3.75rem - 4vw, 2.75rem);
+    font-size: clamp(1.5rem, 2.25rem - 1.3vw, 1.875rem);
     line-height: 1.1;
   }
 
   h3 {
-    font-size: clamp(1.125rem, 2.375rem - 2.2vw, 1.875rem);
+    font-size: clamp(1.125rem, 1.5625rem - 0.75vw, 1.3125rem);
     line-height: 1.2;
   }
 
   p,
   li {
-    font-size: clamp(0.875rem, 1.8125rem - 1.65vw, 1.3125rem);
+    font-size: clamp(0.875rem, 1.125rem - 0.45vw, 1rem);
   }
 
   small,
   label {
-    font-size: clamp(0.625rem, 1.125rem - 0.9vw, 0.875rem);
+    font-size: clamp(0.625rem, 0.75rem - 0.25vw, 0.6875rem);
   }
 
   /* 3. Media always scales down, never overflows or exceeds its cap */

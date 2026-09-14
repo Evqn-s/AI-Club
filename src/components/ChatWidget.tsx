@@ -183,27 +183,38 @@ export function ChatWidget() {
     isLoading && (!lastMessage || lastMessage.role !== "assistant" || !lastMessage.content);
 
   return (
-    <aside aria-label="AI Club Assistant" className="fixed bottom-[clamp(1.25rem,4vw,2rem)] right-[clamp(1.25rem,4vw,2rem)] z-50">
-      {/* Floating Toggle Button */}
+    <>
+      {/* Floating Toggle Button — always bottom-right (incl. mobile).
+          Rendered OUTSIDE the centered dialog wrapper so it never sits
+          mid-screen on top of content. */}
       {!isOpen && (
-        <Button
-          onClick={() => setIsOpen(true)}
-          className="rounded-full gap-2.5 bg-[#241416] border border-[#5E2C32] text-[#FFFFFF] hover:bg-[#33181C] shadow-lg"
-          aria-label="Open club AI chat assistant"
+        <aside
+          aria-label="AI Club Assistant"
+          className="fixed z-50 bottom-[clamp(1.25rem,4vw,2rem)] right-[clamp(1.25rem,4vw,2rem)]"
         >
-          <MessageSquare className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA]" />
-          <span className="text-fluid-small uppercase tracking-[0.08em] font-medium">Ask AI</span>
-        </Button>
+          <Button
+            onClick={() => setIsOpen(true)}
+            className="rounded-full gap-2.5 bg-[#241416] border border-[#5E2C32] text-[#FFFFFF] hover:bg-[#33181C] shadow-lg"
+            aria-label="Open club AI chat assistant"
+          >
+            <MessageSquare className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA]" />
+            <span className="text-fluid-small uppercase tracking-[0.08em] font-medium">Ask AI</span>
+          </Button>
+        </aside>
       )}
 
-      {/* Chat Window Panel */}
+      {/* Chat Window Panel — bottom-center sheet on mobile, bottom-right on desktop */}
       {isOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Club AI Assistant Chat Window"
-          className="flex flex-col w-[var(--fluid-chat-w)] max-w-[calc(100vw-2rem)] h-[var(--fluid-chat-h)] max-h-[85vh] bg-[#0A090A] border border-[#242021] rounded-[var(--fluid-radius-lg)] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150"
+        <aside
+          aria-label="AI Club Assistant"
+          className="fixed z-50 bottom-[clamp(1.25rem,4vw,2rem)] right-[clamp(1.25rem,4vw,2rem)] max-sm:bottom-[clamp(1.25rem,4vw,2rem)] max-sm:right-1/2 max-sm:translate-x-1/2"
         >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Club AI Assistant Chat Window"
+            className="flex flex-col w-[var(--fluid-chat-w)] max-w-[calc(100vw-2rem)] h-[var(--fluid-chat-h)] max-h-[85vh] bg-[#0A090A] border border-[#242021] rounded-[var(--fluid-radius-lg)] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150"
+          >
           {/* Header */}
           <div className="flex items-center justify-between px-[clamp(1rem,3vw,1.25rem)] py-[clamp(0.75rem,2.5vw,0.875rem)] bg-[#141213] border-b border-[#242021]">
             <div className="flex items-center gap-[clamp(0.5rem,2vw,0.75rem)]">
@@ -327,7 +338,8 @@ export function ChatWidget() {
             </Button>
           </form>
         </div>
+      </aside>
       )}
-    </aside>
+    </>
   );
 }
