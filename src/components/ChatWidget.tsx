@@ -194,7 +194,7 @@ export function ChatWidget() {
         >
           <Button
             onClick={() => setIsOpen(true)}
-            className="rounded-full gap-2.5 bg-[#241416] border border-[#5E2C32] text-[#FFFFFF] hover:bg-[#33181C] shadow-lg"
+            className="rounded-full gap-2.5 glass glass-fab text-[#FFFFFF] hover:brightness-125"
             aria-label="Open club AI chat assistant"
           >
             <MessageSquare className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA]" />
@@ -213,7 +213,7 @@ export function ChatWidget() {
             role="dialog"
             aria-modal="true"
             aria-label="Club AI Assistant Chat Window"
-            className="flex flex-col w-[var(--fluid-chat-w)] max-w-[calc(100vw-2rem)] h-[var(--fluid-chat-h)] max-h-[85vh] bg-[#0A090A] border border-[#242021] rounded-[var(--fluid-radius-lg)] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150"
+            className="flex flex-col w-[var(--fluid-chat-w)] max-w-[calc(100vw-2rem)] h-[var(--fluid-chat-h)] max-h-[85vh] glass glass-panel-solid rounded-[var(--fluid-radius-lg)] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150"
           >
           {/* Header */}
           <div className="flex items-center justify-between px-[clamp(1rem,3vw,1.25rem)] py-[clamp(0.75rem,2.5vw,0.875rem)] bg-[#141213] border-b border-[#242021]">
