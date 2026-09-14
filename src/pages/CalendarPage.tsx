@@ -24,13 +24,25 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 
-// Date math helper functions anchored to noon (12:00) to prevent DST day rollover
+// Dynamic today — computed once at module load so every helper uses real current date
+const _NOW = new Date();
+const TODAY_YEAR = _NOW.getFullYear();
+const TODAY_MONTH = _NOW.getMonth();   // 0-indexed
+const TODAY_DAY = _NOW.getDate();
+const TODAY_STRING = `${TODAY_YEAR}-${String(TODAY_MONTH + 1).padStart(2, "0")}-${String(TODAY_DAY).padStart(2, "0")}`;
+
+// Returns the first day of the month that is `monthOffset` months away from today
 function getDateForMonth(monthOffset: number): Date {
-  return new Date(2026, 8 + monthOffset, 1, 12, 0, 0);
+  return new Date(TODAY_YEAR, TODAY_MONTH + monthOffset, 1, 12, 0, 0);
 }
 
+// Returns a date `weekOffset` weeks away from today's week start (Sunday)
 function getDateForWeek(weekOffset: number): Date {
-  return new Date(2026, 8, 13 + weekOffset * 7, 12, 0, 0);
+  // Anchor to today so week 0 always contains today
+  const anchor = new Date(TODAY_YEAR, TODAY_MONTH, TODAY_DAY, 12, 0, 0);
+  const dayOfWeek = anchor.getDay(); // 0 = Sunday
+  const sunday = new Date(TODAY_YEAR, TODAY_MONTH, TODAY_DAY - dayOfWeek, 12, 0, 0);
+  return new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + weekOffset * 7, 12, 0, 0);
 }
 
 // Robust search date parser: parses "15", "15th", "Sep 15", "September 15", "9/15", "2026-09-15", "Oct 3", etc.
@@ -51,7 +63,7 @@ function parseSearchDate(query: string): Date | null {
   if (slashMatch) {
     const [, m, d] = slashMatch.map(Number);
     if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
-      return new Date(2026, m - 1, d, 12, 0, 0);
+      return new Date(TODAY_YEAR, m - 1, d, 12, 0, 0);
     }
   }
 
@@ -77,7 +89,7 @@ function parseSearchDate(query: string): Date | null {
       const match = q.match(regex);
       if (match) {
         const day = parseInt(match[1], 10);
-        const year = match[2] ? parseInt(match[2], 10) : 2026;
+        const year = match[2] ? parseInt(match[2], 10) : TODAY_YEAR;
         if (day >= 1 && day <= 31) {
           return new Date(year, item.m, day, 12, 0, 0);
         }
@@ -90,7 +102,7 @@ function parseSearchDate(query: string): Date | null {
   if (standaloneDay) {
     const day = parseInt(standaloneDay[1], 10);
     if (day >= 1 && day <= 31) {
-      return new Date(2026, 8, day, 12, 0, 0);
+      return new Date(TODAY_YEAR, TODAY_MONTH, day, 12, 0, 0);
     }
   }
 
@@ -131,7 +143,7 @@ function getMonthData(currentDate: Date) {
       dateString,
       dayNumber: dayNum,
       isCurrentMonth: false,
-      isToday: dateString === "2026-09-13",
+      isToday: dateString === TODAY_STRING,
     });
   }
 
@@ -147,7 +159,7 @@ function getMonthData(currentDate: Date) {
       dateString,
       dayNumber: i,
       isCurrentMonth: true,
-      isToday: dateString === "2026-09-13",
+      isToday: dateString === TODAY_STRING,
     });
   }
 
@@ -166,7 +178,7 @@ function getMonthData(currentDate: Date) {
       dateString,
       dayNumber: i,
       isCurrentMonth: false,
-      isToday: dateString === "2026-09-13",
+      isToday: dateString === TODAY_STRING,
     });
   }
 
@@ -209,7 +221,7 @@ function getWeekData(currentDate: Date) {
       dateString,
       dayName: new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(dayDate),
       dayNumber: dayDate.getDate(),
-      isToday: dateString === "2026-09-13",
+      isToday: dateString === TODAY_STRING,
     });
   }
 
@@ -343,7 +355,7 @@ function resolveActiveRow(
     const idx = weeks.findIndex((week) => week.some((d) => d.dateString === anchorSunday));
     if (idx >= 0) return idx;
   }
-  const todayIdx = weeks.findIndex((week) => week.some((d) => d.dateString === "2026-09-13"));
+  const todayIdx = weeks.findIndex((week) => week.some((d) => d.dateString === TODAY_STRING));
   return todayIdx >= 0 ? todayIdx : 0;
 }
 
@@ -876,12 +888,32 @@ export function CalendarPage() {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   // List view sort direction: newest-first (default) or oldest-first
   const [listSortNewest, setListSortNewest] = useState<boolean>(true);
-  const [mobileSelectedDay, setMobileSelectedDay] = useState<string>("2026-09-13");
+  const [mobileSelectedDay, setMobileSelectedDay] = useState<string>(TODAY_STRING);
   const [listActiveIndex, setListActiveIndex] = useState<number>(0);
   const listContainerRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
 
-  // Smoothly scroll selected event card to the top of the list container
+  // Track whether there is enough space on either side of the viewport for the floating nav arrows
+  const [hasSideSpace, setHasSideSpace] = useState(false);
+
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const check = () => {
+      const rect = el.getBoundingClientRect();
+      // Show side buttons when there are at least 52px of gutter on each side
+      setHasSideSpace(rect.left >= 52 && window.innerWidth - rect.right >= 52);
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(document.documentElement);
+    window.addEventListener("resize", check);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", check);
+    };
+  }, []);
+
   const scrollEventToTop = useCallback((index: number) => {
     if (!listContainerRef.current) return;
     const container = listContainerRef.current;
@@ -945,15 +977,12 @@ export function CalendarPage() {
     };
   }, [notifyAnimationComplete]);
 
-  // When switching to list view, ensure the current selected event is aligned at the top
+  // When switching to list view, reset to the first event
   useEffect(() => {
     if (viewMode === "list") {
-      const timer = setTimeout(() => {
-        scrollEventToTop(listActiveIndex);
-      }, 60);
-      return () => clearTimeout(timer);
+      setListActiveIndex(0);
     }
-  }, [viewMode, scrollEventToTop]);
+  }, [viewMode]);
 
 
   // Search & Database lookup state
@@ -1087,10 +1116,10 @@ export function CalendarPage() {
         // 1. Check if user typed a specific day/date (e.g. "Sep 15", "15th", "9/15", "Oct 3")
         const parsedDate = parseSearchDate(q);
         if (parsedDate) {
-          const diffTime = parsedDate.getTime() - new Date(2026, 8, 13, 12, 0, 0).getTime();
+          const diffTime = parsedDate.getTime() - new Date(TODAY_YEAR, TODAY_MONTH, TODAY_DAY, 12, 0, 0).getTime();
           const targetWeekIndex = Math.round(diffTime / (7 * 86400000));
           const targetMonthIndex =
-            (parsedDate.getFullYear() - 2026) * 12 + (parsedDate.getMonth() - 8);
+            (parsedDate.getFullYear() - TODAY_YEAR) * 12 + (parsedDate.getMonth() - TODAY_MONTH);
 
           const y = parsedDate.getFullYear();
           const m = String(parsedDate.getMonth() + 1).padStart(2, "0");
@@ -1169,9 +1198,9 @@ export function CalendarPage() {
         if (matched) {
           const [y, m, d] = matched.date.split("-").map(Number);
           const targetDate = new Date(y, m - 1, d, 12, 0, 0);
-          const diffTime = targetDate.getTime() - new Date(2026, 8, 13, 12, 0, 0).getTime();
+          const diffTime = targetDate.getTime() - new Date(TODAY_YEAR, TODAY_MONTH, TODAY_DAY, 12, 0, 0).getTime();
           const targetWeekIndex = Math.round(diffTime / (7 * 86400000));
-          const targetMonthIndex = (y - 2026) * 12 + (m - 1 - 8);
+          const targetMonthIndex = (y - TODAY_YEAR) * 12 + (m - 1 - TODAY_MONTH);
 
           if (viewMode === "list") {
             const matchIdx = filteredListEvents.findIndex((e) => e.id === matched!.id);
@@ -1270,7 +1299,7 @@ export function CalendarPage() {
   const handleToday = useCallback(() => {
     if (viewMode === "list") {
       if (filteredListEvents.length === 0) return;
-      const todayTime = new Date(2026, 8, 13, 12, 0, 0).getTime();
+      const todayTime = new Date(TODAY_YEAR, TODAY_MONTH, TODAY_DAY, 12, 0, 0).getTime();
       let bestIdx = 0;
       let bestDiff = Infinity;
       filteredListEvents.forEach((evt, idx) => {
@@ -1367,24 +1396,66 @@ export function CalendarPage() {
     };
   }, [viewMode, handleNext, handlePrev]);
 
-  // List scroll listener: dynamically updates listActiveIndex based on snapped top item
-  const handleListScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    const container = e.currentTarget;
-    const items = container.querySelectorAll<HTMLElement>("[data-event-item]");
-    const containerTop = container.getBoundingClientRect().top;
-    let closestIdx = 0;
-    let minDistance = Infinity;
+  // List wheel handler: accumulated-delta pager — each 80px of scroll = one event advance.
+  // A fast flick accumulates quickly and advances multiple events naturally.
+  const listWheelAccum = useRef<number>(0);
+  const listWheelDecayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const listTouchStartY = useRef<number | null>(null);
+  const WHEEL_STEP = 80; // px of accumulated deltaY per event advance
 
-    for (let i = 0; i < items.length; i++) {
-      const rect = items[i].getBoundingClientRect();
-      const distance = Math.abs(rect.top - containerTop);
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestIdx = parseInt(items[i].getAttribute("data-event-index") || "0", 10);
+  useEffect(() => {
+    const el = listContainerRef.current;
+    if (!el || viewMode !== "list") return;
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Accumulate normalized delta (cap single-event delta to avoid huge trackpad jumps)
+      const delta = Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY), 120);
+      listWheelAccum.current += delta;
+
+      // Fire an advance for each WHEEL_STEP crossed
+      while (Math.abs(listWheelAccum.current) >= WHEEL_STEP) {
+        if (listWheelAccum.current > 0) {
+          handleNext();
+          listWheelAccum.current -= WHEEL_STEP;
+        } else {
+          handlePrev();
+          listWheelAccum.current += WHEEL_STEP;
+        }
       }
-    }
-    setListActiveIndex(closestIdx);
+
+      // Decay accumulator after gesture ends so leftover delta doesn't carry over
+      if (listWheelDecayTimer.current) clearTimeout(listWheelDecayTimer.current);
+      listWheelDecayTimer.current = setTimeout(() => {
+        listWheelAccum.current = 0;
+      }, 150);
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      if (listWheelDecayTimer.current) clearTimeout(listWheelDecayTimer.current);
+    };
+  }, [viewMode, handleNext, handlePrev]);
+
+  // Touch swipe on list container
+  const handleListTouchStart = useCallback((e: React.TouchEvent) => {
+    listTouchStartY.current = e.touches[0].clientY;
   }, []);
+
+  const handleListTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (listTouchStartY.current === null) return;
+    const deltaY = e.changedTouches[0].clientY - listTouchStartY.current;
+    listTouchStartY.current = null;
+    if (Math.abs(deltaY) < 40) return;
+    if (deltaY < 0) {
+      handleNext();
+    } else {
+      handlePrev();
+    }
+  }, [handleNext, handlePrev]);
 
   // View switch handler — symmetrical multi-phase transitions
   const handleViewToggle = useCallback(
@@ -1412,9 +1483,9 @@ export function CalendarPage() {
             let diffWeeks = 0;
             if (viewMode === "month") {
               const monthDate = getDateForMonth(activeIndex);
-              const targetDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), 13, 12, 0, 0);
+              const targetDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), TODAY_DAY, 12, 0, 0);
               diffWeeks = Math.round(
-                (targetDate.getTime() - new Date(2026, 8, 13, 12, 0, 0).getTime()) / (7 * 86400000)
+                (targetDate.getTime() - new Date(TODAY_YEAR, TODAY_MONTH, TODAY_DAY, 12, 0, 0).getTime()) / (7 * 86400000)
               );
             } else if (viewMode === "list") {
               const activeEvt = filteredListEvents[listActiveIndex] || events[0];
@@ -1422,7 +1493,7 @@ export function CalendarPage() {
                 const [y, m, d] = activeEvt.date.split("-").map(Number);
                 const targetDate = new Date(y, m - 1, d, 12, 0, 0);
                 diffWeeks = Math.round(
-                  (targetDate.getTime() - new Date(2026, 8, 13, 12, 0, 0).getTime()) / (7 * 86400000)
+                  (targetDate.getTime() - new Date(TODAY_YEAR, TODAY_MONTH, TODAY_DAY, 12, 0, 0).getTime()) / (7 * 86400000)
                 );
                 setMobileSelectedDay(activeEvt.date);
               }
@@ -1454,12 +1525,12 @@ export function CalendarPage() {
           if (viewMode === "week") {
             const weekDate = getDateForWeek(activeIndex);
             setModeAnchorWeek(getWeekData(weekDate).weekDays[0].dateString);
-            diffMonths = (weekDate.getFullYear() - 2026) * 12 + (weekDate.getMonth() - 8);
+            diffMonths = (weekDate.getFullYear() - TODAY_YEAR) * 12 + (weekDate.getMonth() - TODAY_MONTH);
           } else if (viewMode === "list") {
             const activeEvt = filteredListEvents[listActiveIndex] || events[0];
             if (activeEvt) {
               const [y, m, _d] = activeEvt.date.split("-").map(Number);
-              diffMonths = (y - 2026) * 12 + (m - 1 - 8);
+              diffMonths = (y - TODAY_YEAR) * 12 + (m - 1 - TODAY_MONTH);
               setMobileSelectedDay(activeEvt.date);
             }
             setModeAnchorWeek(null);
@@ -1518,18 +1589,19 @@ export function CalendarPage() {
     }
   }, [viewMode, activeIndex, filteredListEvents, listActiveIndex, searchQuery]);
 
-  // Dedicated List View Content Renderer: Selected item is on top and snapped, with smooth layout animations
+  // Dedicated List View Content Renderer: Pager mode — renders events from listActiveIndex onward,
+  // no internal scrolling. Scroll/touch on the container advances the pager via handleNext/handlePrev.
   const renderListContent = useCallback(() => {
+    // Events visible in the pager: from listActiveIndex to end
+    const visibleEvents = filteredListEvents.slice(listActiveIndex);
+
     return (
       <div
         ref={listContainerRef}
-        onScroll={handleListScroll}
-        onWheel={(e) => e.stopPropagation()}
-        className="flex flex-col gap-3.5 select-text w-full overflow-y-auto max-h-[calc(100dvh-13.5rem)] min-h-[420px] snap-y snap-mandatory scroll-smooth overscroll-contain pr-1"
-        style={{
-          scrollSnapType: "y mandatory",
-          scrollbarWidth: "none",
-        }}
+        onTouchStart={handleListTouchStart}
+        onTouchEnd={handleListTouchEnd}
+        className="flex flex-col gap-3.5 select-text w-full overflow-hidden max-h-[calc(100dvh-13.5rem)] min-h-[420px] pr-1"
+        style={{ scrollbarWidth: "none" }}
       >
         {filteredListEvents.length === 0 ? (
           <div className="text-center py-14 px-4 rounded-2xl border border-[#242021] bg-[#141213] space-y-3">
@@ -1551,41 +1623,35 @@ export function CalendarPage() {
             )}
           </div>
         ) : (
-          <AnimatePresence mode="popLayout">
-            {filteredListEvents.map((evt, evtIdx) => {
-              const isSelectedAtTop = evtIdx === listActiveIndex;
-              const isHighlighted = evt.id === highlightedEventId || isSelectedAtTop;
+          <AnimatePresence mode="popLayout" initial={false}>
+            {visibleEvents.map((evt, visIdx) => {
+              const evtIdx = listActiveIndex + visIdx;
+              const isTop = visIdx === 0;
+              const isHighlighted = evt.id === highlightedEventId;
 
-              if (isSelectedAtTop) {
+              if (isTop) {
                 return (
                   <motion.div
                     key={evt.id}
                     layout
                     data-event-item
                     data-event-index={evtIdx}
-                    initial={{ opacity: 0, y: 12 }}
+                    initial={{ opacity: 0, y: -24 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.96 }}
+                    exit={{ opacity: 0, y: -60, scale: 0.94, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
                     transition={{
                       layout: { type: "spring", stiffness: 320, damping: 28 },
-                      opacity: { duration: 0.2 },
+                      opacity: { duration: 0.18 },
+                      y: { type: "spring", stiffness: 320, damping: 28 },
                     }}
-                    style={{
-                      scrollSnapAlign: "start",
-                      scrollSnapStop: "always",
-                    }}
-                    onClick={() => {
-                      setListActiveIndex(evtIdx);
-                      handleSelectEvent(evt);
-                      scrollEventToTop(evtIdx);
-                    }}
-                    className="snap-start snap-always scroll-mt-0 p-5 sm:p-6 rounded-2xl border transition-all cursor-pointer space-y-3.5 shadow-xl relative overflow-hidden bg-gradient-to-br from-[#2D1619] via-[#201718] to-[#141213] border-[#E0A3AA] ring-2 ring-[#E0A3AA]/70 shadow-[0_0_26px_rgba(224,163,170,0.22)]"
+                    onClick={() => handleSelectEvent(evt)}
+                    className="p-5 sm:p-6 rounded-2xl border cursor-pointer space-y-3.5 shadow-xl relative overflow-hidden bg-gradient-to-br from-[#2D1619] via-[#201718] to-[#141213] border-[#E0A3AA] ring-2 ring-[#E0A3AA]/70 shadow-[0_0_26px_rgba(224,163,170,0.22)] shrink-0"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#E0A3AA] text-[#141213] flex items-center gap-1 shadow-sm">
                           <CalendarIcon className="h-3 w-3" />
-                          Selected Event
+                          Current Event
                         </span>
                         {evt.category && (
                           <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#241416] border border-[#5E2C32] text-[#E0A3AA]">
@@ -1654,23 +1720,18 @@ export function CalendarPage() {
                   layout
                   data-event-item
                   data-event-index={evtIdx}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: visIdx <= 2 ? 1 - visIdx * 0.12 : 0.65, y: 0 }}
                   exit={{ opacity: 0, scale: 0.96 }}
                   transition={{
                     layout: { type: "spring", stiffness: 320, damping: 28 },
                     opacity: { duration: 0.2 },
                   }}
-                  style={{
-                    scrollSnapAlign: "start",
-                    scrollSnapStop: "always",
-                  }}
                   onClick={() => {
                     setListActiveIndex(evtIdx);
                     handleSelectEvent(evt);
-                    scrollEventToTop(evtIdx);
                   }}
-                  className={`snap-start snap-always scroll-mt-0 p-4 rounded-xl border transition-all cursor-pointer space-y-2.5 ${
+                  className={`p-4 rounded-xl border cursor-pointer space-y-2.5 shrink-0 ${
                     isHighlighted
                       ? "bg-[#241416] border-[#E0A3AA] ring-2 ring-[#E0A3AA]"
                       : "bg-[#1E1A1B] border-[#242021] hover:border-[#382D30]"
@@ -1722,9 +1783,9 @@ export function CalendarPage() {
     highlightedEventId,
     searchQuery,
     generateGoogleCalendarUrl,
-    handleListScroll,
+    handleListTouchStart,
+    handleListTouchEnd,
     handleSelectEvent,
-    scrollEventToTop,
   ]);
 
   // Render content helper for Month or Week view for any period index
@@ -2024,22 +2085,26 @@ export function CalendarPage() {
           - Side arrow buttons on desktop (>= xl) when ample space is available
           - Swiping left/right on all devices navigates periods */}
       <div className="relative w-full">
-        {/* Desktop Floating Side Navigation Arrows — completely stable fixed coordinates */}
-        <button
-          onClick={handlePrev}
-          aria-label="Previous Period"
-          className="cal-nav-arrow hidden xl:flex absolute -left-12 top-48 -translate-y-1/2 z-30 h-10 w-10 items-center justify-center rounded-full shadow-xl group cursor-pointer"
-        >
-          <ChevronLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
-        </button>
+        {/* Desktop Floating Side Navigation Arrows — visible only when gutters have >= 52px space */}
+        {hasSideSpace && (
+          <>
+            <button
+              onClick={handlePrev}
+              aria-label="Previous Period"
+              className="cal-nav-arrow flex absolute -left-12 top-48 -translate-y-1/2 z-30 h-10 w-10 items-center justify-center rounded-full shadow-xl group cursor-pointer"
+            >
+              <ChevronLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
+            </button>
 
-        <button
-          onClick={handleNext}
-          aria-label="Next Period"
-          className="cal-nav-arrow hidden xl:flex absolute -right-12 top-48 -translate-y-1/2 z-30 h-10 w-10 items-center justify-center rounded-full shadow-xl group cursor-pointer"
-        >
-          <ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
-        </button>
+            <button
+              onClick={handleNext}
+              aria-label="Next Period"
+              className="cal-nav-arrow flex absolute -right-12 top-48 -translate-y-1/2 z-30 h-10 w-10 items-center justify-center rounded-full shadow-xl group cursor-pointer"
+            >
+              <ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
+            </button>
+          </>
+        )}
 
         {/* Viewport with swipe, pan, and desktop wheel support */}
         <div

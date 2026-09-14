@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
+const NUM_STRANDS = 10;
+const X_STEP = 6;
+const RIB_SPACING = 54; // Distance between subtle 3D vertical mesh lines
+
 export function SineWaveBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [fadedIn, setFadedIn] = useState(false);
@@ -35,20 +39,60 @@ export function SineWaveBackground() {
     window.addEventListener("calendar:transition-start", handlePause);
     window.addEventListener("calendar:transition-end", handleResume);
 
+    let isLight = document.documentElement.classList.contains("light");
+    let cachedGrads: CanvasGradient[] = [];
+
+    function buildGradients() {
+      if (!ctx) return;
+      const width = window.innerWidth;
+      cachedGrads = Array.from({ length: NUM_STRANDS }, (_, s) => {
+        const d = s / (NUM_STRANDS - 1);
+        const maxAlpha = 0.12 + d * 0.36;
+
+        let r: number, g: number, b: number;
+        if (isLight) {
+          r = Math.round(30 + d * 37);
+          g = Math.round(64 + d * 86);
+          b = Math.round(175 + d * 60);
+        } else {
+          r = Math.round(150 + d * 74);
+          g = Math.round(35 + d * 128);
+          b = Math.round(55 + d * 115);
+        }
+
+        const grad = ctx.createLinearGradient(0, 0, width, 0);
+        grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0)`);
+        grad.addColorStop(0.18, `rgba(${r}, ${g}, ${b}, ${(maxAlpha * 0.35).toFixed(3)})`);
+        grad.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, ${maxAlpha.toFixed(3)})`);
+        grad.addColorStop(0.82, `rgba(${r}, ${g}, ${b}, ${(maxAlpha * 0.35).toFixed(3)})`);
+        grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+        return grad;
+      });
+    }
+
+    const themeObserver = new MutationObserver(() => {
+      const currentIsLight = document.documentElement.classList.contains("light");
+      if (currentIsLight !== isLight) {
+        isLight = currentIsLight;
+        buildGradients();
+      }
+    });
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
     function resize() {
       if (!canvas || !ctx) return;
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = window.innerWidth * dpr;
       canvas.height = window.innerHeight * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      buildGradients();
     }
 
     resize();
     window.addEventListener("resize", resize);
-
-    const NUM_STRANDS = 10;
-    const X_STEP = 6;
-    const RIB_SPACING = 54; // Distance between subtle 3D vertical mesh lines
 
     function draw() {
       if (!ctx || !canvas) return;
@@ -88,9 +132,6 @@ export function SineWaveBackground() {
         points.push(strandPoints);
       }
 
-      // Detect theme on each frame so theme-switching is reactive
-      const isLight = document.documentElement.classList.contains("light");
-
       // 1. Draw subtle 3D transverse ribs
       const numSteps = points[0]?.length || 0;
       for (let pIdx = 0; pIdx < numSteps; pIdx += Math.round(RIB_SPACING / X_STEP)) {
@@ -109,7 +150,6 @@ export function SineWaveBackground() {
           : `rgba(180, 50, 70, ${(0.07 * edgeFactor).toFixed(3)})`;
         ctx.strokeStyle = ribColor;
         ctx.lineWidth = 0.75;
-        ctx.shadowBlur = 0;
         ctx.stroke();
       }
 
@@ -117,50 +157,32 @@ export function SineWaveBackground() {
       for (let s = 0; s < NUM_STRANDS; s++) {
         const d = s / (NUM_STRANDS - 1);
         const strandPoints = points[s];
-        const maxAlpha = 0.12 + d * 0.36;
-
-        let r: number, g: number, b: number;
-        if (isLight) {
-          // Blue palette: deep navy (back) → vivid sapphire (front)
-          r = Math.round(30 + d * 37);    // 30 → 67
-          g = Math.round(64 + d * 86);   // 64 → 150
-          b = Math.round(175 + d * 60);  // 175 → 235
-        } else {
-          // Crimson/rose palette: dark maroon (back) → glowing rose (front)
-          r = Math.round(150 + d * 74);  // 150 → 224
-          g = Math.round(35 + d * 128);  // 35 → 163
-          b = Math.round(55 + d * 115);  // 55 → 170
-        }
-
-        const grad = ctx.createLinearGradient(0, 0, width, 0);
-        grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0)`);
-        grad.addColorStop(0.18, `rgba(${r}, ${g}, ${b}, ${(maxAlpha * 0.35).toFixed(3)})`);
-        grad.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, ${maxAlpha.toFixed(3)})`);
-        grad.addColorStop(0.82, `rgba(${r}, ${g}, ${b}, ${(maxAlpha * 0.35).toFixed(3)})`);
-        grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
 
         ctx.beginPath();
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 0.9 + d * 0.8;
-
-        if (s >= NUM_STRANDS - 3) {
-          ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.35)`;
-          ctx.shadowBlur = 6;
-        } else {
-          ctx.shadowBlur = 0;
-        }
-
         for (let i = 0; i < strandPoints.length; i++) {
           const pt = strandPoints[i];
           if (i === 0) ctx.moveTo(pt.x, pt.y);
           else ctx.lineTo(pt.x, pt.y);
         }
+
+        ctx.strokeStyle = cachedGrads[s] || "transparent";
+
+        // Double-stroke glow for front strands without expensive shadowBlur
+        if (s >= NUM_STRANDS - 3) {
+          ctx.save();
+          ctx.lineWidth = (0.9 + d * 0.8) * 2.5;
+          ctx.globalAlpha = 0.25;
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        ctx.lineWidth = 0.9 + d * 0.8;
         ctx.stroke();
       }
 
       if (!prefersReducedMotion) {
         if (!isPaused) {
-          phase += 0.0035; // Much slower, serene fluid drift (down from 0.014)
+          phase += 0.0035; // Serenely paced fluid drift
         }
         animationFrameId = requestAnimationFrame(draw);
       }
@@ -169,6 +191,7 @@ export function SineWaveBackground() {
     draw();
 
     return () => {
+      themeObserver.disconnect();
       window.removeEventListener("calendar:transition-start", handlePause);
       window.removeEventListener("calendar:transition-end", handleResume);
       window.removeEventListener("resize", resize);
