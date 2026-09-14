@@ -875,8 +875,9 @@ export function CalendarPage() {
   // "week-shrink" = week view shrinking away (week → month)
   // "month" = month grid fanning out / zooming out into place
   // "list" = list view zooming in
+  // "list-shrink" = list view fading / shrinking away (list → *)
   const [modeTransition, setModeTransition] = useState<
-    "month" | "week-fold" | "week" | "week-shrink" | "list" | null
+    "month" | "week-fold" | "week" | "week-shrink" | "list" | "list-shrink" | null
   >(null);
   const [modeAnchorWeek, setModeAnchorWeek] = useState<string | null>(null);
   const modeTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -1293,13 +1294,19 @@ export function CalendarPage() {
       }
 
       if (viewMode === "list") {
-        setModeAnchorWeek(null);
-        setViewMode("month");
-        setModeTransition("month");
+        // Phase 1: list fades + shrinks away
+        setModeTransition("list-shrink");
         modeTimerRef.current = setTimeout(() => {
-          setModeTransition(null);
-          notifyAnimationComplete();
-        }, MODE_UNFOLD_MS);
+          clearModeTimer();
+          setModeAnchorWeek(null);
+          // Phase 2: swap to month — rows fan out / zoom into place
+          setViewMode("month");
+          setModeTransition("month");
+          modeTimerRef.current = setTimeout(() => {
+            setModeTransition(null);
+            notifyAnimationComplete();
+          }, MODE_UNFOLD_MS);
+        }, MODE_FOLD_MS);
         return;
       }
 
@@ -1337,6 +1344,7 @@ export function CalendarPage() {
       const foldingMonth = isCenter && modeTransition === "week-fold";
       const enteringWeek = isCenter && modeTransition === "week";
       const enteringList = isCenter && modeTransition === "list";
+      const leavingList = isCenter && modeTransition === "list-shrink";
 
       if (viewMode === "list") {
         const sorted = [...events].sort((a, b) => {
@@ -1355,19 +1363,31 @@ export function CalendarPage() {
               sorted.map((evt, evtIdx) => (
                 <motion.div
                   key={evt.id}
-                  initial={enteringList ? { y: 12, opacity: 0.4 } : { y: 0, opacity: 1 }}
+                  initial={enteringList ? { y: 28, opacity: 0, scale: 0.96 } : { y: 0, opacity: 1, scale: 1 }}
                   animate={
                     enteringList
                       ? {
                           y: 0,
                           opacity: 1,
+                          scale: 1,
                           transition: {
-                            duration: 0.26,
-                            delay: Math.min(evtIdx * 0.05, 0.35),
+                            duration: 0.3,
+                            delay: Math.min(evtIdx * 0.06, 0.4),
                             ease: [0.16, 1, 0.3, 1],
                           },
                         }
-                      : { y: 0, opacity: 1 }
+                      : leavingList
+                      ? {
+                          y: -16,
+                          opacity: 0,
+                          scale: 0.97,
+                          transition: {
+                            duration: 0.18,
+                            delay: Math.min(evtIdx * 0.03, 0.15),
+                            ease: [0.7, 0, 0.85, 0.36],
+                          },
+                        }
+                      : { y: 0, opacity: 1, scale: 1 }
                   }
                   onClick={() => {
                     if (!isInteractive) return;
@@ -1749,7 +1769,7 @@ export function CalendarPage() {
                     opacity: 1,
                     transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
                   }
-                : modeTransition === "week-fold" || modeTransition === "week-shrink"
+                : modeTransition === "week-fold" || modeTransition === "week-shrink" || modeTransition === "list-shrink"
                 ? {
                     scale: 0.9,
                     opacity: 0.25,
