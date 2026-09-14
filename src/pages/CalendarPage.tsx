@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback, useRef, memo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase, isSupabaseConfigured, type CalendarEvent } from "@/lib/supabase";
 import {
   prefetchCalendar,
@@ -523,6 +523,8 @@ const MobileWeekView = memo(function MobileWeekView({
   onSelectEvent,
   generateGoogleCalendarUrl,
   entering,
+  selectedDayString: propSelectedDayString,
+  onSelectDay,
 }: {
   weekDays: {
     date: Date;
@@ -538,8 +540,10 @@ const MobileWeekView = memo(function MobileWeekView({
   onSelectEvent: (evt: CalendarEvent) => void;
   generateGoogleCalendarUrl: (evt: CalendarEvent) => string;
   entering: boolean;
+  selectedDayString?: string;
+  onSelectDay?: (day: string) => void;
 }) {
-  const [selectedDayString, setSelectedDayString] = useState<string>(() => {
+  const [internalSelectedDay, setInternalSelectedDay] = useState<string>(() => {
     if (highlightedDateString && weekDays.some((d) => d.dateString === highlightedDateString)) {
       return highlightedDateString;
     }
@@ -547,23 +551,34 @@ const MobileWeekView = memo(function MobileWeekView({
     return todayMatch ? todayMatch.dateString : weekDays[0]?.dateString || "";
   });
 
+  const selectedDayString = propSelectedDayString || internalSelectedDay;
+
   useEffect(() => {
     if (highlightedDateString && weekDays.some((d) => d.dateString === highlightedDateString)) {
-      setSelectedDayString(highlightedDateString);
+      if (onSelectDay) {
+        onSelectDay(highlightedDateString);
+      } else {
+        setInternalSelectedDay(highlightedDateString);
+      }
       return;
     }
     const exists = weekDays.some((d) => d.dateString === selectedDayString);
     if (!exists) {
       const todayMatch = weekDays.find((d) => d.isToday);
-      setSelectedDayString(todayMatch ? todayMatch.dateString : weekDays[0]?.dateString || "");
+      const fallback = todayMatch ? todayMatch.dateString : weekDays[0]?.dateString || "";
+      if (onSelectDay) {
+        onSelectDay(fallback);
+      } else {
+        setInternalSelectedDay(fallback);
+      }
     }
-  }, [weekDays, selectedDayString, highlightedDateString]);
+  }, [weekDays, selectedDayString, highlightedDateString, onSelectDay]);
 
   const activeDayObj = weekDays.find((d) => d.dateString === selectedDayString) || weekDays[0];
   const dayEvents = events.filter((e) => e.date === selectedDayString);
 
   return (
-    <div className="flex flex-col gap-3 w-full md:hidden select-text">
+    <div className="flex flex-col gap-3 w-full md:hidden select-text pb-10 sm:pb-12">
       {/* Horizontal Day Strip */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-none w-full">
         {weekDays.map((d) => {
@@ -572,7 +587,13 @@ const MobileWeekView = memo(function MobileWeekView({
           return (
             <button
               key={d.dateString}
-              onClick={() => setSelectedDayString(d.dateString)}
+              onClick={() => {
+                if (onSelectDay) {
+                  onSelectDay(d.dateString);
+                } else {
+                  setInternalSelectedDay(d.dateString);
+                }
+              }}
               className={`flex-1 min-w-[44px] py-1.5 px-1 rounded-xl border flex flex-col items-center gap-0.5 transition-all ${
                 isSelected
                   ? "bg-[#241416] border-[#E0A3AA] text-[#E0A3AA] shadow-sm"
@@ -601,8 +622,8 @@ const MobileWeekView = memo(function MobileWeekView({
         })}
       </div>
 
-      {/* Selected Day Activities or Blank Space */}
-      <div className="p-4 rounded-2xl border border-[#242021] bg-[#141213] min-h-[220px] flex flex-col justify-center">
+      {/* Selected Day Activities or Blank Space with ample bottom padding */}
+      <div className="p-4 sm:p-5 rounded-2xl border border-[#242021] bg-[#141213] min-h-fit h-auto flex flex-col justify-center pb-8">
         {dayEvents.length === 0 ? (
           <div className="text-center py-6 space-y-2">
             <CalendarIcon className="h-8 w-8 text-[#67646C] mx-auto opacity-40" />
@@ -670,7 +691,7 @@ const MobileWeekView = memo(function MobileWeekView({
                   </div>
                 )}
 
-                <div className="pt-2">
+                <div className="pt-2 pb-1">
                   <Button
                     variant="outline"
                     size="sm"
@@ -864,20 +885,17 @@ export function CalendarPage() {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   // List view sort direction: newest-first (default) or oldest-first
   const [listSortNewest, setListSortNewest] = useState<boolean>(true);
+  const [mobileSelectedDay, setMobileSelectedDay] = useState<string>("2026-09-13");
+  const [listActiveIndex, setListActiveIndex] = useState<number>(0);
+  const listContainerRef = useRef<HTMLDivElement>(null);
 
   // Transition state: activates the cylindrical ring display during arrow navigation
   const [isTransitioning, setIsTransitioning] = useState(false);
   const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Month ⇄ Week ⇄ List mode transition state ("deck of cards" unfold / fold)
-  // "week-fold" = month rows collapsing into the active week (month → week)
-  // "week" = week view zooming in with event float-up
-  // "week-shrink" = week view shrinking away (week → month)
-  // "month" = month grid fanning out / zooming out into place
-  // "list" = list view zooming in
-  // "list-shrink" = list view fading / shrinking away (list → *)
   const [modeTransition, setModeTransition] = useState<
-    "month" | "week-fold" | "week" | "week-shrink" | "list" | "list-shrink" | null
+    "month" | "week-fold" | "week" | "week-shrink" | "list" | null
   >(null);
   const [modeAnchorWeek, setModeAnchorWeek] = useState<string | null>(null);
   const modeTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -927,6 +945,36 @@ export function CalendarPage() {
   const [highlightedEventId, setHighlightedEventId] = useState<string | null>(null);
   const [highlightedDateString, setHighlightedDateString] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+
+  // Filtered & Sorted events for list view and search
+  const filteredListEvents = useMemo(() => {
+    let result = [...events];
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      const parsed = parseSearchDate(q);
+      const parsedDateStr = parsed
+        ? `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}-${String(parsed.getDate()).padStart(2, "0")}`
+        : null;
+
+      result = result.filter((evt) => {
+        if (parsedDateStr && evt.date === parsedDateStr) return true;
+        if (evt.title.toLowerCase().includes(q)) return true;
+        if (evt.description.toLowerCase().includes(q)) return true;
+        if (evt.location.toLowerCase().includes(q)) return true;
+        if (evt.category && evt.category.toLowerCase().includes(q)) return true;
+        if (evt.date.includes(q)) return true;
+        return false;
+      });
+    }
+
+    result.sort((a, b) => {
+      const da = new Date(a.date).getTime();
+      const db = new Date(b.date).getTime();
+      return listSortNewest ? db - da : da - db;
+    });
+
+    return result;
+  }, [events, searchQuery, listSortNewest]);
 
   // Fetch data: strictly from public.events table
   const fetchEvents = useCallback(async () => {
@@ -983,7 +1031,7 @@ export function CalendarPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Live Database Search: prioritizes title over description, and supports searching specific dates
+  // Live Database Search: prioritizes title over description/location, and supports searching specific dates
   const performDatabaseSearch = useCallback(
     async (query: string) => {
       const q = query.trim();
@@ -1008,25 +1056,33 @@ export function CalendarPage() {
           const d = String(parsedDate.getDate()).padStart(2, "0");
           const targetDateString = `${y}-${m}-${d}`;
 
-          triggerTransition();
-          if (viewMode === "week") {
-            setActiveIndex(targetWeekIndex);
+          if (viewMode === "list") {
+            const matchIdx = filteredListEvents.findIndex((e) => e.date === targetDateString);
+            if (matchIdx !== -1) {
+              setListActiveIndex(matchIdx);
+              const el = document.querySelector(`[data-event-index="${matchIdx}"]`);
+              el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            }
           } else {
-            setActiveIndex(targetMonthIndex);
+            triggerTransition();
+            if (viewMode === "week") {
+              setActiveIndex(targetWeekIndex);
+            } else {
+              setActiveIndex(targetMonthIndex);
+            }
           }
 
           setHighlightedDateString(targetDateString);
+          setMobileSelectedDay(targetDateString);
 
-          // If an event exists on that day, also highlight the event card
           const eventOnDay = events.find((e) => e.date === targetDateString);
           setHighlightedEventId(eventOnDay ? eventOnDay.id : null);
           return;
         }
 
-        // 2. Keyword Search prioritizing TITLE over description/location
+        // 2. Keyword Search prioritizing TITLE over description/location/category
         let matched: CalendarEvent | null = null;
 
-        // Query Supabase: first strictly check title
         if (isSupabaseConfigured && supabase) {
           const { data: titleData, error: titleError } = await supabase
             .from("events")
@@ -1038,11 +1094,10 @@ export function CalendarPage() {
           if (!titleError && titleData && titleData.length > 0) {
             matched = titleData[0];
           } else {
-            // Only if NO title match exists, search description and location
             const { data: descData } = await supabase
               .from("events")
               .select("*")
-              .or(`description.ilike.%${q}%,location.ilike.%${q}%`)
+              .or(`title.ilike.%${q}%,description.ilike.%${q}%,location.ilike.%${q}%,category.ilike.%${q}%`)
               .order("date", { ascending: true })
               .limit(1);
 
@@ -1052,7 +1107,7 @@ export function CalendarPage() {
           }
         }
 
-        // Local array fallback: check title first
+        // Local array fallback
         if (!matched) {
           const lowerQ = q.toLowerCase();
           matched = events.find((evt) => evt.title.toLowerCase().includes(lowerQ)) || null;
@@ -1062,7 +1117,9 @@ export function CalendarPage() {
               events.find(
                 (evt) =>
                   evt.description.toLowerCase().includes(lowerQ) ||
-                  evt.location.toLowerCase().includes(lowerQ)
+                  evt.location.toLowerCase().includes(lowerQ) ||
+                  (evt.category && evt.category.toLowerCase().includes(lowerQ)) ||
+                  evt.date.includes(lowerQ)
               ) || null;
           }
         }
@@ -1075,15 +1132,25 @@ export function CalendarPage() {
           const targetWeekIndex = Math.round(diffTime / (7 * 86400000));
           const targetMonthIndex = (y - 2026) * 12 + (m - 1 - 8);
 
-          triggerTransition();
-          if (viewMode === "week") {
-            setActiveIndex(targetWeekIndex);
+          if (viewMode === "list") {
+            const matchIdx = filteredListEvents.findIndex((e) => e.id === matched!.id);
+            if (matchIdx !== -1) {
+              setListActiveIndex(matchIdx);
+              const el = document.querySelector(`[data-event-index="${matchIdx}"]`);
+              el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            }
           } else {
-            setActiveIndex(targetMonthIndex);
+            triggerTransition();
+            if (viewMode === "week") {
+              setActiveIndex(targetWeekIndex);
+            } else {
+              setActiveIndex(targetMonthIndex);
+            }
           }
 
           setHighlightedEventId(matched.id);
           setHighlightedDateString(matched.date);
+          setMobileSelectedDay(matched.date);
         } else {
           setHighlightedEventId(null);
           setHighlightedDateString(null);
@@ -1094,7 +1161,7 @@ export function CalendarPage() {
         setIsSearching(false);
       }
     },
-    [events, viewMode, triggerTransition]
+    [events, viewMode, filteredListEvents, triggerTransition]
   );
 
   // Debounce search input
@@ -1133,20 +1200,57 @@ export function CalendarPage() {
 
   // Stepper handlers
   const handlePrev = useCallback(() => {
+    if (viewMode === "list") {
+      setListActiveIndex((prev) => {
+        const next = Math.max(0, prev - 1);
+        const el = document.querySelector(`[data-event-index="${next}"]`);
+        el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        return next;
+      });
+      return;
+    }
     triggerTransition();
     setActiveIndex((prev) => prev - 1);
-  }, [triggerTransition]);
+  }, [viewMode, triggerTransition]);
 
   const handleNext = useCallback(() => {
+    if (viewMode === "list") {
+      setListActiveIndex((prev) => {
+        const maxIdx = Math.max(0, filteredListEvents.length - 1);
+        const next = Math.min(maxIdx, prev + 1);
+        const el = document.querySelector(`[data-event-index="${next}"]`);
+        el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        return next;
+      });
+      return;
+    }
     triggerTransition();
     setActiveIndex((prev) => prev + 1);
-  }, [triggerTransition]);
+  }, [viewMode, filteredListEvents.length, triggerTransition]);
 
   const handleToday = useCallback(() => {
+    if (viewMode === "list") {
+      if (filteredListEvents.length === 0) return;
+      const todayTime = new Date(2026, 8, 13, 12, 0, 0).getTime();
+      let bestIdx = 0;
+      let bestDiff = Infinity;
+      filteredListEvents.forEach((evt, idx) => {
+        const [y, m, d] = evt.date.split("-").map(Number);
+        const diff = Math.abs(new Date(y, m - 1, d, 12, 0, 0).getTime() - todayTime);
+        if (diff < bestDiff) {
+          bestDiff = diff;
+          bestIdx = idx;
+        }
+      });
+      setListActiveIndex(bestIdx);
+      const el = document.querySelector(`[data-event-index="${bestIdx}"]`);
+      el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      return;
+    }
     if (activeIndex === 0) return;
     triggerTransition();
     setActiveIndex(0);
-  }, [activeIndex, triggerTransition]);
+  }, [viewMode, activeIndex, filteredListEvents, triggerTransition]);
 
   // Swipe gestures for all devices (touch, mouse drag, trackpad)
   const touchStartX = useRef<number | null>(null);
@@ -1159,6 +1263,7 @@ export function CalendarPage() {
 
   const handleTouchEnd = useCallback(
     (e: React.TouchEvent) => {
+      if (viewMode === "list") return;
       if (touchStartX.current === null || touchStartY.current === null) return;
       const deltaX = e.changedTouches[0].clientX - touchStartX.current;
       const deltaY = e.changedTouches[0].clientY - touchStartY.current;
@@ -1173,11 +1278,12 @@ export function CalendarPage() {
         }
       }
     },
-    [handleNext, handlePrev]
+    [viewMode, handleNext, handlePrev]
   );
 
   const handlePanEnd = useCallback(
     (_e: any, info: { offset: { x: number; y: number } }) => {
+      if (viewMode === "list") return;
       if (Math.abs(info.offset.x) > 45 && Math.abs(info.offset.x) > Math.abs(info.offset.y) * 1.3) {
         if (info.offset.x < 0) {
           handleNext();
@@ -1186,7 +1292,7 @@ export function CalendarPage() {
         }
       }
     },
-    [handleNext, handlePrev]
+    [viewMode, handleNext, handlePrev]
   );
 
   // Desktop Mouse Wheel navigation: scrolling changes week/month
@@ -1194,7 +1300,7 @@ export function CalendarPage() {
 
   const handleWheel = useCallback(
     (e: React.WheelEvent) => {
-      // Only active on desktop screens (>= 1024px)
+      if (viewMode === "list") return;
       if (typeof window !== "undefined" && window.innerWidth < 1024) return;
 
       const now = Date.now();
@@ -1209,17 +1315,25 @@ export function CalendarPage() {
         }
       }
     },
-    [handleNext, handlePrev]
+    [viewMode, handleNext, handlePrev]
   );
 
-  // View switch handler — "deck of cards / horizontal blinds" unfold.
-  // View-switch orchestrator. Each direction has a symmetrical two-phase
-  // transition so the outgoing view visibly shrinks/fades while the incoming
-  // view zooms into place:
-  //   month → week : week-fold (rows collapse)  → week (events float up)
-  //   week  → month: week-shrink (week shrinks) → month (rows fan out)
-  //   *    → list : list (zoom in)
-  //   list → *    : the target's own zoom transition plays
+  // List scroll listener: dynamically updates listActiveIndex and stepper date header
+  const handleListScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    const items = container.querySelectorAll<HTMLElement>("[data-event-item]");
+    const containerTop = container.getBoundingClientRect().top;
+    for (let i = 0; i < items.length; i++) {
+      const rect = items[i].getBoundingClientRect();
+      if (rect.bottom >= containerTop + 60) {
+        const idx = parseInt(items[i].getAttribute("data-event-index") || "0", 10);
+        setListActiveIndex(idx);
+        break;
+      }
+    }
+  }, []);
+
+  // View switch handler — symmetrical multi-phase transitions
   const handleViewToggle = useCallback(
     (newMode: "month" | "week" | "list") => {
       if (newMode === viewMode && modeTransition === null) return;
@@ -1227,32 +1341,39 @@ export function CalendarPage() {
       clearModeTimer();
 
       if (newMode === "list") {
-        setViewMode("list");
         setModeTransition("list");
+        setViewMode("list");
+        setListActiveIndex(0);
         modeTimerRef.current = setTimeout(() => {
           setModeTransition(null);
           notifyAnimationComplete();
-        }, MODE_UNFOLD_MS);
+        }, 320);
         return;
       }
 
       if (newMode === "week") {
         if (viewMode === "list" || viewMode === "month") {
-          // Phase 1: fold the current view back into the active week
           setModeTransition("week-fold");
           modeTimerRef.current = setTimeout(() => {
             clearModeTimer();
-            let diffWeeks: number;
+            let diffWeeks = 0;
             if (viewMode === "month") {
               const monthDate = getDateForMonth(activeIndex);
               const targetDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), 13, 12, 0, 0);
               diffWeeks = Math.round(
                 (targetDate.getTime() - new Date(2026, 8, 13, 12, 0, 0).getTime()) / (7 * 86400000)
               );
-            } else {
-              diffWeeks = activeIndex;
+            } else if (viewMode === "list") {
+              const activeEvt = filteredListEvents[listActiveIndex] || events[0];
+              if (activeEvt) {
+                const [y, m, d] = activeEvt.date.split("-").map(Number);
+                const targetDate = new Date(y, m - 1, d, 12, 0, 0);
+                diffWeeks = Math.round(
+                  (targetDate.getTime() - new Date(2026, 8, 13, 12, 0, 0).getTime()) / (7 * 86400000)
+                );
+                setMobileSelectedDay(activeEvt.date);
+              }
             }
-            // Phase 2: swap to the week view — events float up into place
             setActiveIndex(diffWeeks);
             setViewMode("week");
             setModeTransition("week");
@@ -1263,7 +1384,6 @@ export function CalendarPage() {
           }, MODE_FOLD_MS);
           return;
         }
-        // Already week — restart the settle timer
         setModeTransition("week");
         modeTimerRef.current = setTimeout(() => {
           setModeTransition(null);
@@ -1273,15 +1393,24 @@ export function CalendarPage() {
       }
 
       // newMode === "month"
-      if (viewMode === "week") {
-        // Phase 1: shrink the week view away
+      if (viewMode === "week" || viewMode === "list") {
         setModeTransition("week-shrink");
         modeTimerRef.current = setTimeout(() => {
           clearModeTimer();
-          const weekDate = getDateForWeek(activeIndex);
-          setModeAnchorWeek(getWeekData(weekDate).weekDays[0].dateString);
-          const diffMonths = (weekDate.getFullYear() - 2026) * 12 + (weekDate.getMonth() - 8);
-          // Phase 2: swap to month — rows fan out from the active week
+          let diffMonths = 0;
+          if (viewMode === "week") {
+            const weekDate = getDateForWeek(activeIndex);
+            setModeAnchorWeek(getWeekData(weekDate).weekDays[0].dateString);
+            diffMonths = (weekDate.getFullYear() - 2026) * 12 + (weekDate.getMonth() - 8);
+          } else if (viewMode === "list") {
+            const activeEvt = filteredListEvents[listActiveIndex] || events[0];
+            if (activeEvt) {
+              const [y, m, _d] = activeEvt.date.split("-").map(Number);
+              diffMonths = (y - 2026) * 12 + (m - 1 - 8);
+              setMobileSelectedDay(activeEvt.date);
+            }
+            setModeAnchorWeek(null);
+          }
           setActiveIndex(diffMonths);
           setViewMode("month");
           setModeTransition("month");
@@ -1293,24 +1422,6 @@ export function CalendarPage() {
         return;
       }
 
-      if (viewMode === "list") {
-        // Phase 1: list fades + shrinks away
-        setModeTransition("list-shrink");
-        modeTimerRef.current = setTimeout(() => {
-          clearModeTimer();
-          setModeAnchorWeek(null);
-          // Phase 2: swap to month — rows fan out / zoom into place
-          setViewMode("month");
-          setModeTransition("month");
-          modeTimerRef.current = setTimeout(() => {
-            setModeTransition(null);
-            notifyAnimationComplete();
-          }, MODE_UNFOLD_MS);
-        }, MODE_FOLD_MS);
-        return;
-      }
-
-      // Already month — reverse the in-flight fold and restart
       setModeTransition("month");
       modeTimerRef.current = setTimeout(() => {
         setModeTransition(null);
@@ -1321,80 +1432,183 @@ export function CalendarPage() {
       viewMode,
       modeTransition,
       activeIndex,
+      filteredListEvents,
+      listActiveIndex,
+      events,
       notifyAnimationStart,
       notifyAnimationComplete,
       clearModeTimer,
     ]
   );
 
-  // Active period title
+  // Active period title: in list mode, shows formatted day of the active event
   const activeTitle = useMemo(() => {
-    if (viewMode === "month") {
+    if (viewMode === "list") {
+      if (filteredListEvents.length === 0) {
+        return searchQuery ? "No Matches" : "No Events";
+      }
+      const safeIdx = Math.min(listActiveIndex, filteredListEvents.length - 1);
+      const activeEvt = filteredListEvents[safeIdx];
+      if (!activeEvt) return "No Events";
+      const [y, m, d] = activeEvt.date.split("-").map(Number);
+      const dateObj = new Date(y, m - 1, d, 12, 0, 0);
+      return new Intl.DateTimeFormat("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }).format(dateObj);
+    } else if (viewMode === "month") {
       return getMonthData(getDateForMonth(activeIndex)).monthTitle;
     } else {
       return getWeekData(getDateForWeek(activeIndex)).weekTitle;
     }
-  }, [viewMode, activeIndex]);
+  }, [viewMode, activeIndex, filteredListEvents, listActiveIndex, searchQuery]);
 
-  // Render content helper for Month or Week view for any period index
-  const renderCalendarContent = useCallback(
-    (itemIndex: number, isInteractive: boolean) => {
-      const isCenter = isInteractive && itemIndex === activeIndex;
-      const enteringMonth = isCenter && modeTransition === "month";
-      const foldingMonth = isCenter && modeTransition === "week-fold";
-      const enteringWeek = isCenter && modeTransition === "week";
-      const enteringList = isCenter && modeTransition === "list";
-      const leavingList = isCenter && modeTransition === "list-shrink";
-
-      if (viewMode === "list") {
-        const sorted = [...events].sort((a, b) => {
-          const da = new Date(a.date).getTime();
-          const db = new Date(b.date).getTime();
-          return listSortNewest ? db - da : da - db;
-        });
-        return (
-          <div className="flex flex-col gap-2 select-text">
-            {sorted.length === 0 ? (
-              <div className="text-center py-10 space-y-2">
-                <CalendarIcon className="h-8 w-8 text-[#67646C] mx-auto opacity-40" />
-                <p className="text-sm font-mono text-[#9B98A0]">No events scheduled</p>
-              </div>
+  // Dedicated List View Content Renderer: First item is bigger/featured, with smooth layout animations
+  const renderListContent = useCallback(() => {
+    return (
+      <div
+        ref={listContainerRef}
+        onScroll={handleListScroll}
+        className="flex flex-col gap-3 select-text w-full"
+      >
+        {filteredListEvents.length === 0 ? (
+          <div className="text-center py-14 px-4 rounded-2xl border border-[#242021] bg-[#141213] space-y-3">
+            <CalendarIcon className="h-10 w-10 text-[#67646C] mx-auto opacity-40" />
+            <p className="text-base font-display font-bold text-[#E5E5E7]">
+              {searchQuery ? `No events matching "${searchQuery}"` : "No events scheduled"}
+            </p>
+            {searchQuery ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSearchQuery("")}
+                className="text-xs text-[#E0A3AA] border-[#5E2C32] hover:bg-[#241416]"
+              >
+                Clear Search
+              </Button>
             ) : (
-              sorted.map((evt, evtIdx) => (
+              <p className="text-xs font-mono text-[#9B98A0]">Check back later for new events</p>
+            )}
+          </div>
+        ) : (
+          <AnimatePresence mode="popLayout">
+            {filteredListEvents.map((evt, evtIdx) => {
+              const isFirst = evtIdx === 0;
+              const isCurrentActive = evtIdx === listActiveIndex;
+              const isHighlighted = evt.id === highlightedEventId || isCurrentActive;
+
+              if (isFirst) {
+                return (
+                  <motion.div
+                    key={evt.id}
+                    layout
+                    data-event-item
+                    data-event-index={evtIdx}
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.96 }}
+                    transition={{
+                      layout: { type: "spring", stiffness: 320, damping: 28 },
+                      opacity: { duration: 0.22 },
+                    }}
+                    onClick={() => {
+                      setListActiveIndex(evtIdx);
+                      setSelectedEvent(evt);
+                    }}
+                    className={`p-5 sm:p-6 rounded-2xl border transition-all cursor-pointer space-y-3.5 shadow-xl relative overflow-hidden ${
+                      isHighlighted
+                        ? "bg-gradient-to-br from-[#2D1619] via-[#201718] to-[#141213] border-[#E0A3AA] ring-2 ring-[#E0A3AA]/70 shadow-[0_0_26px_rgba(224,163,170,0.22)]"
+                        : "bg-gradient-to-br from-[#241416] via-[#1E1A1B] to-[#141213] border-[#5E2C32] hover:border-[#8A3D46] shadow-[0_0_18px_rgba(224,163,170,0.08)]"
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#E0A3AA] text-[#141213] flex items-center gap-1 shadow-sm">
+                          <CalendarIcon className="h-3 w-3" />
+                          Featured Event
+                        </span>
+                        {evt.category && (
+                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#241416] border border-[#5E2C32] text-[#E0A3AA]">
+                            {evt.category}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs font-mono text-[#E0A3AA]">
+                        <span className="flex items-center gap-1.5 font-bold">
+                          <CalendarIcon className="h-3.5 w-3.5 text-[#E0A3AA]" />
+                          {evt.date}
+                        </span>
+                        <span className="flex items-center gap-1 text-[#9B98A0]">
+                          <Clock className="h-3.5 w-3.5 text-[#9B98A0]" />
+                          {evt.time}
+                        </span>
+                      </div>
+                    </div>
+
+                    <h3 className="font-display font-black text-lg sm:text-xl md:text-2xl text-[#FFFFFF] leading-snug tracking-tight">
+                      {evt.title}
+                    </h3>
+
+                    {evt.description && (
+                      <p className="text-xs sm:text-sm text-[#D1D0D5] leading-relaxed">
+                        {evt.description}
+                      </p>
+                    )}
+
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-[#382D30]/80">
+                      {evt.location ? (
+                        <div className="flex items-center gap-1.5 text-xs text-[#9B98A0] truncate">
+                          <MapPin className="h-3.5 w-3.5 text-[#E0A3AA]" />
+                          <span className="truncate">{evt.location}</span>
+                        </div>
+                      ) : (
+                        <span />
+                      )}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          asChild
+                          className="text-xs bg-[#241416] text-white border-[#5E2C32] hover:bg-[#3D1E22] h-8 px-3"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <a
+                            href={generateGoogleCalendarUrl(evt)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5"
+                          >
+                            <span>Add to Google Calendar</span>
+                            <ExternalLink className="h-3 w-3 text-[#E0A3AA]" />
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              }
+
+              return (
                 <motion.div
                   key={evt.id}
-                  initial={enteringList ? { y: 28, opacity: 0, scale: 0.96 } : { y: 0, opacity: 1, scale: 1 }}
-                  animate={
-                    enteringList
-                      ? {
-                          y: 0,
-                          opacity: 1,
-                          scale: 1,
-                          transition: {
-                            duration: 0.3,
-                            delay: Math.min(evtIdx * 0.06, 0.4),
-                            ease: [0.16, 1, 0.3, 1],
-                          },
-                        }
-                      : leavingList
-                      ? {
-                          y: -16,
-                          opacity: 0,
-                          scale: 0.97,
-                          transition: {
-                            duration: 0.18,
-                            delay: Math.min(evtIdx * 0.03, 0.15),
-                            ease: [0.7, 0, 0.85, 0.36],
-                          },
-                        }
-                      : { y: 0, opacity: 1, scale: 1 }
-                  }
+                  layout
+                  data-event-item
+                  data-event-index={evtIdx}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{
+                    layout: { type: "spring", stiffness: 320, damping: 28 },
+                    opacity: { duration: 0.2 },
+                  }}
                   onClick={() => {
-                    if (!isInteractive) return;
+                    setListActiveIndex(evtIdx);
                     setSelectedEvent(evt);
                   }}
                   className={`p-4 rounded-xl border transition-all cursor-pointer space-y-2.5 ${
-                    evt.id === highlightedEventId
+                    isHighlighted
                       ? "bg-[#241416] border-[#E0A3AA] ring-2 ring-[#E0A3AA]"
                       : "bg-[#1E1A1B] border-[#242021] hover:border-[#382D30]"
                   }`}
@@ -1409,7 +1623,7 @@ export function CalendarPage() {
                       {evt.time}
                     </span>
                   </div>
-                  <h4 className="font-display font-extrabold text-sm text-[#E5E5E7] leading-snug">
+                  <h4 className="font-display font-extrabold text-sm sm:text-base text-[#E5E5E7] leading-snug">
                     {evt.title}
                   </h4>
                   {evt.description && (
@@ -1420,7 +1634,7 @@ export function CalendarPage() {
                   <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-[#242021]/80">
                     {evt.location ? (
                       <div className="flex items-center gap-1.5 text-xs text-[#9B98A0] truncate">
-                        <MapPin className="h-3 w-3 text-[#E0A3AA] shrink-0" />
+                        <MapPin className="h-3.5 w-3.5 text-[#E0A3AA]" />
                         <span className="truncate">{evt.location}</span>
                       </div>
                     ) : (
@@ -1433,10 +1647,31 @@ export function CalendarPage() {
                     )}
                   </div>
                 </motion.div>
-              ))
-            )}
-          </div>
-        );
+              );
+            })}
+          </AnimatePresence>
+        )}
+      </div>
+    );
+  }, [
+    filteredListEvents,
+    listActiveIndex,
+    highlightedEventId,
+    searchQuery,
+    generateGoogleCalendarUrl,
+    handleListScroll,
+  ]);
+
+  // Render content helper for Month or Week view for any period index
+  const renderCalendarContent = useCallback(
+    (itemIndex: number, isInteractive: boolean) => {
+      const isCenter = isInteractive && itemIndex === activeIndex;
+      const enteringMonth = isCenter && modeTransition === "month";
+      const foldingMonth = isCenter && (modeTransition === "week-fold" || modeTransition === "week-shrink");
+      const enteringWeek = isCenter && modeTransition === "week";
+
+      if (viewMode === "list") {
+        return renderListContent();
       }
 
       if (viewMode === "month") {
@@ -1543,6 +1778,8 @@ export function CalendarPage() {
             onSelectEvent={setSelectedEvent}
             generateGoogleCalendarUrl={generateGoogleCalendarUrl}
             entering={enteringWeek}
+            selectedDayString={mobileSelectedDay}
+            onSelectDay={setMobileSelectedDay}
           />
 
           {/* Desktop View: Compact 7-column grid */}
@@ -1568,6 +1805,8 @@ export function CalendarPage() {
       modeTransition,
       modeAnchorWeek,
       listSortNewest,
+      renderListContent,
+      mobileSelectedDay,
     ]
   );
 
@@ -1769,7 +2008,7 @@ export function CalendarPage() {
                     opacity: 1,
                     transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
                   }
-                : modeTransition === "week-fold" || modeTransition === "week-shrink" || modeTransition === "list-shrink"
+                : modeTransition === "week-fold" || modeTransition === "week-shrink"
                 ? {
                     scale: 0.9,
                     opacity: 0.25,
@@ -1828,18 +2067,18 @@ export function CalendarPage() {
       {selectedEvent && (
         <div
           onClick={() => setSelectedEvent(null)}
-          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-black/40 glass-heavy flex items-center justify-center p-4 animate-in fade-in duration-200"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-2xl bg-[#0A090A] border border-[#242021] p-5 shadow-2xl relative overflow-hidden"
+            className="w-full max-w-lg rounded-2xl glass glass-panel-solid p-5 shadow-2xl relative overflow-hidden"
             style={{ boxShadow: "0 0 35px rgba(224, 163, 170, 0.25)" }}
           >
             {/* Close Button */}
             <button
               onClick={() => setSelectedEvent(null)}
               aria-label="Close details"
-              className="absolute top-4 right-4 p-1.5 rounded-full border border-[#242021] bg-[#0A090A] text-[#9B98A0] hover:text-[#E5E5E7] transition-colors"
+              className="absolute top-4 right-4 p-1.5 rounded-full glass glass-panel text-[#9B98A0] hover:text-[#E5E5E7] transition-colors"
             >
               <X className="h-4 w-4" />
             </button>

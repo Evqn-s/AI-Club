@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase, isSupabaseConfigured, type NewsItem } from "@/lib/supabase";
 import {
   prefetchNews,
@@ -10,7 +11,7 @@ import {
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function NewsPage() {
@@ -18,6 +19,7 @@ export function NewsPage() {
   const [news, setNews] = useState<NewsItem[]>(() => cached || fallbackNews);
   const [loading, setLoading] = useState<boolean>(() => !cached);
   const [error, setError] = useState<string | null>(null);
+  const [sortNewest, setSortNewest] = useState<boolean>(true);
 
   async function fetchNews(force = false) {
     if (force) {
@@ -72,14 +74,34 @@ export function NewsPage() {
     };
   }, []);
 
+  const sortedNews = useMemo(() => {
+    return [...news].sort((a, b) => {
+      const ta = new Date(a.timestamp).getTime();
+      const tb = new Date(b.timestamp).getTime();
+      return sortNewest ? tb - ta : ta - tb;
+    });
+  }, [news, sortNewest]);
+
   return (
     <div className="w-full max-w-[var(--fluid-container-narrow)] mx-auto px-[var(--fluid-pad-x)] py-[var(--fluid-section-y)] space-y-[var(--fluid-gap)]">
       {/* Header */}
-      <div className="border-b border-[#242021] pb-4">
-        <span className="text-fluid-label font-medium tracking-[0.08em] uppercase text-[#9B98A0]">Announcements</span>
-        <h1 className="text-fluid-h1 font-extrabold tracking-[-0.03em] font-display text-[#E5E5E7] mt-1">
-          Latest News
-        </h1>
+      <div className="border-b border-[#242021] pb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+        <div>
+          <span className="text-fluid-label font-medium tracking-[0.08em] uppercase text-[#9B98A0]">Announcements</span>
+          <h1 className="text-fluid-h1 font-extrabold tracking-[-0.03em] font-display text-[#E5E5E7] mt-1">
+            Latest News
+          </h1>
+        </div>
+
+        {/* Sort Toggle Button with Animation */}
+        <button
+          onClick={() => setSortNewest((v) => !v)}
+          aria-label={`Sort announcements: currently ${sortNewest ? "newest first" : "oldest first"}`}
+          className="self-start sm:self-auto flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-mono uppercase tracking-wider rounded-full transition-all text-[#9B98A0] hover:text-[#E5E5E7] bg-[#1E1A1B] border border-[#242021] hover:border-[#382D30] cursor-pointer active:scale-95"
+        >
+          <ArrowUpDown className="h-3.5 w-3.5 text-[#E0A3AA]" />
+          <span>{sortNewest ? "Newest first" : "Oldest first"}</span>
+        </button>
       </div>
 
       {/* Explicit Error State Alert if Network Failed */}
@@ -101,7 +123,7 @@ export function NewsPage() {
           <Skeleton className="h-[clamp(6rem,20vw,8rem)] w-full rounded-[var(--fluid-radius-lg)]" />
           <Skeleton className="h-[clamp(6rem,20vw,8rem)] w-full rounded-[var(--fluid-radius-lg)]" />
         </div>
-      ) : news.length === 0 ? (
+      ) : sortedNews.length === 0 ? (
         <Card className="border-[#242021] bg-[#131214]">
           <CardContent className="py-[clamp(2.5rem,10vw,4rem)] text-center text-[#9B98A0]">
             <p className="font-display text-fluid-body font-bold text-[#E5E5E7]">No announcements recorded</p>
@@ -109,29 +131,43 @@ export function NewsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {news.map((item) => (
-            <Card key={item.id} className="border-[#242021] bg-[#131214] hover:border-[#382D30] transition-colors">
-              <CardHeader className="pb-[clamp(0.5rem,2vw,0.75rem)]">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <Badge variant="default">{item.author}</Badge>
-                  <time dateTime={item.timestamp} className="text-fluid-small font-mono text-[#67646C]">
-                    {new Date(item.timestamp).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </time>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-[#E5E5E7] leading-relaxed text-fluid-body whitespace-pre-wrap font-normal">
-                  {item.content}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <motion.div layout className="space-y-3">
+          <AnimatePresence mode="popLayout">
+            {sortedNews.map((item) => (
+              <motion.div
+                key={item.id}
+                layout
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{
+                  layout: { type: "spring", stiffness: 320, damping: 28 },
+                  opacity: { duration: 0.2 },
+                }}
+              >
+                <Card className="border-[#242021] bg-[#131214] hover:border-[#382D30] transition-colors">
+                  <CardHeader className="pb-[clamp(0.5rem,2vw,0.75rem)]">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <Badge variant="default">{item.author}</Badge>
+                      <time dateTime={item.timestamp} className="text-fluid-small font-mono text-[#67646C]">
+                        {new Date(item.timestamp).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </time>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-[#E5E5E7] leading-relaxed text-fluid-body whitespace-pre-wrap font-normal">
+                      {item.content}
+                    </p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
       )}
     </div>
   );
