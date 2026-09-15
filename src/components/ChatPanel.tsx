@@ -69,8 +69,10 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const completedMessageIds = useRef<Set<string>>(new Set());
+  const pendingSubmitRef = useRef(false);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
     api: "/api/chat",
@@ -108,8 +110,12 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (cooldown === 0 && !isLoading && !isTyping) {
       inputRef.current?.focus();
+      if (pendingSubmitRef.current && input.trim()) {
+        pendingSubmitRef.current = false;
+        formRef.current?.requestSubmit();
+      }
     }
-  }, [cooldown, isLoading, isTyping]);
+  }, [cooldown, isLoading, isTyping, input]);
 
   // Escape key closes chat
   useEffect(() => {
@@ -151,12 +157,16 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
 
   function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (cooldown > 0 || isLoading || isTyping || !input.trim()) return;
+    if (!input.trim() || isLoading || isTyping) return;
+    if (cooldown > 0) {
+      pendingSubmitRef.current = true;
+      return;
+    }
     setIsTyping(false);
     handleSubmit(e);
   }
 
-  const isInputDisabled = isLoading || isTyping || cooldown > 0;
+  const isInputDisabled = isLoading || isTyping;
   const isSubmitDisabled = isInputDisabled || !input.trim();
 
   const cooldownSeconds = (cooldown * COOLDOWN_TICK_MS) / 1000;
@@ -280,7 +290,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* Chat Input with 5-second cooldown after typing completes */}
-          <form onSubmit={handleFormSubmit} className="p-[var(--fluid-gap-sm)] bg-[#141213] border-t border-[#242021] flex gap-[clamp(0.375rem,1.5vw,0.5rem)]">
+          <form ref={formRef} onSubmit={handleFormSubmit} className="p-[var(--fluid-gap-sm)] bg-[#141213] border-t border-[#242021] flex gap-[clamp(0.375rem,1.5vw,0.5rem)]">
             <Input
               ref={inputRef}
               value={input}
