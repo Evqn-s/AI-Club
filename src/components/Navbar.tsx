@@ -30,7 +30,7 @@ export function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--color-border-subtle)] bg-[var(--bg-main)] transition-colors">
+    <header className="relative z-40">
       <div className="mx-auto flex flex-wrap items-center gap-x-3 gap-y-2 px-[var(--fluid-pad-x)] py-[clamp(0.5rem,2vw,0.75rem)] max-w-[var(--fluid-container-max)]">
         {/* Brand identity pill — order 1: top-left (incl. mobile) */}
         <Link

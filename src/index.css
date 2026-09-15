@@ -272,6 +272,8 @@ html.light body {
 /* The top bar shares the page canvas and has no divider in either theme. */
 header {
   border-bottom-width: 0 !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
 }
 
 /* Light mode keeps the ambient depth blue-white; the dark red backdrop glows
@@ -288,7 +290,7 @@ html.light .ambient-glow-middle {
 
 /* Light top bar matches the bluish-white page canvas. */
 html.light header {
-  background-color: #F7F9FF !important;
+  background-color: transparent !important;
   border-color: transparent !important;
   box-shadow: none !important;
 }
