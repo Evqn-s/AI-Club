@@ -1,38 +1,40 @@
-import { useEffect, lazy, Suspense } from "react";
+import { lazy, Suspense } from "react";
 import { Route, Switch, useLocation } from "wouter";
 import { ThemeProvider } from "@/components/ThemeToggle";
 import { Navbar } from "@/components/Navbar";
-import { ChatWidget } from "@/components/ChatWidget";
-import { OrganicBackground } from "@/components/OrganicBackground";
 import { HomePage } from "@/pages/HomePage";
-import { NewsPage } from "@/pages/NewsPage";
 import { CalendarSkeleton } from "@/components/CalendarSkeleton";
-import { prefetchRoute } from "@/lib/cache";
 
 import { calendarComponentPromise } from "@/components/Navbar";
 
+// The animated canvas background is purely decorative — keep it out of the
+// initial bundle and mount it after first paint so it never competes with LCP.
+const OrganicBackground = lazy(() =>
+  import("@/components/OrganicBackground").then((m) => ({ default: m.OrganicBackground }))
+);
+
 // Consumes the module promise pre-warmed on hover, or imports on demand
 const CalendarPage = lazy(() => calendarComponentPromise || import("./pages/CalendarPage"));
+
+// Heavy, on-demand modules — split out of the initial bundle:
+// - NewsPage pulls in framer-motion (shared with CalendarPage)
+// - ChatWidget pulls in the AI SDK + zod streaming runtime
+const NewsPage = lazy(() => import("./pages/NewsPage").then((m) => ({ default: m.NewsPage })));
+const ChatWidget = lazy(() =>
+  import("./components/ChatWidget").then((m) => ({ default: m.ChatWidget }))
+);
 
 export function App() {
   const [location] = useLocation();
   const isCalendar = location === "/calendar";
 
-  useEffect(() => {
-    // Warm up routes during idle time so navigation is instantaneous even on first click
-    const timer = setTimeout(() => {
-      prefetchRoute("/");
-      prefetchRoute("/news");
-      prefetchRoute("/calendar");
-    }, 250);
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
     <ThemeProvider>
       <div className="min-h-screen flex flex-col bg-[var(--bg-main)] text-[var(--text-main)] relative selection:bg-[#DC2626] selection:text-white transition-colors duration-200">
-        {/* Structural Vector Geometry Background */}
-        <OrganicBackground />
+        {/* Decorative canvas — mounts after paint, never blocks LCP */}
+        <Suspense fallback={null}>
+          <OrganicBackground />
+        </Suspense>
 
         <Navbar />
 
@@ -43,7 +45,11 @@ export function App() {
         >
           <Switch>
             <Route path="/" component={HomePage} />
-            <Route path="/news" component={NewsPage} />
+            <Route path="/news">
+              <Suspense fallback={null}>
+                <NewsPage />
+              </Suspense>
+            </Route>
             <Route path="/calendar">
               <Suspense fallback={<CalendarSkeleton />}>
                 <CalendarPage />
@@ -58,8 +64,11 @@ export function App() {
           </Switch>
         </main>
 
-        {/* Persistent AI Assistant Widget */}
-        <ChatWidget />
+        {/* Persistent AI Assistant Widget — lazy so the AI SDK + zod never
+            block first paint; renders nothing until the chunk resolves */}
+        <Suspense fallback={null}>
+          <ChatWidget />
+        </Suspense>
       </div>
     </ThemeProvider>
   );

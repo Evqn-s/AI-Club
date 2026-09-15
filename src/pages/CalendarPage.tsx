@@ -1,11 +1,11 @@
 import { useEffect, useState, useMemo, useCallback, useRef, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase, isSupabaseConfigured, type CalendarEvent } from "@/lib/supabase";
+import { isSupabaseConfigured, type CalendarEvent } from "@/lib/supabase";
 import {
-  prefetchCalendar,
   getCachedCalendar,
   fallbackEvents,
 } from "@/lib/cache";
+import { prefetchCalendar } from "@/lib/data";
 import { CalendarSkeleton } from "@/components/CalendarSkeleton";
 import { Button } from "@/components/ui/button";
 import {
@@ -873,6 +873,44 @@ export function CalendarPage() {
   const listContainerRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
 
+  // Mobile detection for list mode: below sm breakpoint we use native scrolling
+  // with top-element highlight only (no scroll hijacking / pager lock-in).
+  const [isMobileList, setIsMobileList] = useState<boolean>(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 640px)").matches : false
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    const onChange = (e: MediaQueryListEvent) => setIsMobileList(e.matches);
+    setIsMobileList(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  // Mobile list scroll tracker: rAF-throttled, passive — finds the topmost
+  // visible card and promotes it (bigger + highlighted). Never scrolls.
+  const listScrollRaf = useRef<number | null>(null);
+  const handleListScroll = useCallback(() => {
+    if (listScrollRaf.current !== null) return;
+    listScrollRaf.current = requestAnimationFrame(() => {
+      listScrollRaf.current = null;
+      const container = listContainerRef.current;
+      if (!container) return;
+      const items = container.querySelectorAll<HTMLElement>("[data-event-index]");
+      if (items.length === 0) return;
+      const cTop = container.getBoundingClientRect().top;
+      let candidate = Number(items[0].getAttribute("data-event-index") ?? 0);
+      items.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        // Last card whose top has crossed just below the container top = current top element
+        if (rect.top <= cTop + 24) {
+          candidate = Number(el.getAttribute("data-event-index") ?? candidate);
+        }
+      });
+      setListActiveIndex((prev) => (prev === candidate ? prev : candidate));
+    });
+  }, []);
+
   // Track whether there is enough space on either side of the viewport for the floating nav arrows
   const [hasSideSpace, setHasSideSpace] = useState(false);
 
@@ -1042,30 +1080,36 @@ export function CalendarPage() {
   }, []);
 
   // Supabase Realtime synchronization: strictly public.events
+  // Deferred — realtime client loads after mount so it never blocks LCP.
   useEffect(() => {
     let isMounted = true;
     fetchEvents();
 
     let channel: any = null;
-    if (isSupabaseConfigured && supabase) {
-      channel = supabase
-        .channel("realtime-events-only")
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "events" },
-          () => {
-            if (isMounted) {
-              fetchEvents();
+    let supabaseClient: any = null;
+    if (isSupabaseConfigured) {
+      import("@/lib/supabaseLazy").then(({ supabase }) => {
+        if (!isMounted || !supabase) return;
+        supabaseClient = supabase;
+        channel = supabase
+          .channel("realtime-events-only")
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "events" },
+            () => {
+              if (isMounted) {
+                fetchEvents();
+              }
             }
-          }
-        )
-        .subscribe();
+          )
+          .subscribe();
+      });
     }
 
     return () => {
       isMounted = false;
-      if (channel && supabase) {
-        supabase.removeChannel(channel);
+      if (channel && supabaseClient) {
+        supabaseClient.removeChannel(channel);
       }
     };
   }, [fetchEvents]);
@@ -1131,29 +1175,31 @@ export function CalendarPage() {
         }
 
         // 2. Keyword Search prioritizing TITLE over description/location/category
+        // Single round-trip: one OR query ordered so title matches sort first.
+        // Title rows are preferred client-side — avoids the old sequential
+        // title-then-description chain that doubled search latency.
         let matched: CalendarEvent | null = null;
 
-        if (isSupabaseConfigured && supabase) {
-          const { data: titleData, error: titleError } = await supabase
-            .from("events")
-            .select("*")
-            .ilike("title", `%${q}%`)
-            .order("date", { ascending: true })
-            .limit(1);
+        if (isSupabaseConfigured) {
+          try {
+            const { supabase } = await import("@/lib/supabaseLazy");
+            if (supabase) {
+              const { data } = await supabase
+                .from("events")
+                .select("id,title,date,time,location,description,category")
+                .or(`title.ilike.%${q}%,description.ilike.%${q}%,location.ilike.%${q}%,category.ilike.%${q}%`)
+                .order("date", { ascending: true })
+                .limit(10);
 
-          if (!titleError && titleData && titleData.length > 0) {
-            matched = titleData[0];
-          } else {
-            const { data: descData } = await supabase
-              .from("events")
-              .select("*")
-              .or(`title.ilike.%${q}%,description.ilike.%${q}%,location.ilike.%${q}%,category.ilike.%${q}%`)
-              .order("date", { ascending: true })
-              .limit(1);
-
-            if (descData && descData.length > 0) {
-              matched = descData[0];
+              if (data && data.length > 0) {
+                const lowerQ = q.toLowerCase();
+                matched =
+                  data.find((row) => (row.title as string).toLowerCase().includes(lowerQ)) ||
+                  data[0];
+              }
             }
+          } catch {
+            // Fall through to the local array search below
           }
         }
 
@@ -1386,6 +1432,7 @@ export function CalendarPage() {
   useEffect(() => {
     const el = listContainerRef.current;
     if (!el || viewMode !== "list") return;
+    if (isMobileList) return; // Mobile: native scrolling, no wheel hijacking
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
@@ -1418,14 +1465,20 @@ export function CalendarPage() {
       el.removeEventListener("wheel", onWheel);
       if (listWheelDecayTimer.current) clearTimeout(listWheelDecayTimer.current);
     };
-  }, [viewMode, handleNext, handlePrev]);
+  }, [viewMode, handleNext, handlePrev, isMobileList]);
 
-  // Touch swipe on list container
-  const handleListTouchStart = useCallback((e: React.TouchEvent) => {
-    listTouchStartY.current = e.touches[0].clientY;
-  }, []);
+  // Touch swipe on list container — desktop pager only; mobile uses native scroll
+  const handleListTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (isMobileList) return;
+      listTouchStartY.current = e.touches[0].clientY;
+    },
+    [isMobileList]
+  );
 
-  const handleListTouchEnd = useCallback((e: React.TouchEvent) => {
+  const handleListTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (isMobileList) return;
     if (listTouchStartY.current === null) return;
     const deltaY = e.changedTouches[0].clientY - listTouchStartY.current;
     listTouchStartY.current = null;
@@ -1435,7 +1488,7 @@ export function CalendarPage() {
     } else {
       handlePrev();
     }
-  }, [handleNext, handlePrev]);
+  }, [handleNext, handlePrev, isMobileList]);
 
   // View switch handler — symmetrical multi-phase transitions
   const handleViewToggle = useCallback(
@@ -1569,9 +1622,110 @@ export function CalendarPage() {
     }
   }, [viewMode, activeIndex, filteredListEvents, listActiveIndex, searchQuery]);
 
-  // Dedicated List View Content Renderer: Pager mode — renders events from listActiveIndex onward,
-  // no internal scrolling. Scroll/touch on the container advances the pager via handleNext/handlePrev.
+  // Dedicated List View Content Renderer:
+  // - Desktop: Pager mode — renders events from listActiveIndex onward,
+  //   no internal scrolling. Scroll/touch on the container advances the pager.
+  // - Mobile (<=640px): native smooth scrolling — renders ALL events, no
+  //   AnimatePresence / layout animations / scroll hijacking. The topmost
+  //   visible card is rendered bigger + highlighted via the passive
+  //   handleListScroll tracker (rAF-throttled, never scrolls programmatically).
   const renderListContent = useCallback(() => {
+    // ---- Mobile: lightweight native-scroll list, zero lock-in ----
+    if (isMobileList) {
+      return (
+        <div className="flex flex-col gap-4 pb-6">
+          {filteredListEvents.map((evt, evtIdx) => {
+            const isTop = evtIdx === listActiveIndex;
+            const isHighlighted = evt.id === highlightedEventId;
+            const showDateHeader =
+              evtIdx === 0 || filteredListEvents[evtIdx - 1]?.date !== evt.date;
+            return (
+              <div key={evt.id} data-event-index={evtIdx}>
+                {showDateHeader && (
+                  <div className="flex items-center gap-2 px-1 mb-2">
+                    <span
+                      className={`text-xs font-mono font-bold uppercase tracking-widest ${
+                        isTop ? "text-[#E8959C]" : "text-[#9B98A0]"
+                      }`}
+                    >
+                      {evt.date}
+                    </span>
+                    <div className="h-px flex-1 bg-gradient-to-r from-[#E0A3AA]/30 to-transparent" />
+                  </div>
+                )}
+                <article
+                  onClick={() => {
+                    setListActiveIndex(evtIdx);
+                    handleSelectEvent(evt);
+                  }}
+                  className={`relative rounded-2xl border text-left w-full overflow-hidden cursor-pointer ${
+                    isTop || isHighlighted
+                      ? "p-5 border-[#E0A3AA]/60 bg-gradient-to-br from-[#1A1A1E] to-[#121215] shadow-[0_0_40px_-8px_rgba(224,163,170,0.35)]"
+                      : "p-4 border-white/10 bg-[#121215]/80"
+                  }`}
+                >
+                  {isHighlighted && !isTop && (
+                    <div className="absolute inset-x-0 top-0 h-0.5 bg-[#E0A3AA]" />
+                  )}
+                  {isTop && (
+                    <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-[#E0A3AA] to-transparent" />
+                  )}
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <h3
+                        className={`font-display font-bold leading-tight flex-1 ${
+                          isTop ? "text-lg text-white" : "text-[15px] text-[#EDEDEF]"
+                        }`}
+                      >
+                        {evt.title}
+                        {isHighlighted && searchQuery && (
+                          <span className="ml-2 inline-flex items-center rounded-full bg-[#E0A3AA]/15 border border-[#E0A3AA]/40 px-2 py-0.5 text-[10px] font-sans font-bold uppercase tracking-wider text-[#E0A3AA] align-middle">
+                            Match
+                          </span>
+                        )}
+                      </h3>
+                      <span
+                        className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-mono font-bold whitespace-nowrap ${
+                          isTop
+                            ? "text-[#E0A3AA] border-[#E0A3AA]/30 bg-[#E0A3AA]/10"
+                            : "text-[#9B98A0] border-white/10 bg-white/5"
+                        }`}
+                      >
+                        {evt.time}
+                      </span>
+                    </div>
+                    <p className="text-xs font-mono text-[#9B98A0] flex items-center gap-1.5">
+                      <MapPin className="h-3 w-3 text-[#9B98A0] shrink-0" />
+                      <span className="truncate">{evt.location}</span>
+                    </p>
+                    {isTop && evt.description && (
+                      <p className="text-[13px] text-[#C9C7CE] leading-relaxed line-clamp-3">
+                        {evt.description}
+                      </p>
+                    )}
+                    {evt.category ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        <span
+                          className={`rounded-md border px-2 py-0.5 text-[10px] font-mono font-semibold ${
+                            isTop
+                              ? "text-[#E0A3AA] border-[#E0A3AA]/25 bg-[#E0A3AA]/10"
+                              : "text-[#9B98A0] border-white/10 bg-white/5"
+                          }`}
+                        >
+                          {evt.category}
+                        </span>
+                      </div>
+                    ) : null}
+                  </div>
+                </article>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // ---- Desktop: pager with depth stack ----
     // Events visible in the pager: from listActiveIndex to end
     const visibleEvents = filteredListEvents.slice(listActiveIndex);
 
@@ -1580,8 +1734,13 @@ export function CalendarPage() {
         ref={listContainerRef}
         onTouchStart={handleListTouchStart}
         onTouchEnd={handleListTouchEnd}
-        className="flex flex-col gap-3.5 select-text w-full overflow-hidden max-h-[calc(100dvh-13.5rem)] min-h-[420px] pr-1"
-        style={{ scrollbarWidth: "none" }}
+        onScroll={isMobileList ? handleListScroll : undefined}
+        className={
+          isMobileList
+            ? "flex flex-col gap-3.5 select-text w-full overflow-y-auto overscroll-contain max-h-[calc(100dvh-13.5rem)] min-h-[420px] pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [-webkit-overflow-scrolling:touch]"
+            : "flex flex-col gap-3.5 select-text w-full overflow-hidden max-h-[calc(100dvh-13.5rem)] min-h-[420px] pr-1"
+        }
+        style={isMobileList ? undefined : { scrollbarWidth: "none" }}
       >
         {filteredListEvents.length === 0 ? (
           <div className="text-center py-14 px-4 rounded-2xl border border-[#242021] bg-[#141213] space-y-3">
@@ -1762,11 +1921,23 @@ export function CalendarPage() {
     listActiveIndex,
     highlightedEventId,
     searchQuery,
+    isMobileList,
+    handleListScroll,
     generateGoogleCalendarUrl,
     handleListTouchStart,
     handleListTouchEnd,
     handleSelectEvent,
   ]);
+
+  // Cleanup pending scroll rAF on unmount
+  useEffect(() => {
+    return () => {
+      if (listScrollRaf.current !== null) {
+        cancelAnimationFrame(listScrollRaf.current);
+        listScrollRaf.current = null;
+      }
+    };
+  }, []);
 
   // Render content helper for Month or Week view for any period index
   const renderCalendarContent = useCallback(

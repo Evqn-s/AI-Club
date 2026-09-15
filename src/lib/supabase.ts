@@ -1,13 +1,16 @@
-import { createClient } from "@supabase/supabase-js";
+// Lightweight module: env flag + shared types ONLY.
+// Must never import @supabase/supabase-js — this file is statically imported
+// by every page, so it stays in the initial bundle. The heavy client lives in
+// supabaseLazy.ts and loads on demand.
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
-export const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : null;
+export function getSupabaseEnv(): { url: string; anonKey: string } {
+  return { url: supabaseUrl, anonKey: supabaseAnonKey };
+}
 
 export interface ClubInfo {
   id: string;

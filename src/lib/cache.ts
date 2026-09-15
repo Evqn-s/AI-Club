@@ -1,10 +1,6 @@
-import {
-  supabase,
-  isSupabaseConfigured,
-  type ClubInfo,
-  type NewsItem,
-  type CalendarEvent,
-} from "./supabase";
+// ── Sync cache core: zero network deps. Safe to import anywhere. ──
+// Fallbacks live here so HomePage renders instantly with zero fetches.
+import type { ClubInfo, NewsItem, CalendarEvent } from "./supabase";
 
 export const fallbackClubInfo: ClubInfo = {
   id: "club_main",
@@ -92,7 +88,6 @@ export const fallbackEvents: CalendarEvent[] = [
 
 // Module-level in-memory cache and in-flight promise tracker
 const cache = new Map<string, { data: unknown; ts: number }>();
-const inFlight = new Map<string, Promise<unknown>>();
 const TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 export function getCached<T>(key: string): T | null {
@@ -139,104 +134,22 @@ export function setCachedCalendar(data: CalendarEvent[]): void {
   setCached("calendar", data);
 }
 
-// Background prefetch methods
-export async function prefetchHome(): Promise<ClubInfo> {
-  const cached = getCachedHome();
-  if (cached) return cached;
-
-  if (inFlight.has("home")) {
-    return inFlight.get("home") as Promise<ClubInfo>;
-  }
-
-  const promise = (async () => {
-    try {
-      if (isSupabaseConfigured && supabase) {
-        const { data, error } = await supabase
-          .from("club_info")
-          .select("*")
-          .single();
-        if (!error && data) {
-          setCachedHome(data);
-          return data as ClubInfo;
-        }
-      }
-    } catch (e) {
-      console.error("Failed to prefetch club info:", e);
-    }
-    setCachedHome(fallbackClubInfo);
-    return fallbackClubInfo;
-  })().finally(() => {
-    inFlight.delete("home");
-  });
-
-  inFlight.set("home", promise);
-  return promise;
+// Background prefetch methods — lazy wrappers.
+// The heavy Supabase client + queries live in ./data and load on demand,
+// so static imports of THIS module never inflate the initial bundle.
+export async function prefetchHome() {
+  const { prefetchHome } = await import("./data");
+  return prefetchHome();
 }
 
-export async function prefetchNews(): Promise<NewsItem[]> {
-  const cached = getCachedNews();
-  if (cached) return cached;
-
-  if (inFlight.has("news")) {
-    return inFlight.get("news") as Promise<NewsItem[]>;
-  }
-
-  const promise = (async () => {
-    try {
-      if (isSupabaseConfigured && supabase) {
-        const { data, error } = await supabase
-          .from("news")
-          .select("*")
-          .order("timestamp", { ascending: false });
-        if (!error && data && data.length > 0) {
-          setCachedNews(data);
-          return data as NewsItem[];
-        }
-      }
-    } catch (e) {
-      console.error("Failed to prefetch news:", e);
-    }
-    setCachedNews(fallbackNews);
-    return fallbackNews;
-  })().finally(() => {
-    inFlight.delete("news");
-  });
-
-  inFlight.set("news", promise);
-  return promise;
+export async function prefetchNews() {
+  const { prefetchNews } = await import("./data");
+  return prefetchNews();
 }
 
-export async function prefetchCalendar(): Promise<CalendarEvent[]> {
-  const cached = getCachedCalendar();
-  if (cached) return cached;
-
-  if (inFlight.has("calendar")) {
-    return inFlight.get("calendar") as Promise<CalendarEvent[]>;
-  }
-
-  const promise = (async () => {
-    try {
-      if (isSupabaseConfigured && supabase) {
-        const { data, error } = await supabase
-          .from("events")
-          .select("*")
-          .order("date", { ascending: true });
-        if (!error && data && data.length > 0) {
-          setCachedCalendar(data);
-          return data as CalendarEvent[];
-        }
-      }
-    } catch (e) {
-      console.error("Failed to prefetch events:", e);
-    }
-    setCachedCalendar(fallbackEvents);
-    return fallbackEvents;
-  })().finally(() => {
-    inFlight.delete("calendar");
-  });
-
-  inFlight.set("calendar", promise);
-  return promise;
+export async function prefetchCalendar() {
+  const { prefetchCalendar } = await import("./data");
+  return prefetchCalendar();
 }
 
 /**

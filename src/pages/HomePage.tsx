@@ -2,11 +2,10 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { type ClubInfo } from "@/lib/supabase";
 import {
-  prefetchHome,
   getCachedHome,
   fallbackClubInfo,
-  prefetchRoute,
 } from "@/lib/cache";
+import { prefetchHome } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,22 +13,41 @@ import { Clock, Mail, ArrowRight, GraduationCap, Instagram, ExternalLink, Messag
 
 export function HomePage() {
   const cached = getCachedHome();
+  // Render instantly from fallback content — LCP never waits on Supabase.
+  // The Supabase sync (data.ts + client) loads after first paint.
   const [info, setInfo] = useState<ClubInfo>(() => cached || fallbackClubInfo);
-  const [loading, setLoading] = useState<boolean>(() => !cached);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
 
-    prefetchHome().then((data) => {
-      if (isMounted) {
-        setInfo(data);
-        setLoading(false);
-      }
-    });
+    const sync = () => {
+      prefetchHome().then((data) => {
+        if (isMounted) {
+          setInfo(data);
+          setLoading(false);
+        }
+      });
+    };
+
+    // If we already have warm cache, sync immediately; otherwise defer the
+    // network + client load until after first paint so LCP is never blocked.
+    if (cached) {
+      sync();
+    } else if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      (window as any).requestIdleCallback(sync, { timeout: 2500 });
+    } else {
+      const t = setTimeout(sync, 800);
+      return () => {
+        isMounted = false;
+        clearTimeout(t);
+      };
+    }
 
     return () => {
       isMounted = false;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const contactEmail = info?.contact_email || fallbackClubInfo.contact_email;
@@ -59,9 +77,9 @@ export function HomePage() {
           >
             <Link
               href="/calendar"
-              onMouseEnter={() => prefetchRoute("/calendar")}
-              onFocus={() => prefetchRoute("/calendar")}
-              onTouchStart={() => prefetchRoute("/calendar")}
+              onMouseEnter={() => import("@/lib/data").then(({ prefetchRoute }) => prefetchRoute("/calendar"))}
+              onFocus={() => import("@/lib/data").then(({ prefetchRoute }) => prefetchRoute("/calendar"))}
+              onTouchStart={() => import("@/lib/data").then(({ prefetchRoute }) => prefetchRoute("/calendar"))}
             >
               <span>View Schedule</span>
               <ArrowRight className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] ml-1.5" />

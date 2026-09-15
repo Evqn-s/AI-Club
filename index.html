@@ -6,9 +6,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Club Portal</title>
     <meta name="description" content="Official AI Club portal: updates, announcements, calendar events, and interactive club AI assistant." />
+    <meta name="theme-color" content="#0A090A" />
+    <!-- Preconnect only to origins needed before first paint -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet" />
+    <!-- Non-blocking font CSS: preload + print-media swap so it never blocks FCP/LCP -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700;800&display=swap"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700;800&display=swap"
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700;800&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
   </head>
   <body class="bg-[#0A090A] text-[#E5E5E7] min-h-screen antialiased selection:bg-[#2F4F4F]/30 selection:text-[#E5E5E7]">
     <div id="root"></div>

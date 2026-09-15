@@ -1,13 +1,12 @@
 import { useEffect, useState, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { supabase, isSupabaseConfigured, type NewsItem } from "@/lib/supabase";
+import { isSupabaseConfigured, type NewsItem } from "@/lib/supabase";
 import {
-  prefetchNews,
   getCachedNews,
   fallbackNews,
   setCachedNews,
   invalidateCache,
 } from "@/lib/cache";
+import { prefetchNews } from "@/lib/data";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,31 +44,38 @@ export function NewsPage() {
     fetchNews();
 
     // State & Mutation Synchronization: Real-time Supabase listener with cleanup
+    // Deferred — the realtime client loads only after first paint via the
+    // dynamic import, so it never competes with LCP.
     let channel: any = null;
-    if (isSupabaseConfigured && supabase) {
-      channel = supabase
-        .channel("realtime-news")
-        .on(
-          "postgres_changes",
-          { event: "INSERT", schema: "public", table: "news" },
-          (payload) => {
-            if (isMounted && payload.new) {
-              setNews((prev) => {
-                const next = [payload.new as NewsItem, ...prev];
-                setCachedNews(next);
-                return next;
-              });
+    let supabaseClient: any = null;
+    if (isSupabaseConfigured) {
+      import("@/lib/supabaseLazy").then(({ supabase }) => {
+        if (!isMounted || !supabase) return;
+        supabaseClient = supabase;
+        channel = supabase
+          .channel("realtime-news")
+          .on(
+            "postgres_changes",
+            { event: "INSERT", schema: "public", table: "news" },
+            (payload) => {
+              if (isMounted && payload.new) {
+                setNews((prev) => {
+                  const next = [payload.new as NewsItem, ...prev];
+                  setCachedNews(next);
+                  return next;
+                });
+              }
             }
-          }
-        )
-        .subscribe();
+          )
+          .subscribe();
+      });
     }
 
     // Memory & Listener Cleanup
     return () => {
       isMounted = false;
-      if (channel && supabase) {
-        supabase.removeChannel(channel);
+      if (channel && supabaseClient) {
+        supabaseClient.removeChannel(channel);
       }
     };
   }, []);
@@ -131,43 +137,29 @@ export function NewsPage() {
           </CardContent>
         </Card>
       ) : (
-        <motion.div layout className="space-y-3">
-          <AnimatePresence mode="popLayout">
-            {sortedNews.map((item) => (
-              <motion.div
-                key={item.id}
-                layout
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                transition={{
-                  layout: { type: "spring", stiffness: 320, damping: 28 },
-                  opacity: { duration: 0.2 },
-                }}
-              >
-                <Card className="glass-panel glass-panel-hover transition-all">
-                  <CardHeader className="pb-[clamp(0.5rem,2vw,0.75rem)]">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <Badge variant="default">{item.author}</Badge>
-                      <time dateTime={item.timestamp} className="text-fluid-small font-mono text-[#67646C]">
-                        {new Date(item.timestamp).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </time>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-[#E5E5E7] leading-relaxed text-fluid-body whitespace-pre-wrap font-normal">
-                      {item.content}
-                    </p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </motion.div>
+        <div className="space-y-3">
+          {sortedNews.map((item) => (
+            <Card key={item.id} className="glass-panel glass-panel-hover transition-all">
+              <CardHeader className="pb-[clamp(0.5rem,2vw,0.75rem)]">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Badge variant="default">{item.author}</Badge>
+                  <time dateTime={item.timestamp} className="text-fluid-small font-mono text-[#67646C]">
+                    {new Date(item.timestamp).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </time>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-[#E5E5E7] leading-relaxed text-fluid-body whitespace-pre-wrap font-normal">
+                  {item.content}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
     </div>
   );
