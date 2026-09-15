@@ -241,6 +241,9 @@ export default async function handler(req: Request) {
       google_classroom_code: "aiclub2026",
       instagram_handle: "@aiclub.official",
     },
+    // Misc club facts, one per row: { title, description }. Seeded by hand in
+    // the Supabase SQL Editor — see supabase/schema.sql and MISC_INFO_SQL.md.
+    info: [] as { title: string; description: string }[],
     news: [
       {
         content: "Welcome to the new semester! Join our Discord and check out our upcoming AI workshop series.",
@@ -263,14 +266,16 @@ export default async function handler(req: Request) {
   if (supabaseUrl && supabaseKey) {
     try {
       const supabase = createClient(supabaseUrl, supabaseKey);
-      const [infoRes, newsRes, eventsRes, secretRes] = await Promise.all([
+      const [clubInfoRes, infoRes, newsRes, eventsRes, secretRes] = await Promise.all([
         supabase.from("club_info").select("*").single(),
+        supabase.from("info").select("title, description").order("title", { ascending: true }).limit(25),
         supabase.from("news").select("*").order("timestamp", { ascending: false }).limit(5),
         supabase.from("events").select("*").order("date", { ascending: true }).limit(5),
         supabase.from("app_secrets").select("value").eq("key", "GOOGLE_GENERATIVE_AI_API_KEY").single(),
       ]);
 
-      if (infoRes.data) clubContext.club_info = infoRes.data;
+      if (clubInfoRes.data) clubContext.club_info = clubInfoRes.data;
+      if (infoRes.data && infoRes.data.length > 0) clubContext.info = infoRes.data;
       if (newsRes.data && newsRes.data.length > 0) clubContext.news = newsRes.data;
       if (eventsRes.data && eventsRes.data.length > 0) clubContext.calendar = eventsRes.data;
 
@@ -309,6 +314,8 @@ Rules:
 - Do not use em dashes (—); use commas, colons, or periods instead.
 - If you don't know the answer or it's not in the context, say you don't have that information.
 - Be friendly, clear, and direct. Keep answers under 150 words.
+- The "info" array holds miscellaneous club facts, each with a "title" and a
+  "description". Check it before saying you don't know something.
 
 Club Context Data:
 ${JSON.stringify(clubContext, null, 2)}`,
