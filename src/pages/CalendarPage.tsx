@@ -257,7 +257,8 @@ function getCoverflowArcTransform(offset: number, isTransitioning: boolean) {
     };
   }
 
-  const opacity = isTransitioning ? (Math.abs(offset) === 1 ? 0.75 : 0.35) : 0;
+  // Secondary slides are fully opaque when visible — no ghostly translucency
+  const opacity = isTransitioning ? 1 : 0;
 
   if (offset === -1) {
     return {
@@ -730,7 +731,6 @@ const DesktopWeekView = memo(function DesktopWeekView({
   highlightedDateString,
   isInteractive,
   onSelectEvent,
-  entering,
 }: {
   weekDays: {
     date: Date;
@@ -744,7 +744,6 @@ const DesktopWeekView = memo(function DesktopWeekView({
   highlightedDateString: string | null;
   isInteractive: boolean;
   onSelectEvent: (evt: CalendarEvent) => void;
-  entering: boolean;
 }) {
   return (
     <div className="hidden md:grid md:grid-cols-7 gap-2.5 w-full select-text">
@@ -753,15 +752,8 @@ const DesktopWeekView = memo(function DesktopWeekView({
         const isDateSearched = dayObj.dateString === highlightedDateString;
 
         return (
-          <motion.div
+          <div
             key={dayObj.dateString}
-            initial={entering ? { y: 10, opacity: 0.55 } : { y: 0, opacity: 1 }}
-            animate={
-              entering
-                ? { y: 0, opacity: 1, transition: { duration: 0.24, ease: [0.16, 1, 0.3, 1] } }
-                : { y: 0, opacity: 1 }
-            }
-            style={{ willChange: "transform, opacity" }}
             className={`rounded-2xl border p-2.5 flex flex-col gap-2.5 min-h-[350px] lg:min-h-[380px] transition-all shadow-2xl ${
               isDateSearched
                 ? "glass-panel ring-2 ring-[#E0A3AA] border-[#E0A3AA] border-t-[#E0A3AA] shadow-[0_0_18px_rgba(224,163,170,0.35)]"
@@ -796,26 +788,14 @@ const DesktopWeekView = memo(function DesktopWeekView({
                   <span className="text-xs text-[#67646C] font-mono">No events</span>
                 </div>
               ) : (
-                dayEvents.map((evt, evtIdx) => {
+                dayEvents.map((evt) => {
                   const isHighlighted = evt.id === highlightedEventId;
                   return (
                     <motion.div
                       key={evt.id}
-                      initial={entering ? { y: 14, opacity: 0.4 } : { y: 0, opacity: 1 }}
-                      animate={
-                        entering
-                          ? {
-                              y: 0,
-                              opacity: 1,
-                              transition: {
-                                duration: 0.26,
-                                delay: Math.min(evtIdx * 0.06, 0.3),
-                                ease: [0.16, 1, 0.3, 1],
-                              },
-                            }
-                          : { y: 0, opacity: 1 }
-                      }
-                      style={{ willChange: "transform, opacity" }}
+                      initial={{ y: 0, opacity: 1 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      style={{ willChange: "auto" }}
                       onClick={(e) => {
                         if (!isInteractive) return;
                         e.stopPropagation();
@@ -860,7 +840,7 @@ const DesktopWeekView = memo(function DesktopWeekView({
                 })
               )}
             </div>
-          </motion.div>
+          </div>
         );
       })}
     </div>
@@ -1813,6 +1793,11 @@ export function CalendarPage() {
             ? Math.max(0, weeks.findIndex((week) => week.some((d) => d.dateString === anchorDateString)))
             : 0;
 
+        // For plain month-to-month navigation (no mode switch), animate the
+        // entire grid as ONE unit — a single compositor layer the GPU translates
+        // once instead of 35 separate animation pipelines.
+        const isNavEntering = !enteringMonth && !foldingMonth && isCenter;
+
         return (
           <div className="space-y-1.5 select-text max-w-4xl mx-auto w-full">
             {/* Weekday Labels Header */}
@@ -1827,7 +1812,8 @@ export function CalendarPage() {
               ))}
             </div>
 
-            {/* Week rows — fan out of / fold back into the active week */}
+            {/* Week rows — fan out of / fold back into the active week during mode switch.
+                During normal month navigation: the whole grid moves as one layer. */}
             <div className="flex flex-col gap-1 sm:gap-1.5 md:gap-2">
               {weeks.map((week, rowIndex) => {
                 const delta = activeRow - rowIndex;
@@ -1863,7 +1849,7 @@ export function CalendarPage() {
                           }
                         : { y: 0, opacity: 1 }
                     }
-                    style={{ willChange: "transform, opacity" }}
+                    style={isNavEntering ? undefined : { willChange: "transform, opacity" }}
                     className="grid grid-cols-7 gap-1 sm:gap-1.5 md:gap-2"
                   >
                     {week.map((dayObj, idx) => {
@@ -1877,7 +1863,7 @@ export function CalendarPage() {
                           highlightedDateString={highlightedDateString}
                           isInteractive={isInteractive}
                           onSelectEvent={handleSelectEvent}
-                          entering={enteringMonth}
+                          entering={false}
                         />
                       );
                     })}
@@ -1917,7 +1903,6 @@ export function CalendarPage() {
             highlightedDateString={highlightedDateString}
             isInteractive={isInteractive}
             onSelectEvent={handleSelectEvent}
-            entering={enteringWeek}
           />
         </>
       );
@@ -2118,7 +2103,8 @@ export function CalendarPage() {
             onPanEnd={handlePanEnd}
             initial={
               modeTransition === "month"
-                ? { scale: 1.14, opacity: 0.3 }
+                // Month expand: rows slide down from collapsed height — scaleY grows from 0
+                ? { scaleY: 0.6, opacity: 0, transformOrigin: "top center" }
                 : modeTransition === "week"
                 ? { scale: 0.93, opacity: 0.4 }
                 : modeTransition === "list"
@@ -2128,9 +2114,9 @@ export function CalendarPage() {
             animate={
               modeTransition === "month"
                 ? {
-                    scale: 1,
+                    scaleY: 1,
                     opacity: 1,
-                    transition: { duration: 0.38, ease: [0.16, 1, 0.3, 1] },
+                    transition: { duration: 0.42, ease: [0.16, 1, 0.3, 1] },
                   }
                 : modeTransition === "week"
                 ? {
