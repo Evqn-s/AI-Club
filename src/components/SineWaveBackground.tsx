@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 
 const NUM_STRANDS = 10;
 const X_STEP = 6;
-const RIB_SPACING = 54; // Distance between subtle 3D vertical mesh lines
 
 export function SineWaveBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -132,29 +131,7 @@ export function SineWaveBackground() {
         points.push(strandPoints);
       }
 
-      // 1. Draw subtle 3D transverse ribs — dark mode only. On a light
-      // background these read as harsh vertical lines cutting through the
-      // waves, so they are skipped entirely in light mode.
-      if (!isLight) {
-        const numSteps = points[0]?.length || 0;
-        for (let pIdx = 0; pIdx < numSteps; pIdx += Math.round(RIB_SPACING / X_STEP)) {
-          const x = points[0][pIdx].x;
-          const edgeFactor = Math.sin((x / width) * Math.PI);
-          if (edgeFactor <= 0.05) continue;
-
-          ctx.beginPath();
-          for (let s = 0; s < NUM_STRANDS; s++) {
-            const pt = points[s][pIdx];
-            if (s === 0) ctx.moveTo(pt.x, pt.y);
-            else ctx.lineTo(pt.x, pt.y);
-          }
-          ctx.strokeStyle = `rgba(180, 50, 70, ${(0.07 * edgeFactor).toFixed(3)})`;
-          ctx.lineWidth = 0.75;
-          ctx.stroke();
-        }
-      }
-
-      // 2. Draw longitudinal 3D ribbon strands from back to front
+      // Draw longitudinal ribbon strands from back to front.
       for (let s = 0; s < NUM_STRANDS; s++) {
         const d = s / (NUM_STRANDS - 1);
         const strandPoints = points[s];

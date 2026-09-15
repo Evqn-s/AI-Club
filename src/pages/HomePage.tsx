@@ -22,20 +22,22 @@ export function HomePage() {
     let isMounted = true;
 
     const sync = () => {
-      prefetchHome().then((data) => {
-        if (isMounted) {
-          setInfo(data);
-          setLoading(false);
-        }
-      });
+      prefetchHome()
+        .then((data) => {
+          if (isMounted) {
+            setInfo(data);
+            setLoading(false);
+          }
+        })
+        .catch(() => {
+          if (isMounted) setLoading(false);
+        });
     };
 
     // If we already have warm cache, sync immediately; otherwise defer the
     // network + client load until after first paint so LCP is never blocked.
     if (cached) {
       sync();
-    } else if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-      (window as any).requestIdleCallback(sync, { timeout: 2500 });
     } else {
       const t = setTimeout(sync, 800);
       return () => {
@@ -47,7 +49,6 @@ export function HomePage() {
     return () => {
       isMounted = false;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const contactEmail = info?.contact_email || fallbackClubInfo.contact_email;

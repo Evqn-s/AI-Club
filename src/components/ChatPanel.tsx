@@ -1,12 +1,19 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useChat } from "@ai-sdk/react";
 import { X, Send, Bot, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const COOLDOWN_TICKS = 5;    // 5 ticks × 500ms = 2.5 second cooldown
+const COOLDOWN_TICKS = 5;
 const COOLDOWN_TICK_MS = 500;
-const CHAR_INTERVAL_MS = 33; // 10x faster (approx 30 characters per second)
+const CHAR_INTERVAL_MS = 33;
+
+type ChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+};
+
+const chatEndpoint = import.meta.env.VITE_BACKEND_URL || "/api/chat";
 
 function TypewriterMessage({
   content,
@@ -72,9 +79,10 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
   const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const completedMessageIds = useRef<Set<string>>(new Set());
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
-    api: "/api/chat",
-  });
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const lastMessage = messages[messages.length - 1];
   const isLatestAssistant = lastMessage?.role === "assistant";
@@ -145,16 +153,54 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
   const handleTypewriterComplete = useCallback((messageId: string) => {
     completedMessageIds.current.add(messageId);
     setIsTyping(false);
+    setIsLoading(false);
     // Once all the text is displayed, start the 2.5-second cooldown
     startCooldown();
   }, []);
 
-  function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (cooldown > 0 || isLoading || isTyping || !input.trim()) return;
+
+    const query = input.trim();
+    const userMessage: ChatMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content: query,
+    };
+    const history = messages.map(({ role, content }) => ({ role, content }));
+
+    setMessages((current) => [...current, userMessage]);
+    setInput("");
+    setError(null);
+    setIsLoading(true);
     setIsTyping(false);
-    handleSubmit(e);
-    // Notice: Cooldown does NOT start here. It starts only after the entire text is displayed.
+
+    try {
+      const response = await fetch(chatEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query, history }),
+      });
+      const payload = (await response.json()) as { answer?: string; detail?: string; error?: string };
+      if (!response.ok) throw new Error(payload.detail || payload.error || "The assistant could not respond.");
+
+      setMessages((current) => [
+        ...current,
+        {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content: payload.answer || "I don't have information about that.",
+        },
+      ]);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "The assistant could not respond.");
+      setIsLoading(false);
+    }
+  }
+
+  function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+    setInput(event.target.value);
   }
 
   const isInputDisabled = isLoading || isTyping || cooldown > 0;

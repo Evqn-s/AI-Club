@@ -5,7 +5,7 @@
 The AI Club Website is the official web portal for a student AI Club: it publishes club facts, announcements (news), and event schedules, and embeds an AI assistant chatbot that answers questions about the club using its live data. The system is a three-tier, JavaScript-first architecture built around graceful degradation.
 
 - **Tier 1 — React SPA.** A **React 19 + TypeScript + Vite** single-page app (`src/`, styled with Tailwind CSS v4). It reads club content directly from a **Supabase PostgreSQL** cloud database using a public anon key, caches it in memory with a 10-minute TTL, deduplicates in-flight fetches, and subscribes to **Supabase Realtime** so news and events update live without a page refresh. If Supabase is unreachable or unconfigured, every page falls back to hardcoded offline data in `src/lib/cache.ts`. The entire UI is driven by a **clamp-based fluid responsive system** (`--fluid-*` / `text-fluid-*` tokens in `src/index.css`) so pages scale smoothly from ~320px phones up to ~1600px desktops, and the Calendar page is lazy-loaded on demand (pre-warmed on navbar hover/focus/touch) behind a `Suspense` skeleton.
-- **Tier 2 — Vercel Edge Function.** `api/chat.ts` rate-limits chat traffic (25 req/min/IP) and answers every chat request in the **Vercel AI Data Stream protocol** that the widget's `useChat` hook expects. When a self-hosted Python backend is configured and reachable it forwards the call there (Option A); otherwise it executes the chat **directly on the edge** with the Vercel AI SDK (`streamText` + `@ai-sdk/google` on `gemini-3.1-flash-lite`), assembling club context from Supabase (Option B).
+- **Tier 2 — Python FastAPI service.** `backend/` is the sole chat runtime. The browser sends `{ query, history }` to `VITE_BACKEND_URL` or Vite's local `/api` proxy, and FastAPI calls `gemini_rag.py` with Supabase/SQLite data. There is no browser-side AI SDK or Vercel chat fallback.
 - **Tier 3 — Python FastAPI service (`backend/`).** The recommended self-hosted producer of chat and data APIs: a RAG chat endpoint (Google Gemini + Supabase club context), database endpoints (`/api/club-info`, `/api/news`, `/api/calendar`), and a Discord webhook endpoint (`/api/discord-webhook`), backed by Supabase with a local SQLite fallback (`backend/club_data.db`).
 - **Discord bridge.** A Supabase Edge Function (`supabase/functions/discord-sync/index.ts`) lets a Discord bot POST announcements straight into the Supabase `news` table, which the frontend instantly renders via Realtime — a second write path (`POST /api/discord-webhook`) goes through the FastAPI service.
 
@@ -19,14 +19,14 @@ The whole stack deploys as: GitHub repo → Vercel (hosting the built SPA + `/ap
 
 ### File Breakdown
 
-- **`package.json`** — Node/npm manifest. Declares the project name (`ai-club-website`), scripts (`dev` → Vite dev server, `build` → `tsc -b && vite build`, `preview`, `lint`, `format`), and all dependencies: React 19, `wouter` (routing), `@supabase/supabase-js` (database client), the Vercel AI SDK (`ai`, `@ai-sdk/google`, `@ai-sdk/react`) used by the Edge Function and the chat widget, `framer-motion` (calendar page transitions), Radix UI + `class-variance-authority` + `clsx` + `tailwind-merge` + `lucide-react` (UI primitives/icons), and dev-time Vite 6, Tailwind v4, TypeScript. It is the single source of truth for the toolchain used by `vite.config.ts` and `tsconfig.json`.
+- **`package.json`** — Node/npm manifest. Declares the React/Vite toolchain, Supabase client, Framer Motion, Radix UI, class utilities, icons, Tailwind, TypeScript, and the project scripts. Chat inference runs in Python and is intentionally absent from the frontend dependency graph.
 - **`package-lock.json`** — Lockfile pinning exact dependency versions for reproducible installs; no logic, consumed only by npm. Keep it in git so `npm ci` works.
 - **`index.html`** — The single HTML entry point that Vite injects the bundle into. Loads Google Fonts (Inter, Plus Jakarta Sans), sets the page title (`AI Club Portal`) and meta description, the initial dark-mode body colors, and the `#root` div plus `/src/main.tsx` module script. In production builds it is transformed and emitted into `dist/index.html`.
 - **`vite.config.ts`** — Vite build configuration. Registers the React and Tailwind v4 plugins, defines the `@/*` → `./src/*` path alias (matching `tsconfig.json` `paths`), sets dev port 3000, and proxies `/api/*` to `http://127.0.0.1:8000` during development so the chat widget's `/api/chat` calls reach the local FastAPI service (mirroring the production route).
 - **`tsconfig.json`** — TypeScript compiler config for `src` and `api` (strict mode, `bundler` module resolution, `@/*` path mapping). Paired with the `build` script's `tsc -b` for type-checking before bundling.
 - **`tsconfig.tsbuildinfo`** — Incremental build cache artifact produced by `tsc -b`; safe to delete, not hand-edited.
-- **`vercel.json`** — Production routing for Vercel. Keeps `/api/(.*)` requests going to the serverless functions (`api/chat.ts`) and rewrites every other route to `/index.html`, enabling SPA-style client routing for `wouter` on deep links like `/news`.
-- **`.env`** *(local, git-ignored)* and **`.env.example`** — Real secrets and their documented template. The public frontend vars (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) are consumed by `src/lib/supabase.ts`; the Vercel-side Gemini key (`GOOGLE_GENERATIVE_AI_API_KEY`) and optional backend target (`BACKEND_URL`/`FASTAPI_BACKEND_URL`) are consumed by `api/chat.ts`; the Python backend reads `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` (and, in older deployments, `GEMINI_API_KEY`) via `backend/sql_db.py`/`backend/gemini_rag.py`; and `DISCORD_BOT_TOKEN` is the Supabase Edge Function secret for `supabase/functions/discord-sync/index.ts`. (The legacy `VITE_BACKEND_URL` direct-backend URL is no longer read by the current chat widget, which always calls the relative `/api/chat`.)
+- **`vercel.json`** — Static Vercel hosting configuration. Rewrites browser routes to `/index.html` and does not host an API function.
+- **`.env`** *(local, git-ignored)* and **`.env.example`** — Frontend uses `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `VITE_BACKEND_URL`. FastAPI uses `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `FRONTEND_ORIGINS`, and the webhook secret. `DISCORD_BOT_TOKEN` remains a Supabase Edge Function secret.
 - **`.eslintrc.cjs`** — ESLint config (TypeScript parser, `eslint:recommended` + `@typescript-eslint/recommended` + Prettier). Backs the `npm run lint` script for all `.ts/.tsx` files.
 - **`.gitignore`** — Excludes `node_modules/`, `dist/`, `.env`/`.env.*`, `.vercel/`, `.supabase/`, `supabase/.temp/`, `*.tsbuildinfo`, and Python artifacts (including `backend/club_data.db`) so secrets, build outputs, and the dev SQLite database stay out of GitHub.
 - **`DEPLOYMENT_GUIDE.md`** — Step-by-step operator manual for the three deployment targets (GitHub, Supabase, Vercel), including SQL setup and environment-variable placement.
@@ -35,7 +35,7 @@ The whole stack deploys as: GitHub repo → Vercel (hosting the built SPA + `/ap
 
 ## 3. `src/` — React Frontend Application Core
 
-**Section Overview:** The browser tier. These four root files bootstrap the SPA, define client-side routing and global layout, and establish the design system (Tailwind theme + light/dark theme CSS + fluid responsive scaling). They import and compose everything from `src/pages/`, `src/components/`, and `src/lib/`, so this section is the hub all other `src/` sections hang off of. It connects outward to `api/chat.ts` (via the chat widget's `/api/chat` call) and Supabase (via `src/lib/supabase.ts`).
+**Section Overview:** The browser tier. These root files bootstrap the SPA, define routing and layout, and establish the Tailwind theme and fluid responsive system. The chat panel calls FastAPI through `VITE_BACKEND_URL` or the local `/api` proxy.
 
 ### File Breakdown
 
@@ -48,7 +48,7 @@ The whole stack deploys as: GitHub repo → Vercel (hosting the built SPA + `/ap
 
 ## 4. `src/pages/` — Route-Level Page Components
 
-**Section Overview:** One component per route, rendered by `App.tsx`'s `<Switch>`. Each page follows the same pattern: initialize state from the in-memory cache (`src/lib/cache.ts`), fetch/refresh through that same module, subscribe to Supabase Realtime where relevant, render skeleton/empty/error/list states with `src/components/ui/` primitives, and degrade to hardcoded fallback data when the database is unavailable. Pages never talk to `api/chat.ts` or the FastAPI backend; their only data source is Supabase via `lib/`.
+**Section Overview:** One component per route, rendered by `App.tsx`'s `<Switch>`. Pages initialize from the in-memory cache, refresh through the data layer, subscribe to Supabase Realtime where relevant, and render skeleton/empty/error/list states with shared UI primitives.
 
 ### File Breakdown
 
@@ -59,16 +59,16 @@ The whole stack deploys as: GitHub repo → Vercel (hosting the built SPA + `/ap
 
 ## 5. `src/components/` — Shared Layout & Feature Components
 
-**Section Overview:** Reusable presentational/behavioral components mounted by `App.tsx` (and, for `ui/`, by the pages). Splits into seven feature components plus a `ui/` subdirectory of primitive building blocks. `Navbar` and `ChatWidget` are the two components that reach beyond pure presentation: Navbar triggers data + module prefetching through `lib/cache`, and ChatWidget is the frontend half of the AI chat pipeline that terminates in `api/chat.ts` / `backend/`.
+**Section Overview:** Reusable presentational and behavioral components mounted by `App.tsx` and the route pages. `Navbar` owns route prefetching, while `ChatWidget` opens the FastAPI-backed chat panel.
 
 ### File Breakdown
 
 - **`src/components/Navbar.tsx`** — Sticky top bar. Uses `wouter`'s `useLocation` for active-link styling and re-orders its children responsively: on mobile the brand pill and a larger `ThemeBar` button sit in the top row while the nav pills wrap onto their own centered full-width row (with clamp-based 44 px touch targets); on desktop the pills return to the right-aligned inline group at their original sizes. Hover/focus/touch on a link calls `prefetchRoute(link.href)`; because the Calendar page is lazy, the calendar link additionally calls `preloadCalendar()`, which (1) prefetches the Supabase calendar data into `lib/cache` and (2) starts the module `import("../pages/CalendarPage")` immediately, storing the promise in the exported `calendarComponentPromise` that `App.tsx` feeds to `React.lazy()`.
 - **`src/components/ThemeToggle.tsx`** — Theme state owner and toggle UI. Exports `ThemeProvider` (a React context persisting `"dark" | "light"` to `localStorage` under `aiclub-theme` and toggling the `dark`/`light` classes on `<html>`), `useTheme`, and the `ThemeToggle` Sun/Moon pill button (fluid icon sizing). It is the *only* source of the `html.light` class that `src/index.css` and `SineWaveBackground.tsx` key off — the coupling point for the entire light-mode design.
 - **`src/components/ThemeBar.tsx`** — Thin wrapper that re-exports `ThemeProvider`/`useTheme` from `ThemeToggle.tsx` and renders the theme switcher as an ARIA-labeled group. It no longer owns theme state (that lives in `ThemeToggle.tsx`); kept as a separate file so `Navbar` has a single bar-shaped import.
-- **`src/components/ChatWidget.tsx`** — The AI assistant frontend. Drives the Vercel AI SDK's `useChat({ api: "/api/chat" })` hook (posts the `messages` array; `api/chat.ts` always responds in the AI Data Stream protocol). Contains the floating **Ask AI** toggle button (bottom-right, clamped), the collapsible chat panel, message bubbles with a per-character `TypewriterMessage` reveal (blinking cursor, ~30 chars/sec), a "Processing" three-dot indicator while awaiting the first token, an error banner, and a client-side **2.5 s cooldown** (5 × 500 ms ticks, started only after the typewriter finishes, shown as a countdown inside the send button) that disables input/submit. It also listens for the `aiclub:open-chat` `CustomEvent` (fired by HomePage's Ask AI button), closes on Esc, scrolls/focuses intelligently, and imports `Button`/`Input` from `components/ui/` for the form.
+- **`src/components/ChatWidget.tsx`** — The AI assistant shell. It lazy-loads `ChatPanel`, which sends typed `{ query, history }` requests directly to FastAPI and retains the per-character typewriter reveal, processing state, error state, cooldown, keyboard close, and focus behavior.
 - **`src/components/OrganicBackground.tsx`** — Thin composition wrapper for the fixed, non-interactive (`pointer-events-none`) background layer: mounts `SineWaveBackground` plus a top "perimeter accent line" gradient. Exists purely so `App.tsx` can mount one decorative unit.
-- **`src/components/SineWaveBackground.tsx`** — Canvas animation drawing 10 layered sine/cosine "ribbon strands" with depth-based amplitude, color, and glow, plus faint 3D ribs. Honors `prefers-reduced-motion` (renders a single static frame), handles DPR-aware resizing, reads `document.documentElement.classList` every frame to switch between the dark (crimson/rose) and light (blue/sapphire) palettes, and pauses/resumes on the `calendar:transition-start`/`calendar:transition-end` window events so the canvas stays stable behind the calendar's Framer Motion sheet transitions.
+- **`src/components/SineWaveBackground.tsx`** — Canvas animation drawing 10 layered sine/cosine ribbon strands with depth-based amplitude, color, and glow. It honors reduced motion, handles DPR-aware resizing, switches palettes through the theme observer, and pauses during calendar sheet transitions.
 - **`src/components/CalendarSkeleton.tsx`** — Skeleton layout that mirrors the calendar chrome while the lazy import resolves or data loads: header block, search + view-switcher control bars, date-stepper row, a 7-column weekday header, and a 5×7 day grid of pulsing placeholder blocks. Rendered by `App.tsx` as the `Suspense` fallback and by `CalendarPage` while loading with no cached data.
 
 ### Subsection: `src/components/ui/` — Primitive UI Building Blocks
@@ -94,28 +94,21 @@ The whole stack deploys as: GitHub repo → Vercel (hosting the built SPA + `/ap
 - **`src/lib/utils.ts`** — One-liner `cn()` helper combining `clsx` + `tailwind-merge`. Imported by all five `components/ui/` files; has no other coupling.
 ---
 
-## 7. `api/` — Vercel Serverless Edge Function
+## 7. `backend/` — Python FastAPI Service
 
-**Section Overview:** The production server-side tier for chat. Deployed automatically by Vercel (routed via `vercel.json`'s `/api/(.*)` rewrite) and executed on the edge runtime, this single function is the production entry point of `src/components/ChatWidget.tsx`. It rate-limits traffic and always answers in the **Vercel AI Data Stream protocol** that `useChat` expects, either by proxying to the self-hosted Python backend (when configured and reachable) or by generating the answer directly on the edge with the Vercel AI SDK.
-
-### File Breakdown
-
-- **`api/chat.ts`** — One handler, three behaviors:
-  - **Rate limiting:** An in-memory sliding-window limiter keyed by client IP (`x-forwarded-for`), 25 requests/minute, returning HTTP 429 with `Retry-After: 60`.
-  - **GET (diagnostics):** A browser-callable health probe reporting whether the Gemini key exists and its source (`process.env` vs Supabase `app_secrets`), the configured model, the list of `generateContent`-capable Gemini models, and FastAPI reachability via a `/health` probe (`connected`/`unreachable`/`not_configured`) — used for setup troubleshooting.
-  - **POST (chat):** Accepts a `{ messages: [...] }` body (or legacy `{ query, history }`). **Option A — proxy:** if `BACKEND_URL`/`FASTAPI_BACKEND_URL` is set, it forwards the body to `{backend}/api/chat` (3.5 s abort timeout) and, on a healthy response, re-wraps the plain JSON `answer` into AI Data Stream frames (`0:{...}\n` + `d:{"finishReason":"stop"}\n`). **Option B — direct edge execution (default when no backend is configured or it is unreachable):** sanitizes the last 10 user/assistant messages (≤ 1000 chars each), resolves the Gemini key (env var first, then the Supabase `app_secrets` table), assembles live club context (club_info + 5 news + 5 events from Supabase, hardcoded defaults otherwise), and calls `streamText` (`ai` SDK) with `createGoogleGenerativeAI` on `gemini-3.1-flash-lite` (2048 max tokens, temperature 0.7) using a club-assistant system prompt (≤ 150 words, no em dashes, admit unknowns), returning `toDataStreamResponse()` directly.
+**Section Overview:** FastAPI is the sole chat runtime. The browser posts `{ query, history }` to `VITE_BACKEND_URL` or Vite's local `/api` proxy. FastAPI calls `gemini_rag.py`, which reads Supabase first and SQLite second.
 
 ---
 
 ## 8. `backend/` — Python FastAPI Service (Self-Hosted Tier)
 
-**Section Overview:** The recommended self-hosted Python backend that owns chat and data APIs. Internally it is layered like a classic service: `main.py` (app/CORS/lifecycle) → `api.py` (routes/DTOs/auth) → `sql_db.py` (data access, Supabase-first with SQLite fallback) → `gemini_rag.py` (LLM prompt/answer). In dev it is reached through `vite.config.ts`'s `/api` proxy; in production `api/chat.ts` forwards to it when its URL is configured. Every route degrades gracefully if Supabase or Gemini is unavailable.
+**Section Overview:** The Python backend owns chat and data APIs. Its layers are `main.py` (app/CORS/lifecycle) → `api.py` (routes/validation/auth) → `sql_db.py` (Supabase-first data access with SQLite fallback) → `gemini_rag.py` (prompt and answer generation). Vite proxies `/api` locally; production uses `VITE_BACKEND_URL`.
 
 ### File Breakdown
 
 - **`backend/__init__.py`** — Empty package marker that makes the folder importable as `backend.*` (required because `main.py`, `api.py`, `gemini_rag.py`, and `sql_db.py` import each other via `from backend.xxx import ...`, and uvicorn loads `backend.main:app`).
-- **`backend/main.py`** — FastAPI app factory and entry point. Creates the app, adds a 404-logging middleware, permissive CORS (any origin, so the Vercel frontend and dev Vite server may call it), mounts the router from `api.py`, and exposes `/` (service descriptor listing endpoints) and `/health` (liveness probe consumed by `api/chat.ts`'s GET diagnostics and forwarding path). `python backend/main.py` runs uvicorn on port 8000 (or `PORT`).
-- **`backend/api.py`** — HTTP routes and request models. Defines `ChatQuery`/`DiscordMessage` Pydantic models and the endpoints: `GET /api/club-info`, `GET /api/news`, `GET /api/calendar` (thin wrappers over `sql_db.py` getters), `POST /api/chat` (accepts a plain `{query, history}` body *or* a `{messages: [...]}` array — the shape the AI SDK `useChat` client sends — calls `gemini_rag.generate_rag_answer`, and responds either as plain JSON `{"answer": ...}` for simple clients or as an **AI Data Stream** (`0:`/`e:` frames with `x-vercel-ai-data-stream: v1`) when the client supplies `messages` or accepts streaming), and `POST /api/discord-webhook` (bearer-token-authenticated via `WEBHOOK_SECRET`, falling back to `DISCORD_BOT_TOKEN`, persisting announcements through `sql_db.add_news`). It is the only backend file that knows about HTTP concerns.
+- **`backend/main.py`** — FastAPI app factory with restricted CORS from `FRONTEND_ORIGINS`, health endpoint, and uvicorn entry point.
+- **`backend/api.py`** — HTTP routes and Pydantic validation. `POST /api/chat` returns JSON `{ "answer": ... }`; the webhook fails closed without a configured secret and enforces payload limits.
 - **`backend/sql_db.py`** — Data access layer with dual backends. Loads `.env` from the repo root or `backend/`, lazily creates a Supabase client (service-role key preferred) and, for every operation (`get_club_info`, `get_news`, `get_calendar`, `add_news`, `get_secret`), tries Supabase first and silently falls back to local SQLite (`club_data.db`) on failure. `init_local_db()` runs at import time to create/seed the `club_info`, `news`, and `events` SQLite tables (same shape as `supabase/schema.sql`) with default rows. `get_secret` additionally falls back to `os.getenv`, providing the Gemini key lookup used by `gemini_rag.py`.
 - **`backend/gemini_rag.py`** — RAG answer generator. Resolves the Gemini API key (env → `sql_db.get_secret`), assembles context from `sql_db` (`club_info`, 5 events, 5 news), formats the last 4 history turns, and builds a club-assistant prompt (strictly use context, ≤ 150 words, no em dashes, admit unknowns), then calls `google-genai` `generate_content` on `gemini-3.1-flash-lite` and returns the text. Called only by `api.py`.
 - **`backend/requirements.txt`** — Python dependency pins (`fastapi`, `uvicorn`, `pydantic`, `python-dotenv`, `google-genai`, `supabase`, `requests`) for `pip install -r`.
@@ -125,7 +118,7 @@ The whole stack deploys as: GitHub repo → Vercel (hosting the built SPA + `/ap
 
 ## 9. `supabase/` — Cloud Database Schema & Edge Function
 
-**Section Overview:** Everything that runs *inside* Supabase rather than in the repo's Node or Python processes. `schema.sql` defines the shared PostgreSQL tables that the React frontend (`src/lib/`), the Vercel Edge Function (`api/chat.ts`), and the Python backend (`backend/sql_db.py`) all read, and the `functions/discord-sync` Edge Function provides the write path for Discord-sourced announcements. This section is therefore the data contract for the whole system.
+**Section Overview:** Everything that runs inside Supabase rather than in the browser or Python process. `schema.sql` defines the PostgreSQL contract used by the frontend and backend, while the Discord Edge Function provides the announcement write path.
 
 ### File Breakdown
 
@@ -148,8 +141,8 @@ The whole stack deploys as: GitHub repo → Vercel (hosting the built SPA + `/ap
 
 1. **Page content flow:** `main.tsx` → `App.tsx` routes → a page in `src/pages/` → `src/lib/cache.ts` (cache/prefetch, in-flight dedup, TTL) → `src/lib/supabase.ts` → Supabase tables from `supabase/schema.sql`. Failure or unconfigured Supabase → hardcoded fallbacks in `cache.ts`. `Navbar.tsx`/`App.tsx`/`HomePage.tsx` warm the cache via `prefetchRoute` before navigation.
 2. **Calendar page flow (lazy):** hovering/focusing/touching the Calendar nav pill fires `preloadCalendar()` in `Navbar.tsx` — it prefetches `/calendar` data into `cache.ts` **and** starts `import("../pages/CalendarPage")`, storing the promise in `calendarComponentPromise`. `App.tsx`'s `React.lazy(() => calendarComponentPromise || import(...))` consumes that promise (or imports on click), rendering `CalendarSkeleton` inside `Suspense` until the chunk is ready; `CalendarPage` then hydrates from cache and subscribes to `realtime-events-only` for live updates.
-3. **Chat flow (production):** `ChatWidget.tsx` (`useChat` from `@ai-sdk/react`, sends `{ messages }`) → `POST /api/chat` → Vercel Edge Function `api/chat.ts` (25 req/min/IP rate limit). If `BACKEND_URL` is configured and healthy, the request is forwarded to `backend/api.py` → `gemini_rag.py` → `sql_db.py` (Supabase/SQLite) → Gemini, and the JSON answer is re-wrapped as an AI Data Stream; otherwise the Edge Function answers directly with Supabase club context + Gemini key (env → `app_secrets`) via `streamText` on `gemini-3.1-flash-lite`, returning `toDataStreamResponse()`. Either way the stream drives the typewriter reveal, and a client-side 2.5 s cooldown starts only after the message finishes typing. `GET /api/chat` is a browser-callable diagnostics endpoint.
-4. **Chat flow (development):** `vite.config.ts` proxies `/api/*` to `127.0.0.1:8000`, where `backend/main.py` serves the same `POST /api/chat` endpoint directly (also speaking the AI Data Stream protocol to `useChat` clients).
+3. **Chat flow:** `ChatPanel.tsx` sends `{ query, history }` to FastAPI → `gemini_rag.py` → `sql_db.py` (Supabase/SQLite) → Gemini. The JSON answer drives the existing client-side typewriter and cooldown.
+4. **Local chat flow:** `vite.config.ts` proxies `/api/*` to `127.0.0.1:8000`.
 5. **Announcement publishing flow:** Discord bot → `supabase/functions/discord-sync/index.ts` (token check) → insert into `public.news` → Supabase Realtime → `NewsPage.tsx` subscription updates the list and `src/lib/cache.ts` instantly. (Alternative: bot → `POST /api/discord-webhook` on the FastAPI service with a Bearer token → `backend/sql_db.py: add_news` → same table.)
 6. **Theming flow:** `ThemeToggle.tsx`'s `ThemeProvider` toggles `html.light`/`html.dark` + `localStorage` (`aiclub-theme`) → `src/index.css` overrides repaint the UI (the calendar page has transitions disabled for a paint-instant switch) and `SineWaveBackground.tsx` swaps its palette per-frame. During calendar sheet transitions the sine wave pauses on `calendar:transition-start`/`end` window events, while Framer Motion transforms continue unaffected.
 
@@ -159,10 +152,11 @@ The whole stack deploys as: GitHub repo → Vercel (hosting the built SPA + `/ap
 
 | Variable | Set where | Consumed by |
 |---|---|---|
-| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | `.env` (public — safe in the bundle) | `src/lib/supabase.ts`; fallbacks in `backend/sql_db.py` and `api/chat.ts` |
-| `GOOGLE_GENERATIVE_AI_API_KEY` (or legacy `GEMINI_API_KEY`) | Vercel env or Supabase `app_secrets` table | `api/chat.ts` (direct edge execution), `backend/gemini_rag.py` (via `sql_db.get_secret`) |
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | `.env` (public — safe in the bundle) | `src/lib/supabase.ts` and `backend/sql_db.py` |
+| `VITE_BACKEND_URL` | `.env` (public) | `src/components/ChatPanel.tsx` |
+| `GOOGLE_GENERATIVE_AI_API_KEY` (or legacy `GEMINI_API_KEY`) | FastAPI env or Supabase `app_secrets` | `backend/gemini_rag.py` |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Server `.env` (FastAPI host) | `backend/sql_db.py`; auto-injected into the `discord-sync` Edge Function |
-| `BACKEND_URL` / `FASTAPI_BACKEND_URL` | Vercel env (optional) | `api/chat.ts` (Option A forwarding + `/health` diagnostics) |
+| `FRONTEND_ORIGINS` | FastAPI env | `backend/main.py` CORS policy |
 | `DISCORD_BOT_TOKEN` | Supabase Edge Function secrets | `supabase/functions/discord-sync/index.ts` |
 | `WEBHOOK_SECRET` (falls back to `DISCORD_BOT_TOKEN`) | Backend `.env` | `backend/api.py` (`POST /api/discord-webhook`) |
 

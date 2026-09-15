@@ -21,7 +21,6 @@ export default defineConfig({
           if (id.includes("node_modules")) {
             if (id.includes("framer-motion") || id.includes("motion-dom")) return "motion";
             if (id.includes("@supabase")) return "supabase";
-            if (id.includes("@ai-sdk") || id.includes("/ai/") || id.includes("zod")) return "ai";
             if (id.includes("react-dom") || id.includes("scheduler")) return "react-dom";
             if (id.includes("react") || id.includes("wouter") || id.includes("use-sync-external-store"))
               return "vendor";

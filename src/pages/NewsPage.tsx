@@ -1,4 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { isSupabaseConfigured, type NewsItem } from "@/lib/supabase";
 import {
   getCachedNews,
@@ -29,7 +31,7 @@ export function NewsPage() {
     try {
       const data = await prefetchNews();
       setNews(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to load news:", err);
       setError("Unable to connect to announcements database. Showing local offline data.");
       setNews(fallbackNews);
@@ -46,8 +48,8 @@ export function NewsPage() {
     // State & Mutation Synchronization: Real-time Supabase listener with cleanup
     // Deferred — the realtime client loads only after first paint via the
     // dynamic import, so it never competes with LCP.
-    let channel: any = null;
-    let supabaseClient: any = null;
+    let channel: RealtimeChannel | null = null;
+    let supabaseClient: SupabaseClient | null = null;
     if (isSupabaseConfigured) {
       import("@/lib/supabaseLazy").then(({ supabase }) => {
         if (!isMounted || !supabase) return;
@@ -137,29 +139,43 @@ export function NewsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {sortedNews.map((item) => (
-            <Card key={item.id} className="glass-panel glass-panel-hover transition-all">
-              <CardHeader className="pb-[clamp(0.5rem,2vw,0.75rem)]">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <Badge variant="default">{item.author}</Badge>
-                  <time dateTime={item.timestamp} className="text-fluid-small font-mono text-[#67646C]">
-                    {new Date(item.timestamp).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </time>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-[#E5E5E7] leading-relaxed text-fluid-body whitespace-pre-wrap font-normal">
-                  {item.content}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <motion.div layout className="space-y-3">
+          <AnimatePresence mode="popLayout">
+            {sortedNews.map((item) => (
+              <motion.div
+                key={item.id}
+                layout
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{
+                  layout: { type: "spring", stiffness: 320, damping: 28 },
+                  opacity: { duration: 0.2 },
+                }}
+              >
+                <Card className="glass-panel glass-panel-hover transition-all">
+                  <CardHeader className="pb-[clamp(0.5rem,2vw,0.75rem)]">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <Badge variant="default">{item.author}</Badge>
+                      <time dateTime={item.timestamp} className="text-fluid-small font-mono text-[#67646C]">
+                        {new Date(item.timestamp).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </time>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-[#E5E5E7] leading-relaxed text-fluid-body whitespace-pre-wrap font-normal">
+                      {item.content}
+                    </p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
       )}
     </div>
   );

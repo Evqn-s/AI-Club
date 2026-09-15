@@ -5,7 +5,7 @@
 Your AI Club Website deploys in three connected parts:
 1. **GitHub** — Stores your codebase, tracks versions, and triggers automatic CI/CD deployments.
 2. **Supabase** — Provides the Postgres database, real-time subscriptions, and the Discord sync Edge Function.
-3. **Vercel** — Hosts the React/Vite frontend static bundle and runs the `/api/chat` serverless Edge function (Google Gemini 1.5 Flash).
+3. **Vercel** — Hosts the React/Vite frontend static bundle. Host the Python FastAPI service separately for chat.
 
 ---
 
@@ -160,19 +160,17 @@ Because all project files are now at the repository root, Vercel will automatica
 | Output Directory | `dist` |
 
 ### Step 3 — Configure Environment Variables
-In the **Environment Variables** section on Vercel, add the following 5 variables:
+In the **Environment Variables** section on Vercel, add the frontend variables below. Configure the backend variables on the FastAPI host.
 
 | Variable Name | Value | Purpose |
 |---|---|---|
 | `VITE_SUPABASE_URL` | `https://<YOUR_PROJECT_REF>.supabase.co` | Supabase URL for the frontend |
 | `VITE_SUPABASE_ANON_KEY` | `eyJ...` (anon public key) | Public Supabase read access |
-| `GOOGLE_GENERATIVE_AI_API_KEY` | `AIzaSy...` | Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey) |
-| `SUPABASE_URL` | `https://<YOUR_PROJECT_REF>.supabase.co` | Server-side Supabase URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | `eyJ...` (service role secret) | Server-side access for AI chat context |
+| `VITE_BACKEND_URL` | `https://api.example.com` | Public FastAPI URL |
 
 ### Step 4 — Deploy
 1. Click **Deploy**.
-2. Vercel will clone the repo, install dependencies, build the static site, and deploy the `/api/chat` Edge function.
+2. Vercel will clone the repo, install dependencies, and deploy the static site.
 3. In ~45 seconds, you will receive a production URL (e.g. `https://ai-club-website.vercel.app`).
 
 ---
@@ -215,7 +213,8 @@ git push origin main
 |---|:---:|:---:|---|
 | `VITE_SUPABASE_URL` | Yes | Client (Browser) | Public Supabase endpoint |
 | `VITE_SUPABASE_ANON_KEY` | Yes | Client (Browser) | Public anon key for database queries |
-| `GOOGLE_GENERATIVE_AI_API_KEY` | Yes | Server (`/api/chat`) | Google Gemini API key for club assistant |
-| `SUPABASE_URL` | Yes | Server (`/api/chat`) | Backend Supabase endpoint |
-| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Server (`/api/chat`) | Private key for server context fetching |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | Yes | FastAPI server | Google Gemini API key for club assistant |
+| `SUPABASE_URL` | Yes | FastAPI server | Backend Supabase endpoint |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes | FastAPI server | Private key for server context fetching |
+| `FRONTEND_ORIGINS` | Yes | FastAPI server | Allowed browser origins |
 | `DISCORD_BOT_TOKEN` | Optional | Supabase Edge Function | Token for `discord-sync` function authentication |

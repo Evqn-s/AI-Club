@@ -27,25 +27,19 @@ below). It is pure SQL with zero code changes and it works immediately.
 
 ## How the AI actually reads your database
 
-The chat endpoint is `api/chat.ts` (a Vercel Edge Function). It does not do RAG,
-embeddings, or semantic search. It runs **four fixed queries**, stringifies the
-results, and pastes them into the Gemini system prompt.
+The chat endpoint is `backend/api.py`, backed by `backend/gemini_rag.py`. It does
+not do embeddings or semantic search. It reads the club, info, news, and event
+rows through `backend/sql_db.py`, then places the bounded context in the Gemini
+prompt.
 
-`api/chat.ts`, lines 269-280:
+`backend/gemini_rag.py`:
 
 ```ts
-const [clubInfoRes, infoRes, newsRes, eventsRes, secretRes] = await Promise.all([
-  supabase.from("club_info").select("*").single(),
-  supabase.from("info").select("title, description").order("title", { ascending: true }).limit(25),
-  supabase.from("news").select("*").order("timestamp", { ascending: false }).limit(5),
-  supabase.from("events").select("*").order("date", { ascending: true }).limit(5),
-  supabase.from("app_secrets").select("value").eq("key", "GOOGLE_GENERATIVE_AI_API_KEY").single(),
-]);
-
-if (clubInfoRes.data) clubContext.club_info = clubInfoRes.data;
-if (infoRes.data && infoRes.data.length > 0) clubContext.info = infoRes.data;
-if (newsRes.data && newsRes.data.length > 0) clubContext.news = newsRes.data;
-if (eventsRes.data && eventsRes.data.length > 0) clubContext.calendar = eventsRes.data;
+context = {
+      "club_info": get_club_info() or {},
+      "calendar": get_calendar(limit=5) or [],
+      "news": get_news(limit=5) or [],
+}
 ```
 
 That object is then injected into the prompt at line 326:
@@ -138,9 +132,9 @@ answer from `built_by` / `website_credits`.
 
 | Link in the chain | Detail |
 | --- | --- |
-| Query | `api/chat.ts:267` → `from("club_info").select("*").single()` |
+| Query | `backend/sql_db.py` getters → Supabase first, SQLite fallback |
 | `select("*")` | PostgREST expands to **all** columns, including ones added later |
-| Prompt injection | `api/chat.ts:314` → `JSON.stringify(clubContext, null, 2)` |
+| Prompt injection | `backend/gemini_rag.py` → `json.dumps(context, default=str)` |
 | Grants | New columns inherit the table-level `grant select on public.club_info` — **no extra grant needed** |
 | RLS | The existing `"Public read club_info"` policy is row-level and applies to the whole row, so new columns are readable |
 
@@ -157,11 +151,11 @@ key ships in the client bundle. Keep API keys, passwords, and anything private i
 **You do not need this — the `info` table above is recommended and already wired.
 Choose Option B only if you want a differently-named or differently-shaped fact
 store (e.g. with `topic` + `question` + `answer` columns). It requires editing
-`api/chat.ts` and redeploying.
+`backend/gemini_rag.py` and redeploying FastAPI.
 
 Want a differently-named table? The `info` table above is already wired, so this
 is only useful if you insist on a different schema. A new table is **invisible to the
-AI until you also edit `api/chat.ts`** to query it. The SQL is only half the work.
+AI until you also edit `backend/gemini_rag.py`** to query it. The SQL is only half the work.
 
 ### Step 1 — Create the table
 
@@ -205,7 +199,7 @@ insert into public.misc_info (topic, question, answer) values
    '<< answer >>');
 ```
 
-### Step 3 — Wire it into `api/chat.ts` (REQUIRED)
+### Step 3 — Wire it into `backend/gemini_rag.py` (REQUIRED)
 
 This is what actually makes the table readable by the AI. Without it, the table is
 never queried and nothing changes.
@@ -237,7 +231,7 @@ never queried and nothing changes.
   ...
 ```
 
-4. Commit and let Vercel redeploy. `api/chat.ts` is a serverless function, so
+4. Restart or redeploy FastAPI. `backend/gemini_rag.py` owns the prompt context, so
 **a new table always needs a deploy — the already-wired `info` table does not.**
 ```
 
@@ -245,7 +239,7 @@ never queried and nothing changes.
 
 ## Gotchas
 
-1. **Never `INSERT` a second `club_info` row.** `api/chat.ts:269` calls `.single()`,
+1. **Never `INSERT` a second `club_info` row.** The backend reads the singleton row,
    which errors when the query matches zero or more than one row. If that call
          fails, `clubInfoRes.data` is `null` and **the whole `club_info` context silently
    falls back to the hardcoded defaults** at lines 237-243, so real club data
@@ -306,7 +300,7 @@ Then open the site's chat and ask something matching a title, e.g.
 | | The `info` table (RECOMMENDED) | A bespoke `misc_info` table |
 | --- | --- | --- |
 | SQL to run | Yes | Yes |
-| Code change | **None** | `api/chat.ts` (extra query + context key) |
+| Code change | **None** | `backend/gemini_rag.py` already reads the shared context tables |
 | Redeploy needed | **No** | Yes |
 | Live for the AI | **Immediately** | After the deploy |
 | Risk to the app | Very low | Touches the chat handler |

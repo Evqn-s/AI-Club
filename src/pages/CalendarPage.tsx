@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useCallback, useRef, memo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type PanInfo } from "framer-motion";
+import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { isSupabaseConfigured, type CalendarEvent } from "@/lib/supabase";
 import {
   getCachedCalendar,
@@ -244,7 +245,17 @@ function getWeekData(currentDate: Date) {
   return { weekDays: days, weekTitle: title };
 }
 
-// Pure GPU accelerated Cylindrical Coverflow Arc transform
+function buildEventDateIndex(events: CalendarEvent[]) {
+  const index = new Map<string, CalendarEvent[]>();
+  for (const event of events) {
+    const dayEvents = index.get(event.date);
+    if (dayEvents) dayEvents.push(event);
+    else index.set(event.date, [event]);
+  }
+  return index;
+}
+
+// Week view keeps the cylindrical coverflow presentation.
 function getCoverflowArcTransform(offset: number, isTransitioning: boolean) {
   if (offset === 0) {
     return {
@@ -257,12 +268,12 @@ function getCoverflowArcTransform(offset: number, isTransitioning: boolean) {
     };
   }
 
+  const opacity = isTransitioning ? 1 : 0;
+
   // Secondary slides stay fully visible during the slide so the 3D coverflow
   // arc (rotated, receding, translucent) reads exactly as it always did.
   // The main period is distinguished by the translucent veil over the centre
   // slide — see .cal-slide-veil — not by dimming or masking its neighbours.
-  const opacity = isTransitioning ? 1 : 0;
-
   if (offset === -1) {
     return {
       rotateY: 35,
@@ -308,6 +319,75 @@ const coverflowSpring = {
   stiffness: 260,
   damping: 28,
 };
+
+const fastCarouselTransition = {
+  type: "tween" as const,
+  duration: 0.16,
+  ease: "easeOut" as const,
+};
+
+// Month navigation uses a flat three-sheet track. A single translate/scale
+// per sheet preserves the layered swipe feel without 3D matrix composition.
+function getMonthSwipeTransform(offset: number, isTransitioning: boolean) {
+  if (offset === 0) {
+    return {
+      x: 0,
+      scale: 1,
+      opacity: 1,
+      zIndex: 30,
+    };
+  }
+
+  return {
+    x: 180,
+    scale: 0.96,
+    opacity: isTransitioning ? 1 : 0,
+    zIndex: 20,
+  };
+}
+
+const monthSwipeTransition = {
+  type: "spring" as const,
+  stiffness: 220,
+  damping: 30,
+  mass: 0.8,
+};
+
+const MonthPreview = memo(function MonthPreview({
+  monthIndex,
+  events,
+}: {
+  monthIndex: number;
+  events: CalendarEvent[];
+}) {
+  const { monthDays } = getMonthData(getDateForMonth(monthIndex));
+  const eventDates = new Set(events.map((event) => event.date));
+
+  return (
+    <div className="space-y-1.5 select-none max-w-4xl mx-auto w-full" aria-hidden="true">
+      <div className="grid grid-cols-7 gap-1 sm:gap-2 py-1 md:py-1.5 border-b border-[#242021]/80" />
+      <div className="grid grid-cols-7 gap-1 sm:gap-1.5 md:gap-2">
+        {monthDays.map((day) => (
+          <div
+            key={day.dateString}
+            className={`min-h-[46px] sm:min-h-[54px] md:min-h-[85px] lg:min-h-[96px] xl:min-h-[105px] rounded-lg md:rounded-xl border p-1 md:p-1.5 ${
+              day.isCurrentMonth
+                ? "glass-cell"
+                : "border-white/5 bg-white/[0.015] opacity-35"
+            }`}
+          >
+            <span className="text-[10px] md:text-xs font-mono text-[#67646C]">
+              {day.dayNumber}
+            </span>
+            {eventDates.has(day.dateString) && (
+              <span className="block h-1.5 w-1.5 mt-2 rounded-full bg-[#E0A3AA]" />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+});
 
 // ==========================================
 // MONTH ⇄ WEEK MODE TRANSITION ("deck of cards" / "horizontal blinds")
@@ -587,7 +667,8 @@ const MobileWeekView = memo(function MobileWeekView({
       : internalSelectedDay;
 
   const activeDayObj = weekDays.find((d) => d.dateString === selectedDayString) || weekDays[0];
-  const dayEvents = events.filter((e) => e.date === selectedDayString);
+  const eventsByDate = useMemo(() => buildEventDateIndex(events), [events]);
+  const dayEvents = eventsByDate.get(selectedDayString) || [];
 
   return (
     <div className="flex flex-col gap-3 w-full md:hidden select-text pb-10 sm:pb-12">
@@ -753,10 +834,12 @@ const DesktopWeekView = memo(function DesktopWeekView({
   isInteractive: boolean;
   onSelectEvent: (evt: CalendarEvent) => void;
 }) {
+  const eventsByDate = useMemo(() => buildEventDateIndex(events), [events]);
+
   return (
     <div className="hidden md:grid md:grid-cols-7 gap-2.5 w-full select-text">
       {weekDays.map((dayObj) => {
-        const dayEvents = events.filter((e) => e.date === dayObj.dateString);
+        const dayEvents = eventsByDate.get(dayObj.dateString) || [];
         const isDateSearched = dayObj.dateString === highlightedDateString;
 
         return (
@@ -1051,7 +1134,11 @@ export function CalendarPage() {
 
   // Transition state: activates the cylindrical ring display during arrow navigation
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isRapidPaging, setIsRapidPaging] = useState(false);
+  const [monthDirection, setMonthDirection] = useState<1 | -1>(1);
+  const [weekDirection, setWeekDirection] = useState<1 | -1>(1);
   const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastNavigationTimeRef = useRef(0);
 
   // Month ⇄ Week ⇄ List mode transition state ("deck of cards" unfold / fold)
   const [modeTransition, setModeTransition] = useState<
@@ -1076,15 +1163,20 @@ export function CalendarPage() {
   }, []);
 
   const triggerTransition = useCallback(() => {
+    const now = performance.now();
+    const isBurst = now - lastNavigationTimeRef.current < 280;
+    lastNavigationTimeRef.current = now;
     notifyAnimationStart();
+    setIsRapidPaging(isBurst);
     setIsTransitioning(true);
     if (transitionTimerRef.current) {
       clearTimeout(transitionTimerRef.current);
     }
     transitionTimerRef.current = setTimeout(() => {
       setIsTransitioning(false);
+      setIsRapidPaging(false);
       notifyAnimationComplete();
-    }, 550);
+    }, isBurst ? 180 : 550);
   }, [notifyAnimationStart, notifyAnimationComplete]);
 
   useEffect(() => {
@@ -1113,6 +1205,7 @@ export function CalendarPage() {
   const [highlightedEventId, setHighlightedEventId] = useState<string | null>(null);
   const [highlightedDateString, setHighlightedDateString] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const eventsByDate = useMemo(() => buildEventDateIndex(events), [events]);
 
   // Unified event selection handler: opens details and syncs active day
   const handleSelectEvent = useCallback((evt: CalendarEvent) => {
@@ -1189,8 +1282,8 @@ export function CalendarPage() {
     let isMounted = true;
     fetchEvents();
 
-    let channel: any = null;
-    let supabaseClient: any = null;
+    let channel: RealtimeChannel | null = null;
+    let supabaseClient: SupabaseClient | null = null;
     if (isSupabaseConfigured) {
       import("@/lib/supabaseLazy").then(({ supabase }) => {
         if (!isMounted || !supabase) return;
@@ -1408,6 +1501,8 @@ export function CalendarPage() {
       });
       return;
     }
+    if (viewMode === "month") setMonthDirection(-1);
+    if (viewMode === "week") setWeekDirection(-1);
     triggerTransition();
     setActiveIndex((prev) => prev - 1);
   }, [viewMode, triggerTransition, scrollEventToTop]);
@@ -1422,6 +1517,8 @@ export function CalendarPage() {
       });
       return;
     }
+    if (viewMode === "month") setMonthDirection(1);
+    if (viewMode === "week") setWeekDirection(1);
     triggerTransition();
     setActiveIndex((prev) => prev + 1);
   }, [viewMode, filteredListEvents.length, triggerTransition, scrollEventToTop]);
@@ -1479,7 +1576,7 @@ export function CalendarPage() {
   );
 
   const handlePanEnd = useCallback(
-    (_e: any, info: { offset: { x: number; y: number } }) => {
+    (_e: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
       if (viewMode === "list") return;
       if (Math.abs(info.offset.x) > 45 && Math.abs(info.offset.x) > Math.abs(info.offset.y) * 1.3) {
         if (info.offset.x < 0) {
@@ -1508,7 +1605,7 @@ export function CalendarPage() {
       e.stopPropagation();
 
       const now = Date.now();
-      if (now - lastWheelTime.current < 320) return;
+      if (now - lastWheelTime.current < 90) return;
 
       if (Math.abs(e.deltaY) > 15 || Math.abs(e.deltaX) > 15) {
         lastWheelTime.current = now;
@@ -1666,7 +1763,7 @@ export function CalendarPage() {
           } else if (viewMode === "list") {
             const activeEvt = filteredListEvents[listActiveIndex] || events[0];
             if (activeEvt) {
-              const [y, m, _d] = activeEvt.date.split("-").map(Number);
+              const [y, m] = activeEvt.date.split("-").map(Number);
               diffMonths = (y - TODAY_YEAR) * 12 + (m - 1 - TODAY_MONTH);
               setMobileSelectedDay(activeEvt.date);
             }
@@ -2073,7 +2170,7 @@ export function CalendarPage() {
 
   // Render content helper for Month or Week view for any period index
   const renderCalendarContent = useCallback(
-    (itemIndex: number, isInteractive: boolean) => {
+    (itemIndex: number, isInteractive: boolean, isPreview = false) => {
       const isCenter = isInteractive && itemIndex === activeIndex;
       const enteringMonth = isCenter && modeTransition === "month";
       const foldingMonth = isCenter && (modeTransition === "week-fold" || modeTransition === "week-shrink");
@@ -2085,6 +2182,9 @@ export function CalendarPage() {
 
       if (viewMode === "month") {
         const monthDate = getDateForMonth(itemIndex);
+        if (isPreview) {
+          return <MonthPreview monthIndex={itemIndex} events={events} />;
+        }
         const { monthDays } = getMonthData(monthDate);
         const weeks = chunkCalendarDays(monthDays, 7);
         const rowHeight = enteringMonth || foldingMonth ? getMonthRowHeightPx() : 0;
@@ -2156,7 +2256,7 @@ export function CalendarPage() {
                     className="grid grid-cols-7 gap-1 sm:gap-1.5 md:gap-2"
                   >
                     {week.map((dayObj, idx) => {
-                      const dayEvents = events.filter((e) => e.date === dayObj.dateString);
+                      const dayEvents = eventsByDate.get(dayObj.dateString) || [];
                       return (
                         <MonthDayCell
                           key={`${dayObj.dateString}-${idx}`}
@@ -2367,9 +2467,9 @@ export function CalendarPage() {
         </div>
       </div>
 
-      {/* Main 3D Viewport — Cylindrical Coverflow Arc for period paging; the month ⇄
-          week mode switch is animated by the row/card motions inside
-          renderCalendarContent ("deck of cards / horizontal blinds" unfold).
+        {/* Period viewport — month uses a flat fluid swipe; week keeps the
+          cylindrical coverflow arc. The month ⇄ week mode switch is animated
+          by the row/card motions inside renderCalendarContent.
           - Side arrow buttons on desktop (>= xl) when ample space is available
           - Swiping left/right on all devices navigates periods */}
       <div className="relative w-full">
@@ -2460,35 +2560,78 @@ export function CalendarPage() {
                   }
                 : { scale: 1, opacity: 1 }
             }
-            style={{ willChange: "transform, opacity" }}
+            style={{
+              perspective: viewMode === "week" ? "1400px" : undefined,
+              transformStyle: viewMode === "week" ? "preserve-3d" : undefined,
+              willChange: "transform, opacity",
+            }}
             className="w-full"
           >
               <div className="relative w-full">
-                {/* Invisible flow placeholder: guarantees exact, natural height across devices */}
-                <div
-                  className="invisible pointer-events-none select-none w-full"
-                  aria-hidden="true"
-                >
-                  {renderCalendarContent(activeIndex, false)}
-                </div>
+                {/* The active month sheet stays in normal flow, so it provides
+                    the viewport height without rendering a duplicate grid. */}
+                {viewMode !== "month" && (
+                  <div
+                    className="invisible pointer-events-none select-none w-full"
+                    aria-hidden="true"
+                  >
+                    {renderCalendarContent(activeIndex, false)}
+                  </div>
+                )}
 
-                {/* Cylindrical Coverflow Arc Carousel Ring Slides — list view shows only the center slide */}
-                {(viewMode === "list" ? [0] : [-2, -1, 0, 1, 2]).map((offset) => {
+                {/* Month is intentionally one-sided: only the active sheet and
+                    the previous sheet being swiped away behind it on the right are mounted. Week
+                    retains the wider cylindrical ring; list renders one slide. */}
+                {(viewMode === "list"
+                  ? [0]
+                  : viewMode === "month"
+                  ? monthDirection === 1
+                    ? [0, -1]
+                    : [0, 1]
+                  : isTransitioning
+                  ? [-1, 0, 1]
+                  : [0]
+                ).map((offset) => {
                   const itemIndex = activeIndex + offset;
-                  const transform = getCoverflowArcTransform(offset, isTransitioning);
+                  const isMonth = viewMode === "month";
+                  const transform = isMonth
+                    ? getMonthSwipeTransform(offset, isTransitioning)
+                    : getCoverflowArcTransform(offset, isTransitioning);
                   const isCenter = offset === 0;
 
                   return (
                     <motion.div
                       key={itemIndex}
+                      initial={
+                        isMonth && isCenter && isTransitioning
+                          ? { x: 180, opacity: 0.7 }
+                          : viewMode === "week" && isCenter && isTransitioning
+                          ? {
+                              rotateY: weekDirection === 1 ? -35 : 35,
+                              x: weekDirection === 1 ? 260 : -260,
+                              z: -180,
+                              scale: 0.84,
+                              opacity: 1,
+                            }
+                          : undefined
+                      }
                       animate={transform}
-                      transition={coverflowSpring}
+                      transition={
+                        isMonth
+                          ? isRapidPaging
+                            ? fastCarouselTransition
+                            : monthSwipeTransition
+                          : isRapidPaging
+                          ? fastCarouselTransition
+                          : coverflowSpring
+                      }
                       style={{
-                        transformStyle: "preserve-3d",
+                        transformStyle: viewMode === "week" ? "preserve-3d" : undefined,
+                        transformOrigin: "center center",
                         willChange: "transform, opacity",
                         backfaceVisibility: "hidden",
                       }}
-                      className={`absolute inset-0 w-full rounded-2xl ${
+                      className={`${isCenter && isMonth ? "relative" : "absolute inset-0"} w-full rounded-2xl ${
                         isCenter ? "pointer-events-auto" : "pointer-events-none"
                       }`}
                     >
@@ -2520,7 +2663,7 @@ export function CalendarPage() {
                           it even inside the slide's preserve-3d context, where
                           z-sorting rules are subtler than in plain 2D. */}
                       <div className="relative w-full">
-                        {renderCalendarContent(itemIndex, isCenter)}
+                        {renderCalendarContent(itemIndex, isCenter, isMonth && !isCenter)}
                       </div>
                     </motion.div>
                   );

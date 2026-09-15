@@ -45,13 +45,15 @@ export async function prefetchHome(): Promise<ClubInfo> {
             "id,club_name,mission,vision,meeting_times,contact_email,google_classroom_code,google_classroom_url,instagram_handle,instagram_url"
           )
           .single();
-        if (!error && data) {
+        if (error) throw error;
+        if (data) {
           setCachedHome(data);
           return data as ClubInfo;
         }
       }
     } catch (e) {
       console.error("Failed to prefetch club info:", e);
+      throw e;
     }
     setCachedHome(fallbackClubInfo);
     return fallbackClubInfo;
@@ -80,13 +82,15 @@ export async function prefetchNews(): Promise<NewsItem[]> {
           .select("id,content,author,timestamp")
           .order("timestamp", { ascending: false })
           .limit(20);
-        if (!error && data && data.length > 0) {
+        if (error) throw error;
+        if (data) {
           setCachedNews(data);
           return data as NewsItem[];
         }
       }
     } catch (e) {
       console.error("Failed to prefetch news:", e);
+      throw e;
     }
     setCachedNews(fallbackNews);
     return fallbackNews;
@@ -115,13 +119,15 @@ export async function prefetchCalendar(): Promise<CalendarEvent[]> {
           .select("id,title,date,time,location,description,category")
           .order("date", { ascending: true })
           .limit(100);
-        if (!error && data && data.length > 0) {
+        if (error) throw error;
+        if (data) {
           setCachedCalendar(data);
           return data as CalendarEvent[];
         }
       }
     } catch (e) {
       console.error("Failed to prefetch events:", e);
+      throw e;
     }
     setCachedCalendar(fallbackEvents);
     return fallbackEvents;
@@ -139,10 +145,10 @@ export async function prefetchCalendar(): Promise<CalendarEvent[]> {
 export function prefetchRoute(route: string): void {
   const clean = route.toLowerCase().split("?")[0].replace(/\/$/, "") || "/";
   if (clean === "/") {
-    prefetchHome();
+    void prefetchHome().catch(() => undefined);
   } else if (clean === "/news") {
-    prefetchNews();
+    void prefetchNews().catch(() => undefined);
   } else if (clean === "/calendar") {
-    prefetchCalendar();
+    void prefetchCalendar().catch(() => undefined);
   }
 }

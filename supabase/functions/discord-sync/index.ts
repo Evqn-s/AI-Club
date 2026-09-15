@@ -97,7 +97,7 @@ serve(async (req: Request) => {
 
   const supabase = createClient(supabaseUrl, serviceKey);
 
-  const newId = `msg_${Date.now()}`;
+  const newId = `msg_${Date.now()}_${crypto.randomUUID()}`;
   const timestamp = new Date().toISOString();
 
   const { error: insertError } = await supabase

@@ -1,26 +1,24 @@
 import os
-import json
 from typing import List, Optional, Dict, Any, Union
-from pydantic import BaseModel
-from fastapi import APIRouter, HTTPException, Header, Request
-from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, Field
+from fastapi import APIRouter, HTTPException, Header
 
 from backend.sql_db import get_club_info, get_news, get_calendar, add_news
 from backend.gemini_rag import generate_rag_answer
 
 router = APIRouter()
-WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET") or os.getenv("DISCORD_BOT_TOKEN") or "default_secret"
+WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET") or os.getenv("DISCORD_BOT_TOKEN")
 
 
 class ChatQuery(BaseModel):
     query: Optional[str] = None
-    history: Optional[List[Dict[str, Any]]] = []
+    history: Optional[List[Dict[str, Any]]] = None
     messages: Optional[List[Dict[str, Any]]] = None
 
 
 class DiscordMessage(BaseModel):
-    content: str
-    author: str
+    content: str = Field(min_length=1, max_length=4000)
+    author: str = Field(min_length=1, max_length=100)
 
 
 @router.get("/api/club-info")
@@ -40,7 +38,7 @@ def fetch_calendar():
 
 @router.post("/api/chat", response_model=None)
 @router.post("/api/chat/", response_model=None)
-async def chat_with_bot(payload: Union[ChatQuery, Dict[str, Any]], request: Request = None):
+async def chat_with_bot(payload: Union[ChatQuery, Dict[str, Any]]):
     if isinstance(payload, dict):
         messages = payload.get("messages")
         query = payload.get("query")
@@ -49,8 +47,6 @@ async def chat_with_bot(payload: Union[ChatQuery, Dict[str, Any]], request: Requ
         messages = payload.messages
         query = payload.query
         history = payload.history or []
-
-    is_stream_client = bool(messages and len(messages) > 0)
 
     if messages and len(messages) > 0:
         query = messages[-1].get("content", "")
@@ -61,27 +57,18 @@ async def chat_with_bot(payload: Union[ChatQuery, Dict[str, Any]], request: Requ
 
     answer = generate_rag_answer(query=query, history=history)
 
-    accept = request.headers.get("accept", "") if request else ""
-    if is_stream_client or "text/plain" in accept or "stream" in accept:
-        def stream_generator():
-            # Properly encode string chunk for Vercel AI Data Stream Protocol (0: format)
-            yield f"0:{json.dumps(answer)}\n"
-            yield 'e:{"finishReason":"stop"}\n'
-
-        return StreamingResponse(
-            stream_generator(),
-            media_type="text/plain; charset=utf-8",
-            headers={"x-vercel-ai-data-stream": "v1", "Cache-Control": "no-cache"},
-        )
-
     return {"answer": answer}
 
 
 @router.post("/api/discord-webhook")
 def discord_webhook(msg: DiscordMessage, authorization: Optional[str] = Header(None)):
+    if not WEBHOOK_SECRET:
+        raise HTTPException(status_code=503, detail="Webhook authentication is not configured")
     token = authorization.split("Bearer ", 1)[1].strip() if authorization and authorization.startswith("Bearer ") else authorization
     if token != WEBHOOK_SECRET:
         raise HTTPException(status_code=401, detail="Unauthorized")
-    if not msg.content or not msg.author:
-        raise HTTPException(status_code=400, detail="Content and author are required")
-    return {"status": "success", "data": add_news(content=msg.content, author=msg.author)}
+    content = msg.content.strip()
+    author = msg.author.strip()
+    if not content or not author:
+        raise HTTPException(status_code=400, detail="Content and author cannot be blank")
+    return {"status": "success", "data": add_news(content=content, author=author)}

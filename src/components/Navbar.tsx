@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { ThemeBar } from "@/components/ThemeBar";
 
 // Module-level cache for the lazy component promise
-export let calendarComponentPromise: Promise<any> | null = null;
+export let calendarComponentPromise: Promise<typeof import("../pages/CalendarPage")> | null = null;
 
 // Prefetch a route's data without pulling the Supabase client into the
 // initial bundle — the dynamic import loads data.ts + client on demand.

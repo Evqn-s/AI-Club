@@ -3,6 +3,7 @@ create table if not exists public.club_info (
   id                    text        primary key default 'club_main',
   club_name             text        not null    default 'AI Club',
   mission               text,
+  vision                text,
   meeting_times         text        not null    default 'Every Tuesday at 6 PM',
   rules                 text[],
   contact_email         text        not null    default 'contact.aiclub@gmail.com',
@@ -38,6 +39,10 @@ create table if not exists public.events (
 
 create index if not exists events_date_idx on public.events (date asc);
 
+-- Keep existing deployments aligned with the frontend event contract.
+alter table public.club_info add column if not exists vision text;
+alter table public.events add column if not exists category text;
+
 -- 3b. info — miscellaneous club facts the AI assistant can quote.
 -- Each row is one fact pair: a short `title` (the prompt/topic) and a
 -- `description` (the answer). Seeded by hand in the Supabase SQL Editor.
@@ -54,6 +59,12 @@ create table if not exists public.info (
 -- Guarantees "one fact per title" so re-running the seed script stays
 -- idempotent (insert ... on conflict do update).
 create unique index if not exists info_title_key on public.info (title);
+
+-- Server-only secrets are intentionally excluded from public grants and policies.
+create table if not exists public.app_secrets (
+  key   text primary key,
+  value text not null
+);
 
 -- 4. Enable Row Level Security (RLS)
 alter table public.club_info enable row level security;
@@ -91,3 +102,20 @@ create policy "Public read info"
   on public.info for select
   to anon, authenticated
   using (true);
+
+-- Realtime subscriptions used by NewsPage and CalendarPage.
+do $$
+begin
+  alter publication supabase_realtime add table public.news;
+exception
+  when duplicate_object then null;
+end
+$$;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.events;
+exception
+  when duplicate_object then null;
+end
+$$;

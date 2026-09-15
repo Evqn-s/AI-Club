@@ -2,8 +2,7 @@ import { useState, useEffect, lazy, Suspense } from "react";
 import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-// The heavy AI SDK runtime (useChat + zod streaming) loads only when the user
-// actually opens the chat — the floating button stays instant and tiny.
+// Load the chat surface only when the user opens it.
 const ChatPanel = lazy(() => import("./ChatPanel").then((m) => ({ default: m.ChatPanel })));
 
 export function ChatWidget() {
