@@ -662,17 +662,33 @@ html {
   transition-duration: 150ms !important;
 }
 
-/* MOBILE LIST CARD — no animation at all while scrolling.
-   The top card is still bigger and brighter, but the change is instant: there
-   is deliberately NO transition here, so the scoped exception that used to
-   re-enable transform/box-shadow transitions has been removed and the global
-   "[data-page=calendar] *" kill above applies.
-   `transform: scale(...)` is used rather than padding/font-size because a
-   transform never reflows, so promoting a card cannot shift the cards below
-   it, and it costs the browser nothing to animate (it doesn't animate here). */
+/* MOBILE LIST CARD — scoped exception to the transition kill above.
+   The top card scales up and lights up as you scroll. `transform` is
+   layout-neutral (a scale never reflows), so promoting a card can never
+   shift the cards below it — which is what used to fight the scroll
+   position and make the list feel like it was snapping back.
+   Only transform/shadow/opacity animate; colours still snap instantly so
+   theme switching stays lag-free. */
+[data-page="calendar"] .cal-list-card {
+  transform-origin: center center;
+  transition-property: transform, box-shadow !important;
+  transition-duration: 260ms !important;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* The "top" card is bigger purely via a composited scale — no padding, font
+   size or mount/unmount change, so the cards below it never move.
+   1.04 keeps the growth inside the page's horizontal padding (~7px per side
+   on a 375px viewport), so it never clips or creates a sideways scroll. */
 [data-page="calendar"] .cal-list-card--top {
   transform: scale(1.04);
   z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-page="calendar"] .cal-list-card {
+    transition-duration: 0ms !important;
+  }
 }
 
 /* =========================================================
