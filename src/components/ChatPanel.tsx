@@ -172,9 +172,10 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
   const isSubmitDisabled = !input.trim() || hasPendingSubmit;
 
   const cooldownSeconds = (cooldown * COOLDOWN_TICK_MS) / 1000;
+  const cooldownDisplay = cooldownSeconds % 1 === 0 ? String(cooldownSeconds) : cooldownSeconds.toFixed(1);
   let placeholderText = "Ask about club details...";
   if (cooldown > 0) {
-    placeholderText = `Wait ${cooldownSeconds % 1 === 0 ? cooldownSeconds : cooldownSeconds.toFixed(1)}s before sending again…`;
+    placeholderText = `Wait ${cooldownDisplay}s before sending again…`;
   } else if (isTyping) {
     placeholderText = "Typing response…";
   } else if (isLoading) {
@@ -307,11 +308,11 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
               type="submit"
               disabled={isSubmitDisabled}
               size="icon"
-              aria-label={cooldown > 0 ? `Cooldown: ${cooldown}s remaining` : isTyping ? "AI is typing" : "Send message"}
+              aria-label={cooldown > 0 ? `Cooldown: ${cooldownDisplay}s remaining` : isTyping ? "AI is typing" : "Send message"}
               className="shrink-0 bg-[#241416] hover:bg-[#33181C] border border-[#5E2C32] text-[#E0A3AA] transition-all"
             >
               {cooldown > 0 ? (
-                <span className="text-fluid-label font-mono font-bold text-[#E0A3AA]">{cooldown}s</span>
+                <span className="text-fluid-label font-mono font-bold text-[#E0A3AA]">{cooldownDisplay}s</span>
               ) : (
                 <Send className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA]" />
               )}
