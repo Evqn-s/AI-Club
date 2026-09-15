@@ -5,7 +5,7 @@ from typing import List, Optional
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types as genai_types
-from backend.sql_db import get_club_info, get_calendar, get_news, get_secret
+from backend.sql_db import get_club_info, get_calendar, get_info, get_news, get_secret
 
 load_dotenv()
 
@@ -24,6 +24,7 @@ def generate_rag_answer(query: str, history: Optional[List[dict]] = None) -> str
     # Limit each source so prompt size and answer scope stay predictable.
     context = {
         "club_info": get_club_info() or {},
+        "info": get_info(limit=25) or [],
         "calendar": get_calendar(limit=5) or [],
         "news": get_news(limit=5) or [],
     }
