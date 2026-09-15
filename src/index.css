@@ -691,26 +691,102 @@ html.light .cal-nav-arrow svg {
 }
 
 /* =========================================================
-   CALENDAR PERIOD-PAGING FOCUS BACKING
-   The day cells are translucent frosted glass, so while the coverflow arc
-   slides between months/weeks the outgoing slide behind would bleed through
-   the incoming centre and make it ambiguous which period is the "main" one.
-   This panel sits above the dimmed side slides but below the centre content,
-   masking the bleed. It only becomes visible while paging (animated opacity
-   from the component) and is fully transparent at rest, so the resting glass
-   look is untouched. No backdrop-filter: the alpha alone hides the ~32% side
-   slides and it keeps the paging animation repaint-cheap.
+   CALENDAR PERIOD-PAGING MAIN VEIL (transition-only)
+   While a month/week change is in flight the centre slide gets this
+   translucent veil behind its content, so the main period reads as solidly
+   "the main page" instead of one more sheet of glass.
+   Why it is needed: the day cells are frosted glass at only ~6% white (see
+   .glass-cell), so without it the outgoing month's grid shows straight
+   through the incoming one and it is ambiguous which period is the main one
+   until the animation has finished.
+   Deliberately only ~45% opaque — NOT the 74% of the earlier opaque panel.
+   The neighbouring slides still read clearly as they arc past, because that
+   3D depth IS the animation and must stay visible.
+   The component animates this element's opacity 0 -> 1 while paging and back
+   to 0 the moment the arc settles, so at rest nothing is veiled and the
+   original translucent glass look is exactly as it was.
    ========================================================= */
-.cal-slide-stage {
-  background: rgba(11, 10, 11, 0.74);
-  box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.07),
-    0 18px 44px rgba(0, 0, 0, 0.45);
+.cal-slide-veil {
+  /* z-index:-1 keeps it behind every in-flow child of the slide (the calendar
+     content root is not a positioned element, so a plain z-index:auto overlay
+     would paint ON TOP of the weekday labels). The centre slide is itself a
+     stacking context (will-change: transform + the animated transform), so the
+     negative level is contained: relative to the side slides at z-index:20 the
+     whole centre subtree still paints at z-index:30, i.e. the veil still sits
+     over the neighbours as they arc past. The slide has no background of its
+     own, so nothing occludes it. */
+  z-index: -1;
+  background: rgba(11, 10, 11, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
-html.light .cal-slide-stage {
-  background: rgba(255, 255, 255, 0.8);
+/* Light mode: white veil, slightly lighter since light-mode glass cells are
+   already ~70% opaque (see :root.light .glass-cell) */
+html.light .cal-slide-veil {
+  background: rgba(255, 255, 255, 0.42);
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.05);
+}
+
+/* =========================================================
+   CALENDAR "TODAY" GLOW
+   Applied to today's cell in Month view, today's column in the desktop Week
+   view and today's chip in the mobile Week strip. The glow is painted on an
+   ::after with z-index:-1, so it lands above the cell's own frosted glass
+   background but behind its content — the surface, borders and text stay
+   perfectly crisp and no existing ring/shadow utility gets overridden.
+   It breathes with opacity only (composited: no per-frame box-shadow repaint).
+   ========================================================= */
+.cal-today {
+  position: relative;
+}
+
+.cal-today::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 90% at 50% 0%,
+    rgba(224, 163, 170, 0.32) 0%,
+    rgba(224, 163, 170, 0.07) 55%,
+    transparent 100%
+  );
   box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.9),
-    0 18px 44px rgba(15, 23, 42, 0.12);
+    0 0 0 1.5px rgba(224, 163, 170, 0.7),
+    0 0 16px rgba(224, 163, 170, 0.42),
+    inset 0 0 20px rgba(224, 163, 170, 0.16);
+  animation: cal-today-glow 3.2s ease-in-out infinite;
+}
+
+@keyframes cal-today-glow {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Static halo for users who ask for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .cal-today::after {
+    animation: none;
+  }
+}
+
+/* Light mode: accent glow turns sapphire blue to match the theme remap */
+html.light .cal-today::after {
+  background: radial-gradient(
+    120% 90% at 50% 0%,
+    rgba(37, 99, 235, 0.24) 0%,
+    rgba(37, 99, 235, 0.06) 55%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 0 1.5px rgba(37, 99, 235, 0.6),
+    0 0 16px rgba(37, 99, 235, 0.3),
+    inset 0 0 20px rgba(37, 99, 235, 0.12);
 }

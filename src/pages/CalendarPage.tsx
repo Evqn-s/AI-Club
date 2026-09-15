@@ -257,10 +257,11 @@ function getCoverflowArcTransform(offset: number, isTransitioning: boolean) {
     };
   }
 
-  // Side slides are dimmed ghosts during the slide — clearly secondary so the
-  // incoming center month/week reads as the main element even though every
-  // card surface is translucent glass. Hidden entirely when idle.
-  const opacity = isTransitioning ? 0.32 : 0;
+  // Secondary slides stay fully visible during the slide so the 3D coverflow
+  // arc (rotated, receding, translucent) reads exactly as it always did.
+  // The main period is distinguished by the translucent veil over the centre
+  // slide — see .cal-slide-veil — not by dimming or masking its neighbours.
+  const opacity = isTransitioning ? 1 : 0;
 
   if (offset === -1) {
     return {
@@ -475,6 +476,11 @@ const MonthDayCell = memo(function MonthDayCell({
           : dayObj.isToday
           ? "ring-1 ring-[#E0A3AA] border-[#5E2C32] border-t-white/50 shadow-[0_0_12px_rgba(224,163,170,0.2)]"
           : ""
+      } ${
+        // Today gets a soft breathing halo (see .cal-today in index.css) so it
+        // reads at a glance on the dense month grid. Only in its own month —
+        // never on the adjacent-month overflow cells.
+        dayObj.isToday && dayObj.isCurrentMonth ? "cal-today" : ""
       }`}
     >
       {/* Day header — NO today dot */}
@@ -604,7 +610,7 @@ const MobileWeekView = memo(function MobileWeekView({
                 isSelected
                   ? "glass-panel ring-1 ring-[#E0A3AA] border-[#E0A3AA] border-t-white/50 text-[#E0A3AA] shadow-[0_0_12px_rgba(224,163,170,0.25)]"
                   : "glass-cell glass-cell-hover text-[#9B98A0]"
-              }`}
+              } ${d.isToday ? "cal-today" : ""}`}
             >
               <span className="text-[10px] font-mono uppercase">{d.dayName}</span>
               <span
@@ -760,7 +766,7 @@ const DesktopWeekView = memo(function DesktopWeekView({
               isDateSearched
                 ? "glass-panel ring-2 ring-[#E0A3AA] border-[#E0A3AA] border-t-[#E0A3AA] shadow-[0_0_18px_rgba(224,163,170,0.35)]"
                 : dayObj.isToday
-                ? "glass-panel ring-1 ring-[#E0A3AA]/60 border-[#5E2C32] border-t-white/50 shadow-[0_0_14px_rgba(224,163,170,0.15)]"
+                ? "glass-panel ring-1 ring-[#E0A3AA]/60 border-[#5E2C32] border-t-white/50 shadow-[0_0_14px_rgba(224,163,170,0.15)] cal-today"
                 : "glass-cell glass-cell-hover"
             }`}
           >
@@ -2338,34 +2344,38 @@ export function CalendarPage() {
                         transformStyle: "preserve-3d",
                         willChange: "transform, opacity",
                         backfaceVisibility: "hidden",
-                        // Dimmed side slides get a touch of blur + desaturation so
-                        // the crisp, full-color center slide is unmistakably the
-                        // main month/week while the arc is mid-flight.
-                        filter: isCenter
-                          ? "none"
-                          : "blur(1.5px) saturate(0.75)",
                       }}
                       className={`absolute inset-0 w-full rounded-2xl ${
                         isCenter ? "pointer-events-auto" : "pointer-events-none"
                       }`}
                     >
-                      {/* Focus backing: rises above the dimmed side slides so the
-                          translucent day cells of the outgoing period cannot bleed
-                          through the incoming centre. Fades out the moment paging
-                          settles, leaving the resting glass look untouched.
-                          `initial={false}` avoids a flash if it mounts mid-idle. */}
-                      {isCenter && (
+                      {/* Main-period veil: fades in while a month/week change is in
+                          flight and back out the moment the arc settles, so the
+                          centre slide reads as the solid "main page" instead of
+                          one more sheet of glass while the neighbours arc past.
+                          Only ~45% opaque, so the neighbouring slides stay
+                          clearly visible — the 3D depth IS the animation. At
+                          rest it is fully transparent and the original
+                          translucent glass look is untouched.
+                          Month/Week only — list view is a long scroll surface,
+                          not the calendar itself. */}
+                      {isCenter && viewMode !== "list" && (
                         <motion.div
                           aria-hidden="true"
-                          className="cal-slide-stage absolute inset-0 rounded-2xl pointer-events-none"
+                          className="cal-slide-veil absolute inset-0 rounded-2xl pointer-events-none"
                           initial={false}
                           animate={{ opacity: isTransitioning ? 1 : 0 }}
                           transition={{
-                            duration: isTransitioning ? 0.14 : 0.3,
+                            duration: isTransitioning ? 0.15 : 0.3,
                             ease: "easeOut",
                           }}
                         />
                       )}
+                      {/* `relative` (zero offsets, no layout change) makes the
+                          calendar content a positioned sibling painted in tree
+                          order after the veil, so it is guaranteed to sit above
+                          it even inside the slide's preserve-3d context, where
+                          z-sorting rules are subtler than in plain 2D. */}
                       <div className="relative w-full">
                         {renderCalendarContent(itemIndex, isCenter)}
                       </div>
