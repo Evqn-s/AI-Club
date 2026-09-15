@@ -66,6 +66,7 @@ function TypewriterMessage({
 export function ChatPanel({ onClose }: { onClose: () => void }) {
   const [cooldown, setCooldown] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
+  const [hasPendingSubmit, setHasPendingSubmit] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -112,6 +113,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
       inputRef.current?.focus();
       if (pendingSubmitRef.current && input.trim()) {
         pendingSubmitRef.current = false;
+        setHasPendingSubmit(false);
         formRef.current?.requestSubmit();
       }
     }
@@ -157,17 +159,17 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
 
   function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!input.trim() || isLoading || isTyping) return;
-    if (cooldown > 0) {
+    if (!input.trim() || pendingSubmitRef.current) return;
+    if (cooldown > 0 || isLoading || isTyping) {
       pendingSubmitRef.current = true;
+      setHasPendingSubmit(true);
       return;
     }
     setIsTyping(false);
     handleSubmit(e);
   }
 
-  const isInputDisabled = isLoading || isTyping;
-  const isSubmitDisabled = isInputDisabled || !input.trim();
+  const isSubmitDisabled = !input.trim() || hasPendingSubmit;
 
   const cooldownSeconds = (cooldown * COOLDOWN_TICK_MS) / 1000;
   let placeholderText = "Ask about club details...";
@@ -296,7 +298,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
               value={input}
               onChange={handleInputChange}
               placeholder={placeholderText}
-              disabled={isInputDisabled}
+              disabled={false}
               maxLength={1000}
               aria-label="Chat query input"
               className="bg-[#0A090A] border-[#382D30] text-[#E5E5E7] placeholder:text-[#67646C]"
