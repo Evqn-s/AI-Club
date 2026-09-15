@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 const NUM_STRANDS = 10;
 const X_STEP = 6;
 
+// The canvas is decorative and owns its animation lifecycle, including DPR
+// resizing, theme palette changes, reduced-motion support, and calendar pauses.
 export function SineWaveBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [fadedIn, setFadedIn] = useState(false);
@@ -42,6 +44,8 @@ export function SineWaveBackground() {
     let cachedGrads: CanvasGradient[] = [];
 
     function buildGradients() {
+      // Gradients are rebuilt only when the viewport or theme changes; drawing
+      // can then reuse them on every animation frame.
       if (!ctx) return;
       const width = window.innerWidth;
       cachedGrads = Array.from({ length: NUM_STRANDS }, (_, s) => {
@@ -97,6 +101,8 @@ export function SineWaveBackground() {
       if (!ctx || !canvas) return;
 
       if (isPaused) {
+        // Keep the frame loop alive while paused so resume does not need to
+        // coordinate a second animation loop with the existing cleanup.
         animationFrameId = requestAnimationFrame(draw);
         return;
       }

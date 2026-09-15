@@ -1,5 +1,6 @@
 import { SineWaveBackground } from "./SineWaveBackground";
 
+// Composes all fixed decorative layers behind the interactive application.
 export function OrganicBackground() {
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">

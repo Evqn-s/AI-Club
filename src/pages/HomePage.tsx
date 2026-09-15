@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Clock, Mail, ArrowRight, GraduationCap, Instagram, ExternalLink, MessageSquare } from "lucide-react";
 
+// Home renders useful fallback content immediately, then replaces it with the
+// shared Supabase-backed record once the deferred data layer is ready.
 export function HomePage() {
   const cached = getCachedHome();
   // Render instantly from fallback content — LCP never waits on Supabase.

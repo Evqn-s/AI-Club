@@ -6,6 +6,8 @@ from fastapi import APIRouter, HTTPException, Header
 from backend.sql_db import get_club_info, get_news, get_calendar, add_news
 from backend.gemini_rag import generate_rag_answer
 
+# HTTP boundary for browser data reads, chat requests, and trusted Discord
+# writes. Validation stays here so downstream services receive clean input.
 router = APIRouter()
 WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET") or os.getenv("DISCORD_BOT_TOKEN")
 
@@ -39,6 +41,8 @@ def fetch_calendar():
 @router.post("/api/chat", response_model=None)
 @router.post("/api/chat/", response_model=None)
 async def chat_with_bot(payload: Union[ChatQuery, Dict[str, Any]]):
+    # Accept both the current {query, history} shape and the older messages
+    # shape so deployed clients can upgrade independently of the backend.
     if isinstance(payload, dict):
         messages = payload.get("messages")
         query = payload.get("query")
@@ -62,6 +66,8 @@ async def chat_with_bot(payload: Union[ChatQuery, Dict[str, Any]]):
 
 @router.post("/api/discord-webhook")
 def discord_webhook(msg: DiscordMessage, authorization: Optional[str] = Header(None)):
+    # The webhook is write-only and server-authenticated; public browser reads
+    # use the separate RLS-protected Supabase path instead.
     if not WEBHOOK_SECRET:
         raise HTTPException(status_code=503, detail="Webhook authentication is not configured")
     token = authorization.split("Bearer ", 1)[1].strip() if authorization and authorization.startswith("Bearer ") else authorization

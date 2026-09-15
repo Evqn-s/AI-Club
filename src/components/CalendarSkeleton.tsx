@@ -1,5 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Mirrors the calendar toolbar and grid dimensions so lazy loading does not
+// cause the page layout to jump when CalendarPage finishes loading.
 export function CalendarSkeleton() {
   return (
     <div className="space-y-[var(--fluid-gap)] py-[var(--fluid-section-y)] max-w-[var(--fluid-container-max)] mx-auto px-[var(--fluid-pad-x)] animate-in fade-in duration-200">

@@ -15,6 +15,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, RefreshCw, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+// News is cache-first and realtime-aware: the page remains usable offline,
+// while new announcements are prepended as soon as Supabase broadcasts them.
 export function NewsPage() {
   const cached = getCachedNews();
   const [news, setNews] = useState<NewsItem[]>(() => cached || fallbackNews);
@@ -23,6 +25,8 @@ export function NewsPage() {
   const [sortNewest, setSortNewest] = useState<boolean>(true);
 
   async function fetchNews(force = false) {
+    // A forced refresh invalidates the local copy so Retry really asks the
+    // data layer for fresh data instead of returning the stale cached result.
     if (force) {
       invalidateCache("news");
       setLoading(true);
@@ -45,7 +49,8 @@ export function NewsPage() {
 
     fetchNews();
 
-    // State & Mutation Synchronization: Real-time Supabase listener with cleanup
+    // Subscribe after the initial render so realtime setup cannot delay paint;
+    // the mounted guard prevents late dynamic-import results updating a dead page.
     // Deferred — the realtime client loads only after first paint via the
     // dynamic import, so it never competes with LCP.
     let channel: RealtimeChannel | null = null;

@@ -14,7 +14,6 @@ import {
   Clock,
   MapPin,
   ExternalLink,
-  AlertCircle,
   ChevronLeft,
   ChevronRight,
   Search,
@@ -540,6 +539,7 @@ const MonthDayCell = memo(function MonthDayCell({
 
   return (
     <div
+      data-calendar-day="true"
       onClick={() => {
         if (!isInteractive || !hasEvents) return;
         onSelectEvent(dayEvents[0]);
@@ -680,6 +680,7 @@ const MobileWeekView = memo(function MobileWeekView({
           return (
             <button
               key={d.dateString}
+              data-calendar-day="true"
               onClick={() => {
                 if (!isInteractive) return;
                 if (onSelectDay) {
@@ -845,6 +846,7 @@ const DesktopWeekView = memo(function DesktopWeekView({
         return (
           <div
             key={dayObj.dateString}
+            data-calendar-day="true"
             className={`rounded-2xl border p-2.5 flex flex-col gap-2.5 min-h-[350px] lg:min-h-[380px] transition-all shadow-2xl ${
               isDateSearched
                 ? "glass-panel ring-2 ring-[#E0A3AA] border-[#E0A3AA] border-t-[#E0A3AA] shadow-[0_0_18px_rgba(224,163,170,0.35)]"
@@ -961,8 +963,6 @@ export function CalendarPage() {
     const c = getCachedCalendar();
     return (c && c.length > 0) || fallbackEvents.length > 0 ? false : true;
   });
-  const [error, setError] = useState<string | null>(null);
-
   // Active view mode and date navigation state
   const [viewMode, setViewMode] = useState<"month" | "week" | "list">("month");
   const [activeIndex, setActiveIndex] = useState<number>(0);
@@ -1043,8 +1043,9 @@ export function CalendarPage() {
     if (!el) return;
     const check = () => {
       const rect = el.getBoundingClientRect();
-      // Show side buttons when there are at least 52px of gutter on each side
-      setHasSideSpace(rect.left >= 52 && window.innerWidth - rect.right >= 52);
+      // The arrows sit just outside the day viewport. Keep them whenever the
+      // page leaves even a small visible gutter around the day elements.
+      setHasSideSpace(rect.left >= 16 && window.innerWidth - rect.right >= 16);
     };
     check();
     const ro = new ResizeObserver(check);
@@ -1263,13 +1264,11 @@ export function CalendarPage() {
 
   // Fetch data: strictly from public.events table
   const fetchEvents = useCallback(async () => {
-    setError(null);
     try {
       const data = await prefetchCalendar();
       setEvents(data);
     } catch (err: unknown) {
       console.error("Failed to load events:", err);
-      setError("Unable to connect to events database. Showing local offline schedule.");
       setEvents(fallbackEvents);
     } finally {
       setLoading(false);
@@ -1599,6 +1598,11 @@ export function CalendarPage() {
 
     const handleNativeWheel = (e: WheelEvent) => {
       if (viewMode === "list") return; // List view handles its own internal snapping scroll
+
+      const target = e.target;
+      if (!(target instanceof Element) || !target.closest("[data-calendar-day='true']")) {
+        return;
+      }
 
       // Stop page from scrolling while scrolling the calendar
       e.preventDefault();
@@ -2343,24 +2347,6 @@ export function CalendarPage() {
         </h1>
       </div>
 
-      {/* Offline Alert Banner */}
-      {error && (
-        <div className="rounded-xl border border-[#5E2C32] bg-[#241416]/60 p-3 flex items-center justify-between text-xs text-[#E0A3AA]">
-          <div className="flex items-center gap-2.5">
-            <AlertCircle className="h-4 w-4 shrink-0 text-[#E0A3AA]" />
-            <span>{error}</span>
-          </div>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => fetchEvents()}
-            className="text-xs text-[#E0A3AA] hover:bg-[#3D1E22] shrink-0 h-7 px-2"
-          >
-            Retry
-          </Button>
-        </div>
-      )}
-
       {/* Top Toolbar: Live Search, View Toggle, and Date Steppers */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 p-2.5 rounded-2xl glass-panel shadow-xl">
         {/* Live Database Search Input */}
@@ -2470,10 +2456,10 @@ export function CalendarPage() {
         {/* Period viewport — month uses a flat fluid swipe; week keeps the
           cylindrical coverflow arc. The month ⇄ week mode switch is animated
           by the row/card motions inside renderCalendarContent.
-          - Side arrow buttons on desktop (>= xl) when ample space is available
+          - Side arrow buttons on desktop when a visible gutter is available
           - Swiping left/right on all devices navigates periods */}
       <div className="relative w-full">
-        {/* Desktop Floating Side Navigation Arrows — visible only when gutters have >= 52px space */}
+        {/* Desktop Floating Side Navigation Arrows — visible when a gutter remains */}
         {hasSideSpace && (
           <>
             <button

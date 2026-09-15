@@ -12,6 +12,8 @@ try:
 except ImportError:
     pass
 
+# Supabase is preferred in production; the local SQLite file keeps the API
+# useful during development or when the cloud database is unavailable.
 SUPABASE_URL = os.getenv("SUPABASE_URL") or os.getenv("VITE_SUPABASE_URL")
 SUPABASE_KEY = (
     os.getenv("SUPABASE_SERVICE_ROLE_KEY")
@@ -23,6 +25,8 @@ DB_PATH = os.path.join(os.path.dirname(__file__), "club_data.db")
 _supabase_client = None
 
 def get_supabase_client():
+    # Create the client lazily because importing the backend should still work
+    # when Supabase credentials or its optional dependency are missing.
     global _supabase_client
     if _supabase_client is not None:
         return _supabase_client
@@ -36,6 +40,8 @@ def get_supabase_client():
         return None
 
 def init_local_db():
+    # Idempotently create and seed the offline schema before any read route
+    # runs. Existing rows are preserved across process restarts.
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
@@ -101,6 +107,7 @@ def init_local_db():
 init_local_db()
 
 def get_club_info() -> Dict[str, Any]:
+    # Every accessor follows the same Supabase-first, SQLite-fallback contract.
     sb = get_supabase_client()
     if sb:
         try:
@@ -185,6 +192,8 @@ def add_news(content: str, author: str) -> Dict[str, Any]:
     return new_item
 
 def get_secret(key: str) -> Optional[str]:
+    # Secrets may live in the server-only table or environment, never in the
+    # public frontend data path.
     sb = get_supabase_client()
     if sb:
         try:

@@ -3,6 +3,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.api import router
 
+# FastAPI application entrypoint. Route definitions live in api.py so this
+# module remains responsible for process-wide middleware and startup wiring.
 app = FastAPI(
     title="AI Club Backend API",
     description="Python FastAPI backend providing RAG chatbot and SQL database endpoints for AI Club Website",
@@ -16,7 +18,8 @@ async def log_requests(request, call_next):
         print(f"[404 DETECTED] Path requested: {request.method} {request.url.path}")
     return response
 
-# Allow all origins for seamless pairing with Vite frontend or external deployments
+# Origins are configured explicitly because the browser is the only intended
+# caller; credentials stay disabled since auth uses request-level tokens.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[origin.strip() for origin in os.getenv("FRONTEND_ORIGINS", "http://localhost:3000").split(",") if origin.strip()],

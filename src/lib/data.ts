@@ -19,6 +19,8 @@ import {
 // In-flight promise tracker (dedups concurrent prefetches)
 const inFlight = new Map<string, Promise<unknown>>();
 
+// Keep the Supabase runtime out of the initial bundle; callers can still
+// prefetch data on hover or after paint without duplicating client creation.
 // Lazy-load the heavy Supabase client only when it is actually needed.
 async function getClient() {
   if (!isSupabaseConfigured) return null;
@@ -55,6 +57,8 @@ export async function prefetchHome(): Promise<ClubInfo> {
       console.error("Failed to prefetch club info:", e);
       throw e;
     }
+    // A failed or unconfigured remote read still resolves with usable content;
+    // callers do not need a separate offline data path.
     setCachedHome(fallbackClubInfo);
     return fallbackClubInfo;
   })().finally(() => {

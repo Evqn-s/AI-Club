@@ -3,6 +3,8 @@ import { Moon, Sun } from "lucide-react";
 
 type Theme = "dark" | "light";
 
+// Theme state is centralized here because CSS, the canvas background, and
+// every route need to observe the same persisted choice.
 interface ThemeContextValue {
   theme: Theme;
   setTheme: (theme: Theme) => void;
@@ -11,6 +13,7 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function applyTheme(theme: Theme) {
+  // Keep exactly one theme class active so CSS selectors never compete.
   const root = document.documentElement;
   root.classList.toggle("dark", theme === "dark");
   root.classList.toggle("light", theme === "light");
@@ -26,6 +29,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
+    // Persist after every state change and apply it again for non-click changes
+    // such as restoring the saved preference during the first render.
     applyTheme(theme);
     localStorage.setItem("aiclub-theme", theme);
   }, [theme]);
@@ -33,6 +38,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const setTheme = (nextTheme: Theme) => {
     if (nextTheme === theme) return;
 
+    // Apply before React re-renders so the visual switch feels instantaneous.
     applyTheme(nextTheme);
     setThemeState(nextTheme);
   };

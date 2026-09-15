@@ -10,6 +10,8 @@ from backend.sql_db import get_club_info, get_calendar, get_news, get_secret
 load_dotenv()
 
 
+# Assemble a small, current club context and ask Gemini to answer only from it.
+# Keeping retrieval here makes the API route independent from prompt details.
 def generate_rag_answer(query: str, history: Optional[List[dict]] = None) -> str:
     api_key = (
         os.getenv("GOOGLE_GENERATIVE_AI_API_KEY")
@@ -19,6 +21,7 @@ def generate_rag_answer(query: str, history: Optional[List[dict]] = None) -> str
     if not api_key:
         return "Error: Gemini API key is not configured. Please set GOOGLE_GENERATIVE_AI_API_KEY in your environment."
 
+    # Limit each source so prompt size and answer scope stay predictable.
     context = {
         "club_info": get_club_info() or {},
         "calendar": get_calendar(limit=5) or [],
@@ -27,6 +30,8 @@ def generate_rag_answer(query: str, history: Optional[List[dict]] = None) -> str
 
     now_str = datetime.now().strftime("%A, %B %d, %Y at %I:%M %p")
 
+    # Only recent turns matter for follow-up questions and keep the prompt
+    # bounded even if a client keeps a long conversation open.
     formatted_history = ""
     if history:
         for msg in history[-4:]:
