@@ -13,7 +13,15 @@ type ChatMessage = {
   content: string;
 };
 
-const chatEndpoint = import.meta.env.VITE_BACKEND_URL || "/api/chat";
+// VITE_BACKEND_URL is documented as the FastAPI origin, while local Vite uses
+// its /api proxy. Accept a full endpoint too so either deployment style works.
+function getChatEndpoint(configuredUrl?: string): string {
+  const baseUrl = configuredUrl?.trim().replace(/\/+$/, "");
+  if (!baseUrl) return "/api/chat";
+  return /\/api\/chat$/i.test(baseUrl) ? baseUrl : `${baseUrl}/api/chat`;
+}
+
+const chatEndpoint = getChatEndpoint(import.meta.env.VITE_BACKEND_URL);
 
 function TypewriterMessage({
   content,
@@ -182,15 +190,25 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query, history }),
       });
-      const payload = (await response.json()) as { answer?: string; detail?: string; error?: string };
-      if (!response.ok) throw new Error(payload.detail || payload.error || "The assistant could not respond.");
+      const responseText = await response.text();
+      let payload: { answer?: string; detail?: string; error?: string } = {};
+      try {
+        payload = JSON.parse(responseText) as typeof payload;
+      } catch {
+        // Static-host fallbacks can return HTML for an unknown API route.
+        // Keep that implementation detail out of the user-facing error.
+      }
+      if (!response.ok || !payload.answer) {
+        throw new Error(payload.detail || payload.error || "The assistant could not respond.");
+      }
+      const answer = payload.answer;
 
       setMessages((current) => [
         ...current,
         {
           id: `assistant-${Date.now()}`,
           role: "assistant",
-          content: payload.answer || "I don't have information about that.",
+          content: answer,
         },
       ]);
     } catch (requestError) {
