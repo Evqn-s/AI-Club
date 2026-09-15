@@ -471,17 +471,17 @@ const MonthEventCard = memo(function MonthEventCard({
       style={{ willChange: "transform, opacity" }}
       className="w-full"
     >
-      <button
+          <button
         onClick={(e) => {
           if (!isInteractive) return;
           e.stopPropagation();
           onSelect(evt);
         }}
-        className={`w-full text-left p-1 md:p-1.5 rounded-lg border transition-all flex flex-col justify-between ${
+            className={`w-full text-left p-1 md:p-1.5 rounded-lg border transition-all flex flex-col justify-between ${
           isHighlighted
             ? "bg-[#241416]/90 border-[#E0A3AA] border-t-white/50 ring-2 ring-[#E0A3AA] shadow-[0_0_16px_rgba(224,163,170,0.5)]"
             : "glass-chip"
-        }`}
+            } ${isHighlighted ? "cal-search-match" : ""}`}
       >
         <div className="space-y-0.5 w-full">
           <div className="flex items-start justify-between gap-1 w-full">
@@ -535,7 +535,7 @@ const MonthDayCell = memo(function MonthDayCell({
 }) {
   const hasEvents = dayEvents.length > 0;
   const isAnyHighlighted = dayEvents.some((e) => e.id === highlightedEventId);
-  const isDateSearched = dayObj.dateString === highlightedDateString;
+        const isDateSearched = dayObj.dateString === highlightedDateString;
 
   return (
     <div
@@ -561,7 +561,7 @@ const MonthDayCell = memo(function MonthDayCell({
         // reads at a glance on the dense month grid. Only in its own month —
         // never on the adjacent-month overflow cells.
         dayObj.isToday && dayObj.isCurrentMonth ? "cal-today" : ""
-      }`}
+      } ${isDateSearched || isAnyHighlighted ? "cal-search-match" : ""}`}
     >
       {/* Day header — NO today dot */}
       <div className="flex items-center justify-between pb-0.5 border-b border-[#242021]/60">
@@ -754,7 +754,7 @@ const MobileWeekView = memo(function MobileWeekView({
                   evt.id === highlightedEventId
                     ? "bg-[#241416]/90 border-[#E0A3AA] border-t-white/50 ring-2 ring-[#E0A3AA]"
                     : "glass-panel glass-panel-hover"
-                }`}
+                } ${evt.id === highlightedEventId ? "cal-search-match" : ""}`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-mono font-bold text-[#E0A3AA] flex items-center gap-1.5">
@@ -853,7 +853,7 @@ const DesktopWeekView = memo(function DesktopWeekView({
                 : dayObj.isToday
                 ? "glass-panel ring-1 ring-[#E0A3AA]/60 border-[#5E2C32] border-t-white/50 shadow-[0_0_14px_rgba(224,163,170,0.15)] cal-today"
                 : "glass-cell glass-cell-hover"
-            }`}
+              } ${isDateSearched ? "cal-search-match" : ""}`}
           >
             <div className="border-b border-[#242021] pb-1.5 flex items-center justify-between">
               <div>
@@ -898,7 +898,7 @@ const DesktopWeekView = memo(function DesktopWeekView({
                         isHighlighted
                           ? "bg-[#241416]/90 border-[#E0A3AA] border-t-white/50 ring-2 ring-[#E0A3AA] shadow-[0_0_20px_rgba(224,163,170,0.5)]"
                           : "glass-chip"
-                      }`}
+                      } ${isHighlighted ? "cal-search-match" : ""}`}
                     >
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between gap-1">

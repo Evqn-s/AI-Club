@@ -40,9 +40,9 @@ body::after {
 }
 
 :root.light {
-  --bg-main: #F7F7F8;
+  --bg-main: #F7F9FF;
   --bg-surface: #FFFFFF;
-  --bg-elevated: #F7F7F8;
+  --bg-elevated: #F7F9FF;
   --text-main: #000000;
   --color-border-subtle: rgba(0, 0, 0, 0.12);
   color-scheme: light;
@@ -109,26 +109,26 @@ body::after {
 }
 
 :root.light .glass-panel {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.025) 100%);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(219, 234, 254, 0.12) 100%);
   border: 1px solid rgba(0, 0, 0, 0.14);
   border-top-color: rgba(255, 255, 255, 0.9);
   box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.55), 0 16px 36px rgba(0, 0, 0, 0.08);
 }
 :root.light .glass-panel-hover:hover {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.05) 100%);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.16) 0%, rgba(219, 234, 254, 0.2) 100%);
   border-top-color: rgba(255, 255, 255, 1);
   box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.75), 0 20px 44px rgba(0, 0, 0, 0.12);
 }
 
 :root.light .glass-button {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.05) 100%);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.2) 0%, rgba(219, 234, 254, 0.16) 100%);
   border: 1px solid rgba(0, 0, 0, 0.14);
   border-top-color: rgba(255, 255, 255, 0.65);
   box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.35), 0 10px 24px rgba(0, 0, 0, 0.12);
   color: #141213;
 }
 :root.light .glass-button:hover {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.09) 100%);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.3) 0%, rgba(219, 234, 254, 0.24) 100%);
   border-top-color: rgba(255, 255, 255, 0.85);
   box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.5), 0 14px 32px rgba(0, 0, 0, 0.16);
   color: #000000;
@@ -151,22 +151,22 @@ html.light .ask-ai-fab:hover {
 }
 
 :root.light .glass-cell {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.5) 100%);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.72) 0%, rgba(219, 234, 254, 0.42) 100%);
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-top-color: rgba(255, 255, 255, 0.85);
   box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.7);
 }
 :root.light .glass-cell-hover:hover {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.68) 100%);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.88) 0%, rgba(219, 234, 254, 0.56) 100%);
 }
 
 :root.light .glass-chip {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.65) 100%);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.82) 0%, rgba(219, 234, 254, 0.5) 100%);
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-top-color: rgba(255, 255, 255, 0.9);
 }
 :root.light .glass-chip:hover {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.8) 100%);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.96) 0%, rgba(219, 234, 254, 0.64) 100%);
 }
 
 /* Globally remove scrollbars across all browsers while keeping content scrollable */
@@ -265,15 +265,32 @@ html:not(.light) [class*="hover:border-"]:hover {
    ========================================================= */
 
 html.light body {
-  background-color: #F7F7F8;
+  background-color: #F7F9FF;
   color: #000000 !important;
 }
 
-/* Pure white top header navbar with blue border outline */
+/* The top bar shares the page canvas and has no divider in either theme. */
+header {
+  border-bottom-width: 0 !important;
+}
+
+/* Light mode keeps the ambient depth blue-white; the dark red backdrop glows
+   are intentionally removed so they cannot muddy the page canvas. */
+html.light .ambient-glow-top {
+  background: radial-gradient(ellipse, rgba(219, 234, 254, 0.42), transparent 70%) !important;
+  opacity: 0.7;
+}
+
+html.light .ambient-glow-middle {
+  background: radial-gradient(ellipse, rgba(191, 219, 254, 0.3), transparent 70%) !important;
+  opacity: 0.65;
+}
+
+/* Light top bar matches the bluish-white page canvas. */
 html.light header {
-  background-color: #FFFFFF !important;
-  border-color: rgba(37, 99, 235, 0.35) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+  background-color: #F7F9FF !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
 }
 
 html.light header .bg-\[\#0A090A\],
@@ -328,7 +345,7 @@ html.light ::selection {
 /* Neutral background surfaces */
 html.light .bg-\[\#0A090A\],
 html.light .bg-\[\#0A090A\]\/95 {
-  background-color: #F7F7F8 !important;
+  background-color: #F7F9FF !important;
 }
 
 html.light .bg-\[\#141213\],
@@ -341,7 +358,7 @@ html.light .bg-\[\#1E1A1B\],
 html.light .bg-\[\#241416\],
 html.light .bg-\[\#2A1215\],
 html.light .bg-\[\#3D1E22\] {
-  background-color: #F0F0F2 !important;
+  background-color: #EEF4FF !important;
 }
 
 /* Calendar-specific: opacity-modified dark backgrounds need separate selectors
@@ -808,4 +825,11 @@ html.light .cal-today::after {
     0 0 0 1.5px rgba(37, 99, 235, 0.6),
     0 0 16px rgba(37, 99, 235, 0.3),
     inset 0 0 20px rgba(37, 99, 235, 0.12);
+}
+
+/* Search matches stay visible on the solid white light theme. */
+html.light .cal-search-match {
+  background: linear-gradient(145deg, #FFFFFF 0%, #EEF4FF 100%) !important;
+  border-color: #2563EB !important;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.48), 0 0 22px rgba(37, 99, 235, 0.42) !important;
 }
