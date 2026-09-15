@@ -257,8 +257,10 @@ function getCoverflowArcTransform(offset: number, isTransitioning: boolean) {
     };
   }
 
-  // Secondary slides are fully opaque when visible — no ghostly translucency
-  const opacity = isTransitioning ? 1 : 0;
+  // Side slides are dimmed ghosts during the slide — clearly secondary so the
+  // incoming center month/week reads as the main element even though every
+  // card surface is translucent glass. Hidden entirely when idle.
+  const opacity = isTransitioning ? 0.32 : 0;
 
   if (offset === -1) {
     return {
@@ -2336,12 +2338,37 @@ export function CalendarPage() {
                         transformStyle: "preserve-3d",
                         willChange: "transform, opacity",
                         backfaceVisibility: "hidden",
+                        // Dimmed side slides get a touch of blur + desaturation so
+                        // the crisp, full-color center slide is unmistakably the
+                        // main month/week while the arc is mid-flight.
+                        filter: isCenter
+                          ? "none"
+                          : "blur(1.5px) saturate(0.75)",
                       }}
                       className={`absolute inset-0 w-full rounded-2xl ${
                         isCenter ? "pointer-events-auto" : "pointer-events-none"
                       }`}
                     >
-                      {renderCalendarContent(itemIndex, isCenter)}
+                      {/* Focus backing: rises above the dimmed side slides so the
+                          translucent day cells of the outgoing period cannot bleed
+                          through the incoming centre. Fades out the moment paging
+                          settles, leaving the resting glass look untouched.
+                          `initial={false}` avoids a flash if it mounts mid-idle. */}
+                      {isCenter && (
+                        <motion.div
+                          aria-hidden="true"
+                          className="cal-slide-stage absolute inset-0 rounded-2xl pointer-events-none"
+                          initial={false}
+                          animate={{ opacity: isTransitioning ? 1 : 0 }}
+                          transition={{
+                            duration: isTransitioning ? 0.14 : 0.3,
+                            ease: "easeOut",
+                          }}
+                        />
+                      )}
+                      <div className="relative w-full">
+                        {renderCalendarContent(itemIndex, isCenter)}
+                      </div>
                     </motion.div>
                   );
                 })}
