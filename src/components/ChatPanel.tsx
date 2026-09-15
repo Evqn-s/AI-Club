@@ -5,9 +5,9 @@ import { Input } from "@/components/ui/input";
 
 // ChatPanel owns the request state and presentation timing; ChatWidget only
 // decides whether this lazy-loaded surface is mounted.
-const COOLDOWN_TICKS = 5;
+const COOLDOWN_TICKS = 0;
 const COOLDOWN_TICK_MS = 500;
-const CHAR_INTERVAL_MS = 33;
+const CHAR_INTERVAL_MS = 3300;
 
 type ChatMessage = {
   id: string;
