@@ -87,6 +87,14 @@ def init_local_db():
             description TEXT NOT NULL DEFAULT ''
         )
     """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS info (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL UNIQUE,
+            description TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
     cursor.execute("SELECT COUNT(*) FROM club_info")
     if cursor.fetchone()[0] == 0:
         cursor.execute("""
@@ -164,6 +172,34 @@ def get_calendar(limit: int = 10) -> List[Dict[str, Any]]:
     rows = cursor.fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+def get_info(limit: int = 25) -> List[Dict[str, Any]]:
+    """Return miscellaneous facts for the Python assistant context."""
+    sb = get_supabase_client()
+    if sb:
+        try:
+            res = (
+                sb.table("info")
+                .select("title,description")
+                .order("title", desc=False)
+                .limit(limit)
+                .execute()
+            )
+            if res.data is not None:
+                return res.data
+        except Exception:
+            pass
+
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT title, description FROM info ORDER BY title ASC LIMIT ?",
+        (limit,),
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
 
 def add_news(content: str, author: str) -> Dict[str, Any]:
     new_item = {

@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useChat } from "@ai-sdk/react";
 import { X, Send, Bot, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +6,21 @@ import { Input } from "@/components/ui/input";
 const COOLDOWN_TICKS = 5;
 const COOLDOWN_TICK_MS = 500;
 const CHAR_INTERVAL_MS = 33;
+const CHAT_TIMEOUT_MS = 45_000;
+
+type ChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+};
+
+function getChatEndpoint(configuredUrl?: string): string {
+  const baseUrl = configuredUrl?.trim().replace(/\/+$/, "");
+  if (!baseUrl) return "/api/chat";
+  return /\/api\/chat$/i.test(baseUrl) ? baseUrl : `${baseUrl}/api/chat`;
+}
+
+const chatEndpoint = getChatEndpoint(import.meta.env.VITE_BACKEND_URL);
 
 function TypewriterMessage({
   content,
@@ -72,9 +86,10 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
   const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const completedMessageIds = useRef<Set<string>>(new Set());
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
-    api: "/api/chat",
-  });
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const lastMessage = messages[messages.length - 1];
   const isLatestAssistant = lastMessage?.role === "assistant";
@@ -149,11 +164,65 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
     startCooldown();
   }, []);
 
-  function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (cooldown > 0 || isLoading || isTyping || !input.trim()) return;
+
+    const query = input.trim();
+    const userMessage: ChatMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content: query,
+    };
+    const history = messages.map(({ role, content }) => ({ role, content }));
+
+    setMessages((current) => [...current, userMessage]);
+    setInput("");
+    setError(null);
+    setIsLoading(true);
     setIsTyping(false);
-    handleSubmit(e);
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), CHAT_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(chatEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query, history }),
+        signal: controller.signal,
+      });
+      const responseText = await response.text();
+      let payload: { answer?: string; detail?: string; error?: string } = {};
+      try {
+        payload = JSON.parse(responseText) as typeof payload;
+      } catch {
+        // The Python route should return JSON; hide HTML proxy errors from users.
+      }
+      if (!response.ok || !payload.answer) {
+        throw new Error(payload.detail || payload.error || "The assistant could not respond.");
+      }
+
+      setIsLoading(false);
+      setMessages((current) => [
+        ...current,
+        { id: `assistant-${Date.now()}`, role: "assistant", content: payload.answer! },
+      ]);
+    } catch (requestError) {
+      const message = requestError instanceof DOMException && requestError.name === "AbortError"
+        ? "The chatbot took too long to respond. Please try again."
+        : requestError instanceof Error
+        ? requestError.message
+        : "The assistant could not respond.";
+      setError(message);
+      setIsLoading(false);
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }
+
+  function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+    setInput(event.target.value);
   }
 
   const isInputDisabled = isLoading || isTyping || cooldown > 0;
