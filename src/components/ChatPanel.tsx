@@ -203,6 +203,8 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
       }
       const answer = payload.answer;
 
+      // Network work is complete; the typewriter owns the remaining UI state.
+      setIsLoading(false);
       setMessages((current) => [
         ...current,
         {
