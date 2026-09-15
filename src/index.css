@@ -187,7 +187,13 @@ html.light .ask-ai-fab:hover {
 html,
 body {
   overflow-x: hidden;
-  overscroll-behavior: none;
+  /* `clip` (not `hidden`) for the x-axis on purpose. `overflow-x: hidden`
+     turns the element into a SCROLL CONTAINER and forces its overflow-y to
+     `auto`, which on phones can swallow the page's own vertical scroll
+     gesture — the line above is kept only as a fallback for browsers
+     without `clip` support, and this overrides it everywhere modern.
+     `clip` just clips the paint and never becomes a scroller. */
+  overflow-x: clip;
 }
 
 body {

@@ -859,6 +859,15 @@ const DesktopWeekView = memo(function DesktopWeekView({
 // MAIN CALENDAR PAGE COMPONENT
 // ==========================================
 
+// Bottom edge of the sticky navbar in viewport coordinates. Anything scrolled
+// to the top of the list is aligned just below this so it can never end up
+// hidden underneath the header.
+function getStickyHeaderBottom(): number {
+  const header = document.querySelector("header");
+  if (!header) return 0;
+  return Math.max(0, header.getBoundingClientRect().bottom);
+}
+
 export function CalendarPage() {
   // Immediate Data Hydration: zero skeleton flash
   const cachedData = getCachedCalendar();
@@ -879,6 +888,13 @@ export function CalendarPage() {
   const [mobileSelectedDay, setMobileSelectedDay] = useState<string>(TODAY_STRING);
   const [listActiveIndex, setListActiveIndex] = useState<number>(0);
   const listContainerRef = useRef<HTMLDivElement>(null);
+  // Arrows scroll the *document* on mobile (the list has no inner scroller).
+  // While that smooth scroll animates we pin the intended index so the passive
+  // tracker can neither fight it mid-flight nor drag the highlight back when
+  // the page is already scrolled as far as it will go.
+  const pinnedIndexRef = useRef<number | null>(null);
+  const pinTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const listSettleTimer = useRef<NodeJS.Timeout | null>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
 
   // Mobile detection for list mode: below sm breakpoint we use native scrolling
@@ -895,29 +911,46 @@ export function CalendarPage() {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  // Mobile list scroll tracker: rAF-throttled, passive — finds the topmost
-  // visible card and promotes it (bigger + highlighted). Never scrolls.
-  const listScrollRaf = useRef<number | null>(null);
-  const handleListScroll = useCallback(() => {
-    if (listScrollRaf.current !== null) return;
-    listScrollRaf.current = requestAnimationFrame(() => {
-      listScrollRaf.current = null;
-      const container = listContainerRef.current;
-      if (!container) return;
-      const items = container.querySelectorAll<HTMLElement>("[data-event-index]");
-      if (items.length === 0) return;
-      const cTop = container.getBoundingClientRect().top;
-      let candidate = Number(items[0].getAttribute("data-event-index") ?? 0);
-      items.forEach((el) => {
-        const rect = el.getBoundingClientRect();
-        // Last card whose top has crossed just below the container top = current top element
-        if (rect.top <= cTop + 24) {
-          candidate = Number(el.getAttribute("data-event-index") ?? candidate);
-        }
-      });
-      setListActiveIndex((prev) => (prev === candidate ? prev : candidate));
+  // List scroll tracker — passive, never scrolls. Promotes the card sitting at
+  // the top of the scroll area (bigger + highlighted) so the user always knows
+  // where they are.
+  //
+  // Two deliberate safety measures keep scrolling smooth:
+  // 1. It only re-evaluates once the scroll SETTLES. Promoting a card grows it,
+  //    which pushes everything below it down — doing that mid-drag would yank
+  //    content out from under the user's finger.
+  // 2. It stands down while an arrow-driven scroll is pinned.
+  const updateListActiveFromScroll = useCallback(() => {
+    if (pinnedIndexRef.current !== null) return;
+    const container = listContainerRef.current;
+    if (!container) return;
+    const items = container.querySelectorAll<HTMLElement>("[data-event-index]");
+    if (items.length === 0) return;
+    // Reference line: the container's own top while it sits below the sticky
+    // navbar (desktop inner scroller). On mobile the document scrolls and the
+    // container top goes negative, so fall back to just under the navbar.
+    const line = Math.max(
+      container.getBoundingClientRect().top,
+      getStickyHeaderBottom() + 12
+    );
+    let candidate = Number(items[0].getAttribute("data-event-index") ?? 0);
+    items.forEach((el) => {
+      const rect = el.getBoundingClientRect();
+      // Last card whose top has crossed just below the reference line = top element
+      if (rect.top <= line + 24) {
+        candidate = Number(el.getAttribute("data-event-index") ?? candidate);
+      }
     });
+    setListActiveIndex((prev) => (prev === candidate ? prev : candidate));
   }, []);
+
+  const handleListScroll = useCallback(() => {
+    if (listSettleTimer.current) clearTimeout(listSettleTimer.current);
+    listSettleTimer.current = setTimeout(() => {
+      listSettleTimer.current = null;
+      updateListActiveFromScroll();
+    }, 110);
+  }, [updateListActiveFromScroll]);
 
   // Track whether there is enough space on either side of the viewport for the floating nav arrows
   const [hasSideSpace, setHasSideSpace] = useState(false);
@@ -940,18 +973,81 @@ export function CalendarPage() {
     };
   }, []);
 
-  const scrollEventToTop = useCallback((index: number) => {
-    if (!listContainerRef.current) return;
-    const container = listContainerRef.current;
-    const el = container.querySelector<HTMLElement>(`[data-event-index="${index}"]`);
-    if (el) {
+  // Bring a list card to the top of the scroll area.
+  // - Desktop: the list is an inner scroller, so scroll that container.
+  // - Mobile: the document is the scroller, so scroll the window until the card
+  //   sits just clear of the sticky navbar. The index is pinned for the length
+  //   of the animation so the passive tracker cannot hijack the highlight.
+  const scrollEventToTop = useCallback(
+    (index: number) => {
+      const container = listContainerRef.current;
+      if (!container) return;
+      const el = container.querySelector<HTMLElement>(`[data-event-index="${index}"]`);
+      if (!el) return;
+
+      if (isMobileList) {
+        // The document is the scroller on mobile, so only record the intent
+        // here. The actual scroll runs in the effect below, AFTER React has
+        // committed the new top card — promoting a card resizes it and
+        // collapses the previous one, so measuring at click time would aim at a
+        // position that no longer exists once the layout settles.
+        pinnedIndexRef.current = index;
+        if (pinTimerRef.current) clearTimeout(pinTimerRef.current);
+        pinTimerRef.current = setTimeout(() => {
+          pinnedIndexRef.current = null;
+          pinTimerRef.current = null;
+        }, 700);
+        return;
+      }
+
       const topOffset = el.offsetTop - container.offsetTop;
       container.scrollTo({
         top: Math.max(0, topOffset),
         behavior: "smooth",
       });
-    }
-  }, []);
+    },
+    [isMobileList]
+  );
+
+  // Performs the arrow / Today jump on mobile once the new top card has been
+  // committed to the DOM, so the measurement reflects the settled layout.
+  useEffect(() => {
+    if (!isMobileList) return;
+    const pinned = pinnedIndexRef.current;
+    if (pinned === null) return;
+    const el = listContainerRef.current?.querySelector<HTMLElement>(
+      `[data-event-index="${pinned}"]`
+    );
+    if (!el) return;
+    const navBottom = getStickyHeaderBottom();
+    window.scrollTo({
+      top: Math.max(0, window.scrollY + el.getBoundingClientRect().top - navBottom - 12),
+      behavior: "smooth",
+    });
+  }, [listActiveIndex, isMobileList]);
+
+  // On mobile the document is the scroller, so track scroll there instead of on
+  // the list container (passive + debounced, so it costs nothing per frame).
+  useEffect(() => {
+    if (!isMobileList || viewMode !== "list") return;
+    window.addEventListener("scroll", handleListScroll, { passive: true });
+    // A touch/wheel means the user has taken over — drop any arrow pin.
+    const releasePin = () => {
+      pinnedIndexRef.current = null;
+    };
+    window.addEventListener("touchstart", releasePin, { passive: true });
+    window.addEventListener("wheel", releasePin, { passive: true });
+    // Entering list mode or rotating the device can leave the highlight on a
+    // card that is no longer at the top; re-derive it once the mode transition
+    // and layout have settled.
+    const settle = setTimeout(updateListActiveFromScroll, 340);
+    return () => {
+      window.removeEventListener("scroll", handleListScroll);
+      window.removeEventListener("touchstart", releasePin);
+      window.removeEventListener("wheel", releasePin);
+      clearTimeout(settle);
+    };
+  }, [isMobileList, viewMode, handleListScroll, updateListActiveFromScroll]);
 
   // Transition state: activates the cylindrical ring display during arrow navigation
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -1641,7 +1737,9 @@ export function CalendarPage() {
     // ---- Mobile: lightweight native-scroll list, zero lock-in ----
     if (isMobileList) {
       return (
-        <div className="flex flex-col gap-4 pb-6">
+        // The ref is required here too: the arrow steppers and the Today jump
+        // resolve their target card through this container on mobile.
+        <div ref={listContainerRef} className="flex flex-col gap-4 pb-6">
           {filteredListEvents.map((evt, evtIdx) => {
             const isTop = evtIdx === listActiveIndex;
             const isHighlighted = evt.id === highlightedEventId;
@@ -1937,12 +2035,16 @@ export function CalendarPage() {
     handleSelectEvent,
   ]);
 
-  // Cleanup pending scroll rAF on unmount
+  // Cleanup pending scroll timers on unmount
   useEffect(() => {
     return () => {
-      if (listScrollRaf.current !== null) {
-        cancelAnimationFrame(listScrollRaf.current);
-        listScrollRaf.current = null;
+      if (listSettleTimer.current) {
+        clearTimeout(listSettleTimer.current);
+        listSettleTimer.current = null;
+      }
+      if (pinTimerRef.current) {
+        clearTimeout(pinTimerRef.current);
+        pinTimerRef.current = null;
       }
     };
   }, []);
