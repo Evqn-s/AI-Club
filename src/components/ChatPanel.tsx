@@ -3,11 +3,9 @@ import { X, Send, Bot, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-// ChatPanel owns the request state and presentation timing; ChatWidget only
-// decides whether this lazy-loaded surface is mounted.
-const COOLDOWN_TICKS = 0;
+const COOLDOWN_TICKS = 5;
 const COOLDOWN_TICK_MS = 500;
-const CHAR_INTERVAL_MS = 3300;
+const CHAR_INTERVAL_MS = 25;
 
 type ChatMessage = {
   id: string;
@@ -30,8 +28,6 @@ function TypewriterMessage({
   onComplete: () => void;
   onProgress?: () => void;
 }) {
-  // Keep the reveal local to each message so reopening or rerendering the
-  // panel cannot replay text that the user has already seen.
   const [displayedCount, setDisplayedCount] = useState(alreadyCompleted ? content.length : 0);
   const completedRef = useRef(alreadyCompleted);
   const onCompleteRef = useRef(onComplete);
@@ -140,8 +136,6 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
   }, []);
 
   function startCooldown() {
-    // Restarting the interval makes rapid state changes safe and guarantees
-    // only one cooldown timer can be active at a time.
     if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
     setCooldown(COOLDOWN_TICKS);
     cooldownTimerRef.current = setInterval(() => {
@@ -176,8 +170,6 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
     };
     const history = messages.map(({ role, content }) => ({ role, content }));
 
-    // Add the user message before awaiting the backend so the conversation
-    // stays responsive even when the network or model is slow.
     setMessages((current) => [...current, userMessage]);
     setInput("");
     setError(null);
