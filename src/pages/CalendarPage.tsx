@@ -1739,7 +1739,21 @@ export function CalendarPage() {
       return (
         // The ref is required here too: the arrow steppers and the Today jump
         // resolve their target card through this container on mobile.
-        <div ref={listContainerRef} className="flex flex-col gap-4 pb-6">
+        //
+        // touch-action: pan-y pinch-zoom — explicitly hands vertical panning to
+        // the browser (pinch-zoom preserved for accessibility).
+        //
+        // CRITICAL INVARIANT: a card's rendered height must not depend on
+        // `isTop`. Promoting a card changes only colours, shadow and a
+        // composited `transform` scale — never padding, font-size, or whether
+        // the description is mounted. Otherwise promoting the card above the
+        // scroll position reflows every card below it by ~90px, which is what
+        // made the list appear to snap back and refuse to scroll.
+        <div
+          ref={listContainerRef}
+          className="flex flex-col gap-4 pb-6"
+          style={{ touchAction: "pan-y pinch-zoom" }}
+        >
           {filteredListEvents.map((evt, evtIdx) => {
             const isTop = evtIdx === listActiveIndex;
             const isHighlighted = evt.id === highlightedEventId;
@@ -1764,10 +1778,10 @@ export function CalendarPage() {
                     setListActiveIndex(evtIdx);
                     handleSelectEvent(evt);
                   }}
-                  className={`relative rounded-2xl border text-left w-full overflow-hidden cursor-pointer ${
+                  className={`cal-list-card relative rounded-2xl border text-left w-full overflow-hidden cursor-pointer p-4 ${
                     isTop || isHighlighted
-                      ? "p-5 border-[#E0A3AA]/60 bg-gradient-to-br from-[#1A1A1E] to-[#121215] shadow-[0_0_40px_-8px_rgba(224,163,170,0.35)]"
-                      : "p-4 border-white/10 bg-[#121215]/80"
+                      ? "cal-list-card--top border-[#E0A3AA]/60 bg-gradient-to-br from-[#1A1A1E] to-[#121215] shadow-[0_0_40px_-8px_rgba(224,163,170,0.35)]"
+                      : "border-white/10 bg-[#121215]/80"
                   }`}
                 >
                   {isHighlighted && !isTop && (
@@ -1779,8 +1793,8 @@ export function CalendarPage() {
                   <div className="flex flex-col gap-3">
                     <div className="flex items-start justify-between gap-3">
                       <h3
-                        className={`font-display font-bold leading-tight flex-1 ${
-                          isTop ? "text-lg text-white" : "text-[15px] text-[#EDEDEF]"
+                        className={`font-display font-bold leading-tight flex-1 text-[15px] ${
+                          isTop ? "text-white" : "text-[#EDEDEF]"
                         }`}
                       >
                         {evt.title}
@@ -1804,8 +1818,16 @@ export function CalendarPage() {
                       <MapPin className="h-3 w-3 text-[#9B98A0] shrink-0" />
                       <span className="truncate">{evt.location}</span>
                     </p>
-                    {isTop && evt.description && (
-                      <p className="text-[13px] text-[#C9C7CE] leading-relaxed line-clamp-3">
+                    {/* Always rendered with a constant clamp: a card's own height must
+                        never depend on `isTop`, or promoting it reflows every
+                        card below the scroll position (the "snapping"). Only
+                        the colour changes here. */}
+                    {evt.description && (
+                      <p
+                        className={`text-[13px] leading-relaxed line-clamp-2 ${
+                          isTop ? "text-[#C9C7CE]" : "text-[#8A8790]"
+                        }`}
+                      >
                         {evt.description}
                       </p>
                     )}
@@ -2372,12 +2394,31 @@ export function CalendarPage() {
           </>
         )}
 
-        {/* Viewport with swipe, pan, and desktop wheel support */}
+        {/* Viewport with swipe, pan, and desktop wheel support.
+            In mobile list mode this wrapper must neither clip nor CONTAIN its
+            scroll. `overscroll-behavior: contain` on a box that cannot itself
+            scroll strangles the chain up to the document, so a touch anywhere
+            over the list scrolled nothing at all — the list simply would not
+            move. `overflow: hidden` makes it a (non-scrollable) scroll
+            container, which is what gives that rule its grip, so both are
+            dropped here. List mode renders a single full-height slide, so
+            there is nothing in it that needs clipping.
+            `touch-action: pan-y pinch-zoom` explicitly hands vertical panning
+            to the browser while keeping pinch-zoom for accessibility. */}
         <div
           ref={viewportRef}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          className="relative w-full overflow-hidden select-none py-1 overscroll-contain"
+          className={`relative w-full py-1 ${
+            isMobileList && viewMode === "list"
+              ? ""
+              : "overflow-hidden select-none overscroll-contain"
+          }`}
+          style={
+            isMobileList && viewMode === "list"
+              ? { touchAction: "pan-y pinch-zoom" }
+              : undefined
+          }
         >
           <motion.div
             key={viewMode}
