@@ -1,27 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useChat } from "@ai-sdk/react";
 import { X, Send, Bot, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const COOLDOWN_TICKS = 5;
 const COOLDOWN_TICK_MS = 500;
-const CHAR_INTERVAL_MS = 25;
-
-type ChatMessage = {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-};
-
-// VITE_BACKEND_URL is documented as the FastAPI origin, while local Vite uses
-// its /api proxy. Accept a full endpoint too so either deployment style works.
-function getChatEndpoint(configuredUrl?: string): string {
-  const baseUrl = configuredUrl?.trim().replace(/\/+$/, "");
-  if (!baseUrl) return "/api/chat";
-  return /\/api\/chat$/i.test(baseUrl) ? baseUrl : `${baseUrl}/api/chat`;
-}
-
-const chatEndpoint = getChatEndpoint(import.meta.env.VITE_BACKEND_URL);
+const CHAR_INTERVAL_MS = 33;
 
 function TypewriterMessage({
   content,
@@ -87,10 +72,9 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
   const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const completedMessageIds = useRef<Set<string>>(new Set());
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
+    api: "/api/chat",
+  });
 
   const lastMessage = messages[messages.length - 1];
   const isLatestAssistant = lastMessage?.role === "assistant";
@@ -161,66 +145,15 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
   const handleTypewriterComplete = useCallback((messageId: string) => {
     completedMessageIds.current.add(messageId);
     setIsTyping(false);
-    setIsLoading(false);
     // Once all the text is displayed, start the 2.5-second cooldown
     startCooldown();
   }, []);
 
-  async function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (cooldown > 0 || isLoading || isTyping || !input.trim()) return;
-
-    const query = input.trim();
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      content: query,
-    };
-    const history = messages.map(({ role, content }) => ({ role, content }));
-
-    setMessages((current) => [...current, userMessage]);
-    setInput("");
-    setError(null);
-    setIsLoading(true);
     setIsTyping(false);
-
-    try {
-      const response = await fetch(chatEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, history }),
-      });
-      const responseText = await response.text();
-      let payload: { answer?: string; detail?: string; error?: string } = {};
-      try {
-        payload = JSON.parse(responseText) as typeof payload;
-      } catch {
-        // Static-host fallbacks can return HTML for an unknown API route.
-        // Keep that implementation detail out of the user-facing error.
-      }
-      if (!response.ok || !payload.answer) {
-        throw new Error(payload.detail || payload.error || "The assistant could not respond.");
-      }
-      const answer = payload.answer;
-
-      // Network work is complete; the typewriter owns the remaining UI state.
-      setIsLoading(false);
-      setMessages((current) => [
-        ...current,
-        {
-          id: `assistant-${Date.now()}`,
-          role: "assistant",
-          content: answer,
-        },
-      ]);
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "The assistant could not respond.");
-      setIsLoading(false);
-    }
-  }
-
-  function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
-    setInput(event.target.value);
+    handleSubmit(e);
   }
 
   const isInputDisabled = isLoading || isTyping || cooldown > 0;

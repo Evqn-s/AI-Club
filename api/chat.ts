@@ -1,3 +1,6 @@
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { streamText } from "ai";
+
 type ChatMessage = {
   role: "user" | "assistant" | "system";
   content: string;
@@ -25,6 +28,8 @@ const fallbackContext = {
   calendar: [],
   info: [],
 };
+
+export const config = { runtime: "edge" };
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -127,38 +132,28 @@ export default async function handler(request: Request): Promise<Response> {
   if (!apiKey) return json({ error: "Gemini API key is not configured" }, 503);
 
   const context = await fetchSupabaseContext();
-  const prompt = `You are a helpful, concise assistant for the AI Club.
-Answer strictly from the club context below. If the answer is unknown, say so.
-Do not use em dashes. Keep the answer under 150 words.
-
-Club context:
-${JSON.stringify(context, null, 2)}
-
-Conversation:
-${messages.map((message) => `${message.role}: ${message.content}`).join("\n")}
-
-Answer:`;
-
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 512 },
-        }),
-      }
-    );
-    const result = (await response.json()) as {
-      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-      error?: { message?: string };
-    };
-    if (!response.ok) return json({ error: result.error?.message || "Gemini request failed" }, 502);
+    const google = createGoogleGenerativeAI({ apiKey });
+    const result = streamText({
+      model: google(MODEL),
+      messages,
+      maxTokens: 1024,
+      temperature: 0.1,
+      topP: 1,
+      system: `You are a helpful, concise assistant for the AI Club.
+Answer the user query strictly using the Club Context Data below.
+If asked follow-up questions, use the conversation history.
 
-    const answer = result.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("").trim();
-    return answer ? json({ answer }) : json({ error: "Gemini returned no answer" }, 502);
+Rules:
+1. Do not use em dashes; use commas, colons, or periods instead.
+2. If the answer is not in context, say you don't have that information.
+3. Be friendly, clear, and direct. Keep answers under 150 words.
+
+Club Context Data:
+${JSON.stringify(context, null, 2)}`,
+    });
+
+    return result.toDataStreamResponse();
   } catch (error) {
     console.error("Vercel chat handler failed", error);
     return json({ error: "Failed to process chat request" }, 502);
