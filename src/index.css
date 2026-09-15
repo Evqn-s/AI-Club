@@ -48,6 +48,109 @@ body::after {
   color-scheme: light;
 }
 
+/* ==========================================================================
+   Spatial Glassmorphic Design System
+   Genuine translucent frosted glass with top specular light & inner rim reflection
+   ========================================================================== */
+.glass-panel {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.025) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-top-color: rgba(255, 255, 255, 0.45);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.22), 0 16px 36px rgba(0, 0, 0, 0.45);
+}
+.glass-panel-hover:hover {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border-top-color: rgba(255, 255, 255, 0.65);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.32), 0 20px 44px rgba(0, 0, 0, 0.55);
+}
+
+.glass-button {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-top-color: rgba(255, 255, 255, 0.65);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.35), 0 10px 24px rgba(0, 0, 0, 0.4);
+  color: #ffffff;
+}
+.glass-button:hover {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.09) 100%);
+  border-top-color: rgba(255, 255, 255, 0.85);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.5), 0 14px 32px rgba(0, 0, 0, 0.6);
+  color: #ffffff;
+}
+
+.glass-cell {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-top-color: rgba(255, 255, 255, 0.35);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
+}
+.glass-cell-hover:hover {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border-top-color: rgba(255, 255, 255, 0.55);
+}
+
+.glass-chip {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.035) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-top-color: rgba(255, 255, 255, 0.45);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.18);
+}
+.glass-chip:hover {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.065) 100%);
+  border-top-color: rgba(255, 255, 255, 0.65);
+}
+
+:root.light .glass-panel {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.55) 100%);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-top-color: rgba(255, 255, 255, 0.95);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.85), 0 16px 36px rgba(0, 0, 0, 0.07);
+}
+:root.light .glass-panel-hover:hover {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.7) 100%);
+  border-top-color: #ffffff;
+}
+
+:root.light .glass-button {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.65) 100%);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-top-color: rgba(255, 255, 255, 0.95);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.9), 0 10px 24px rgba(0, 0, 0, 0.08);
+  color: #141213;
+}
+:root.light .glass-button:hover {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.8) 100%);
+  border-top-color: #ffffff;
+  color: #000000;
+}
+
+:root.light .glass-cell {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.5) 100%);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-top-color: rgba(255, 255, 255, 0.85);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.7);
+}
+:root.light .glass-cell-hover:hover {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.68) 100%);
+}
+
+:root.light .glass-chip {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.65) 100%);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-top-color: rgba(255, 255, 255, 0.9);
+}
+:root.light .glass-chip:hover {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.8) 100%);
+}
+
 /* Globally remove scrollbars across all browsers while keeping content scrollable */
 *,
 *::before,
