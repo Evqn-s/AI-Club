@@ -681,14 +681,24 @@ html {
   transition-duration: 150ms !important;
 }
 
-/* MOBILE LIST CARD — no animation at all while scrolling.
-   The top card is still bigger and brighter, but the change is instant: there
-   is deliberately NO transition here, so the scoped exception that used to
-   re-enable transform/box-shadow transitions has been removed and the global
-   "[data-page=calendar] *" kill above applies.
-   `transform: scale(...)` is used rather than padding/font-size because a
-   transform never reflows, so promoting a card cannot shift the cards below
-   it, and it costs the browser nothing to animate (it doesn't animate here). */
+/* MOBILE LIST CARD — live-while-scrolling, compositor-only.
+   The top card is bigger/brighter; the change animates via `transform`
+   ONLY (opacity/transform are the two properties the compositor can
+   animate without reflow or repaint). Border/shadow/color swaps apply
+   instantly on promotion (one paint per index change, not per frame),
+   while the scale glides — so the highlight visibly renders DURING the
+   scroll instead of snapping after it settles, at ~zero main-thread cost.
+   `will-change` pre-promotes the card to its own layer so the scale never
+   invalidates layout of the cards below it. This scoped exception
+   intentionally re-enables transform transitions that the global
+   "[data-page=calendar] *" kill above disables. */
+[data-page="calendar"] .cal-list-card {
+  transition-property: transform !important;
+  transition-duration: 180ms !important;
+  transition-timing-function: ease-out !important;
+  will-change: transform;
+  contain: layout style;
+}
 [data-page="calendar"] .cal-list-card--top {
   transform: scale(1.04);
   z-index: 1;
@@ -834,4 +844,44 @@ html.light .cal-search-match {
   background: linear-gradient(145deg, #FFFFFF 0%, #EEF4FF 100%) !important;
   border-color: #2563EB !important;
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.48), 0 0 22px rgba(37, 99, 235, 0.42) !important;
+}
+
+/* =========================================================
+   MOBILE LIST CARDS — LIGHT MODE
+   The mobile list uses hardcoded dark surfaces
+   (bg-[#121215]/80, from-[#1A1A1E] → to-[#121215]) that no
+   generic override catches — gradients bypass background-color
+   rules. Repaint them explicitly so light mode is light.
+   ========================================================= */
+html.light [data-page="calendar"] .cal-list-card {
+  background: linear-gradient(145deg, #FFFFFF 0%, #EEF4FF 100%) !important;
+  background-image: linear-gradient(145deg, #FFFFFF 0%, #EEF4FF 100%) !important;
+  --tw-gradient-from: #FFFFFF !important;
+  --tw-gradient-to: #EEF4FF !important;
+  --tw-gradient-stops: #FFFFFF, #EEF4FF !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06) !important;
+}
+html.light [data-page="calendar"] .cal-list-card--top {
+  background: linear-gradient(145deg, #FFFFFF 0%, #E4EDFF 100%) !important;
+  background-image: linear-gradient(145deg, #FFFFFF 0%, #E4EDFF 100%) !important;
+  --tw-gradient-from: #FFFFFF !important;
+  --tw-gradient-to: #E4EDFF !important;
+  --tw-gradient-stops: #FFFFFF, #E4EDFF !important;
+  border-color: rgba(37, 99, 235, 0.55) !important;
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.18), 0 8px 24px rgba(37, 99, 235, 0.16) !important;
+}
+/* Inner text greys used ONLY by the mobile list have no generic
+   light-mode mapping — force them dark for contrast. */
+html.light [data-page="calendar"] .cal-list-card .text-\[\#EDEDEF\],
+html.light [data-page="calendar"] .cal-list-card .text-\[\#C9C7CE\],
+html.light [data-page="calendar"] .cal-list-card .text-\[\#8A8790\] {
+  color: #0F172A !important;
+}
+/* Top-card rose accent → sapphire blue in light mode */
+html.light [data-page="calendar"] .cal-list-card .text-\[\#E8959C\] {
+  color: #1D4ED8 !important;
+}
+html.light [data-page="calendar"] .cal-list-card .from-\[\#E0A3AA\]\/30 {
+  --tw-gradient-from: rgba(37, 99, 235, 0.35) !important;
 }

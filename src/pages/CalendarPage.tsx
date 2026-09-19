@@ -977,7 +977,9 @@ export function CalendarPage() {
   // the page is already scrolled as far as it will go.
   const pinnedIndexRef = useRef<number | null>(null);
   const pinTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const listSettleTimer = useRef<NodeJS.Timeout | null>(null);
+  // rAF throttle flag for live-while-scrolling highlight updates (mobile).
+  // One queued frame max → ~1 cheap rect scan per frame, zero timers per event.
+  const listRafRef = useRef<number | null>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
 
   // Mobile detection for list mode: below sm breakpoint we use native scrolling
@@ -1016,23 +1018,38 @@ export function CalendarPage() {
       container.getBoundingClientRect().top,
       getStickyHeaderBottom() + 12
     );
-    let candidate = Number(items[0].getAttribute("data-event-index") ?? 0);
-    items.forEach((el) => {
+    // 50%-gone rule (mobile): the active card is the FIRST card whose
+    // midpoint is still below the reference line — i.e. a card stops being
+    // "top" as soon as half its height has scrolled past the line, instead
+    // of waiting until it is fully gone. Falls back to the last card when
+    // every midpoint has crossed (scrolled to the very bottom).
+    let candidate = Number(
+      items[items.length - 1].getAttribute("data-event-index") ?? 0
+    );
+    for (let i = 0; i < items.length; i++) {
+      const el = items[i];
       const rect = el.getBoundingClientRect();
-      // Last card whose top has crossed just below the reference line = top element
-      if (rect.top <= line + 24) {
+      // Skip zero-height (unmeasured) rows.
+      if (rect.height <= 0) continue;
+      if (rect.top + rect.height * 0.5 > line) {
         candidate = Number(el.getAttribute("data-event-index") ?? candidate);
+        break;
       }
-    });
+    }
     setListActiveIndex((prev) => (prev === candidate ? prev : candidate));
   }, []);
 
+  // Live-while-scrolling tracker (mobile): rAF-throttled so the highlight +
+  // composited scale animation render DURING the scroll, not after it settles.
+  // Cost per frame is one cheap getBoundingClientRect scan, and React only
+  // re-renders when the candidate index actually changes (see the guard in
+  // updateListActiveFromScroll), so steady scrolling costs ~zero JS.
   const handleListScroll = useCallback(() => {
-    if (listSettleTimer.current) clearTimeout(listSettleTimer.current);
-    listSettleTimer.current = setTimeout(() => {
-      listSettleTimer.current = null;
+    if (listRafRef.current !== null) return;
+    listRafRef.current = requestAnimationFrame(() => {
+      listRafRef.current = null;
       updateListActiveFromScroll();
-    }, 110);
+    });
   }, [updateListActiveFromScroll]);
 
   // Track whether there is enough space on either side of the viewport for the floating nav arrows
@@ -2161,9 +2178,9 @@ export function CalendarPage() {
   // Cleanup pending scroll timers on unmount
   useEffect(() => {
     return () => {
-      if (listSettleTimer.current) {
-        clearTimeout(listSettleTimer.current);
-        listSettleTimer.current = null;
+      if (listRafRef.current !== null) {
+        cancelAnimationFrame(listRafRef.current);
+        listRafRef.current = null;
       }
       if (pinTimerRef.current) {
         clearTimeout(pinTimerRef.current);
