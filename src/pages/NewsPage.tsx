@@ -15,6 +15,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, RefreshCw, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+// --- NEW IMPORTS FOR MARKDOWN ---
+import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
+
 // News is cache-first and realtime-aware: the page remains usable offline,
 // while new announcements are prepended as soon as Supabase broadcasts them.
 export function NewsPage() {
@@ -172,9 +176,52 @@ export function NewsPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-[#E5E5E7] leading-relaxed text-fluid-body whitespace-pre-wrap font-normal">
-                      {item.content}
-                    </p>
+                    {/* --- NEW MARKDOWN RENDERER --- */}
+                    <div className="text-[#E5E5E7] leading-relaxed text-fluid-body font-normal">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkBreaks]}
+                        components={{
+                          // Map # Heading to your glowing display font (using h2 size so it fits the card nicely)
+                          h1: ({ node, ...props }) => (
+                            <h1 className="text-fluid-h2 font-display font-bold mt-4 mb-2 first:mt-0" {...props} />
+                          ),
+                          // Map ## Heading to a slightly smaller glowing display font
+                          h2: ({ node, ...props }) => (
+                            <h2 className="text-fluid-h3 font-display font-bold mt-3 mb-2 first:mt-0" {...props} />
+                          ),
+                          // Map ### Heading
+                          h3: ({ node, ...props }) => (
+                            <h3 className="text-lg font-display font-bold mt-3 mb-1 first:mt-0" {...props} />
+                          ),
+                          // Standard text paragraphs
+                          p: ({ node, ...props }) => (
+                            <p className="mb-3 last:mb-0" {...props} />
+                          ),
+                          // Map **bold** to pure white/black so it pops against the grey text
+                          strong: ({ node, ...props }) => (
+                            <strong className="font-bold text-white dark:text-white light:text-black" {...props} />
+                          ),
+                          // Map *italic*
+                          em: ({ node, ...props }) => (
+                            <em className="italic" {...props} />
+                          ),
+                          // Map bullet points (- item)
+                          ul: ({ node, ...props }) => (
+                            <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />
+                          ),
+                          // Map numbered lists (1. item)
+                          ol: ({ node, ...props }) => (
+                            <ol className="list-decimal pl-5 mb-3 space-y-1" {...props} />
+                          ),
+                          // Map links [text](url)
+                          a: ({ node, ...props }) => (
+                            <a className="text-[#E0A3AA] hover:underline" target="_blank" rel="noopener noreferrer" {...props} />
+                          ),
+                        }}
+                      >
+                        {item.content}
+                      </ReactMarkdown>
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>
