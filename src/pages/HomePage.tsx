@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { type ClubInfo } from "@/lib/supabase";
-import {
-  getCachedHome,
-  fallbackClubInfo,
-} from "@/lib/cache";
+import { getCachedHome } from "@/lib/cache";
 import { prefetchHome } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,16 +9,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { HomeSkeleton } from "@/components/HomeSkeleton";
 import { Clock, Mail, ArrowRight, GraduationCap, Instagram, ExternalLink, MessageSquare } from "lucide-react";
 
-// Home renders useful fallback content immediately, then replaces it with the
-// shared Supabase-backed record once the deferred data layer is ready.
+// Home reads strictly from the Supabase club_info record: skeleton while
+// loading, content when it lands, error state when it cannot be reached.
+// No placeholder content is rendered at any point.
 export function HomePage() {
   const cached = getCachedHome();
-  // Render instantly from fallback content — LCP never waits on Supabase.
-  // The Supabase sync (data.ts + client) loads after first paint.
-  const [info, setInfo] = useState<ClubInfo>(() => cached || fallbackClubInfo);
-  // Cold start (no warm cache): show layout-accurate skeleton shapes instead
-  // of text so structure paints instantly with zero layout shift.
+  const [info, setInfo] = useState<ClubInfo | null>(() => cached);
   const [loading, setLoading] = useState<boolean>(() => !cached);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -31,11 +26,15 @@ export function HomePage() {
         .then((data) => {
           if (isMounted) {
             setInfo(data);
+            setError(null);
             setLoading(false);
           }
         })
         .catch(() => {
-          if (isMounted) setLoading(false);
+          if (isMounted) {
+            setError("Unable to connect to the club database.");
+            setLoading(false);
+          }
         });
     };
 
@@ -56,29 +55,41 @@ export function HomePage() {
     };
   }, []);
 
-  const contactEmail = info?.contact_email || fallbackClubInfo.contact_email;
-  const classroomCode = info?.google_classroom_code || fallbackClubInfo.google_classroom_code;
-  const classroomUrl = info?.google_classroom_url || fallbackClubInfo.google_classroom_url;
-  const instagramHandle = info?.instagram_handle || fallbackClubInfo.instagram_handle;
-  const instagramUrl = info?.instagram_url || fallbackClubInfo.instagram_url;
-  const visionText =
-    info?.vision ||
-    info?.mission ||
-    fallbackClubInfo.vision ||
-    "Empowering students to explore, build, and innovate with artificial intelligence.";
-
-  // First paint with no cache: skeleton shapes mimicking the SQL-backed
-  // club_info layout — no text flash, no layout shift when data lands.
-  if (loading && !cached) {
+  // Skeleton while the Supabase record loads — no placeholder text flash,
+  // no layout shift when data lands.
+  if (loading) {
     return <HomeSkeleton />;
   }
+
+  if (!info) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center gap-3 py-[clamp(3rem,10vw,6rem)] text-center">
+        <p className="font-display text-fluid-body font-bold text-[#E5E5E7]">
+          {error ?? "Club information is unavailable right now."}
+        </p>
+        <p className="text-fluid-label uppercase tracking-[0.06em] text-[#67646C]">
+          Check your connection and try again.
+        </p>
+        <Button variant="glass" size="lg" type="button" onClick={() => window.location.reload()}>
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
+  const contactEmail = info.contact_email;
+  const classroomCode = info.google_classroom_code;
+  const classroomUrl = info.google_classroom_url;
+  const instagramHandle = info.instagram_handle;
+  const instagramUrl = info.instagram_url;
+  const visionText = info.vision || info.mission;
 
   return (
     <div className="flex-1 flex flex-col justify-between gap-[clamp(1rem,2vw,1.75rem)] py-[clamp(0.75rem,2vw,1.25rem)]">
       {/* Editorial Centered Hero with Bold Scale & Negative Space */}
       <section className="text-center max-w-[var(--fluid-container-max)] mx-auto w-full space-y-[var(--fluid-gap)] pt-[clamp(0.5rem,1vw,1rem)] pb-[clamp(0.25rem,1vw,0.75rem)]">
         <h1 className="text-fluid-hero font-black tracking-[-0.04em] font-display text-[#E5E5E7] leading-[0.95] select-none">
-          {info?.club_name || "AI Club"}
+          {info.club_name}
         </h1>
 
         <div className="flex flex-wrap items-center justify-center gap-[clamp(0.5rem,2vw,0.75rem)] pt-[clamp(0.25rem,1.5vw,0.5rem)]">
@@ -126,7 +137,7 @@ export function HomePage() {
               <Skeleton className="h-[clamp(1.25rem,4vw,1.5rem)] w-3/4 rounded-[var(--fluid-radius)]" />
             ) : (
               <div className="p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021] bg-[#0A090A] text-[#E5E5E7] text-fluid-body font-medium">
-                {info?.meeting_times || "Every Tuesday at 6 PM"}
+                {info.meeting_times || "Meeting times will be announced."}
               </div>
             )}
           </CardContent>
@@ -164,7 +175,8 @@ export function HomePage() {
                   </a>
                 </div>
 
-                {/* Google Classroom from SQL backend */}
+                {/* Google Classroom from SQL backend — only when the record has it */}
+                {(classroomCode || classroomUrl) && (
                 <div className="flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021] bg-[#0A090A] text-fluid-small">
                   <div className="flex items-center gap-2.5 text-[#9B98A0]">
                     <GraduationCap className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA] shrink-0" />
@@ -180,8 +192,10 @@ export function HomePage() {
                     <ExternalLink className="h-3 w-3 opacity-70 shrink-0" />
                   </a>
                 </div>
+                )}
 
-                {/* Instagram from SQL backend */}
+                {/* Instagram from SQL backend — only when the record has it */}
+                {(instagramHandle || instagramUrl) && (
                 <div className="flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021] bg-[#0A090A] text-fluid-small">
                   <div className="flex items-center gap-2.5 text-[#9B98A0]">
                     <Instagram className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA] shrink-0" />
@@ -197,18 +211,21 @@ export function HomePage() {
                     <ExternalLink className="h-3 w-3 opacity-70 shrink-0" />
                   </a>
                 </div>
+                )}
               </div>
             )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Vision Statement — bottom anchor */}
+      {/* Vision Statement — bottom anchor, only when the record has one */}
+      {visionText && (
       <div className="text-center pt-[clamp(0.25rem,1vw,0.75rem)] pb-[clamp(0.5rem,1.5vw,1rem)] max-w-[var(--fluid-container-narrow)] mx-auto px-[var(--fluid-pad-x)]">
         <p className="text-fluid-body text-[#9B98A0] font-normal tracking-wide leading-relaxed">
           {visionText}
         </p>
       </div>
+      )}
     </div>
   );
 }

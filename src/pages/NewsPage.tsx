@@ -4,7 +4,6 @@ import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { isSupabaseConfigured, type NewsItem } from "@/lib/supabase";
 import {
   getCachedNews,
-  fallbackNews,
   setCachedNews,
   invalidateCache,
 } from "@/lib/cache";
@@ -23,7 +22,7 @@ import remarkBreaks from "remark-breaks";
 // while new announcements are prepended as soon as Supabase broadcasts them.
 export function NewsPage() {
   const cached = getCachedNews();
-  const [news, setNews] = useState<NewsItem[]>(() => cached || fallbackNews);
+  const [news, setNews] = useState<NewsItem[]>(() => cached ?? []);
   const [loading, setLoading] = useState<boolean>(() => !cached);
   const [error, setError] = useState<string | null>(null);
   const [sortNewest, setSortNewest] = useState<boolean>(true);
@@ -41,8 +40,8 @@ export function NewsPage() {
       setNews(data);
     } catch (err: unknown) {
       console.error("Failed to load news:", err);
-      setError("Unable to connect to announcements database. Showing local offline data.");
-      setNews(fallbackNews);
+      setError("Unable to connect to announcements database.");
+      setNews([]);
     } finally {
       setLoading(false);
     }

@@ -2,40 +2,9 @@
 // Fallbacks live here so HomePage renders instantly with zero fetches.
 import type { ClubInfo, NewsItem, CalendarEvent } from "./supabase";
 
-export const fallbackClubInfo: ClubInfo = {
-  id: "club_main",
-  club_name: "AI Club",
-  mission: "Empowering students to explore, build, and innovate with artificial intelligence.",
-  vision: "Empowering students to explore, build, and innovate with artificial intelligence.",
-  meeting_times: "Every Tuesday at 6 PM",
-  rules: [],
-  contact_email: "contact.aiclub@gmail.com",
-  google_classroom_code: "aiclub2026",
-  google_classroom_url: "https://classroom.google.com",
-  instagram_handle: "@aiclub.official",
-  instagram_url: "https://instagram.com/aiclub.official",
-};
-
-export const fallbackNews: NewsItem[] = [
-  {
-    id: "msg_1",
-    content:
-      "Welcome to the new semester! Join our Discord and check out our upcoming AI workshop series.",
-    author: "Admin",
-    timestamp: "2026-09-01T12:00:00Z",
-  },
-  {
-    id: "msg_2",
-    content:
-      "Hackathon project groups will be finalized during our next Tuesday session. Bring your project ideas!",
-    author: "President",
-    timestamp: "2026-09-04T18:30:00Z",
-  },
-];
-
-// Calendar has no placeholder events: events come strictly from the Supabase
-// `events` table. Empty table / offline / unconfigured → empty list, and the
-// page renders its empty state.
+// No placeholder rows: every page reads strictly from Supabase and renders
+// its skeleton while loading, then the empty/error state when there is no
+// data. Nothing here fabricates club_info, news, or events content.
 
 // Module-level in-memory cache and in-flight promise tracker
 const cache = new Map<string, { data: unknown; ts: number }>();

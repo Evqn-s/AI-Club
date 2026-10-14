@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useCallback, useRef, memo } from "react";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { isSupabaseConfigured, type CalendarEvent } from "@/lib/supabase";
-import { getCachedCalendar } from "@/lib/cache";
+import { getCachedCalendar, invalidateCache } from "@/lib/cache";
 import { prefetchCalendar } from "@/lib/data";
 import { CalendarSkeleton } from "@/components/CalendarSkeleton";
 import { Button } from "@/components/ui/button";
@@ -1050,27 +1050,7 @@ export function CalendarPage() {
     });
   }, [updateListActiveFromScroll]);
 
-  // Track whether there is enough space on either side of the viewport for the floating nav arrows
-  const [hasSideSpace, setHasSideSpace] = useState(false);
 
-  useEffect(() => {
-    const el = viewportRef.current;
-    if (!el) return;
-    const check = () => {
-      const rect = el.getBoundingClientRect();
-      // The arrows sit just outside the day viewport. Keep them whenever the
-      // page leaves even a small visible gutter around the day elements.
-      setHasSideSpace(rect.left >= 16 && window.innerWidth - rect.right >= 16);
-    };
-    check();
-    const ro = new ResizeObserver(check);
-    ro.observe(document.documentElement);
-    window.addEventListener("resize", check);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", check);
-    };
-  }, []);
 
   // Bring a list card to the top of the scroll area.
   // - Desktop: the list is an inner scroller, so scroll that container.
@@ -1277,8 +1257,12 @@ export function CalendarPage() {
     return result;
   }, [events, searchQuery, listSortNewest]);
 
-  // Fetch data: strictly from public.events table
+  // Fetch data: strictly from public.events table.
+  // The cache is invalidated first so realtime pings and retries always
+  // read live rows — otherwise the 10-minute cached copy would be served
+  // back and inserts/updates/deletes would never appear on screen.
   const fetchEvents = useCallback(async () => {
+    invalidateCache("calendar");
     try {
       const data = await prefetchCalendar();
       setEvents(data);
@@ -2471,29 +2455,30 @@ export function CalendarPage() {
         {/* Period viewport — month uses a flat fluid swipe; week keeps the
           cylindrical coverflow arc. The month ⇄ week mode switch is animated
           by the row/card motions inside renderCalendarContent.
-          - Side arrow buttons on desktop when a visible gutter is available
+          - Floating side arrow buttons overlaid inside the viewport on desktop
           - Swiping left/right on all devices navigates periods */}
       <div className="relative w-full">
-        {/* Desktop Floating Side Navigation Arrows — visible when a gutter remains */}
-        {hasSideSpace && (
-          <>
-            <button
-              onClick={handlePrev}
-              aria-label="Previous Period"
-              className="cal-nav-arrow flex absolute -left-12 top-48 -translate-y-1/2 z-30 h-10 w-10 items-center justify-center rounded-full shadow-xl group cursor-pointer"
-            >
-              <ChevronLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
-            </button>
+        {/* Desktop floating side navigation arrows — overlaid inside the
+          viewport edges so they are always available on md+ screens. The
+          old gutter measurement hid them whenever the calendar stretched
+          edge-to-edge (rect.left < 16px), which is the normal layout. */}
+        <>
+          <button
+            onClick={handlePrev}
+            aria-label="Previous Period"
+            className="cal-nav-arrow hidden md:flex absolute left-2 top-48 -translate-y-1/2 z-30 h-10 w-10 items-center justify-center rounded-full shadow-xl group cursor-pointer"
+          >
+            <ChevronLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
+          </button>
 
-            <button
-              onClick={handleNext}
-              aria-label="Next Period"
-              className="cal-nav-arrow flex absolute -right-12 top-48 -translate-y-1/2 z-30 h-10 w-10 items-center justify-center rounded-full shadow-xl group cursor-pointer"
-            >
-              <ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
-            </button>
-          </>
-        )}
+          <button
+            onClick={handleNext}
+            aria-label="Next Period"
+            className="cal-nav-arrow hidden md:flex absolute right-2 top-48 -translate-y-1/2 z-30 h-10 w-10 items-center justify-center rounded-full shadow-xl group cursor-pointer"
+          >
+            <ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
+          </button>
+        </>
 
         {/* Viewport with swipe, pan, and desktop wheel support.
             In mobile list mode this wrapper must neither clip nor CONTAIN its

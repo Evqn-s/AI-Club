@@ -11,8 +11,6 @@ import {
   setCachedNews,
   getCachedCalendar,
   setCachedCalendar,
-  fallbackClubInfo,
-  fallbackNews,
 } from "./cache";
 
 // In-flight promise tracker (dedups concurrent prefetches)
@@ -56,10 +54,9 @@ export async function prefetchHome(): Promise<ClubInfo> {
       console.error("Failed to prefetch club info:", e);
       throw e;
     }
-    // A failed or unconfigured remote read still resolves with usable content;
-    // callers do not need a separate offline data path.
-    setCachedHome(fallbackClubInfo);
-    return fallbackClubInfo;
+    // Supabase-only: no placeholder row. Callers show the skeleton, then
+    // the error state. Never cache a fabricated record.
+    throw new Error("Club info unavailable");
   })().finally(() => {
     inFlight.delete("home");
   });
@@ -95,8 +92,9 @@ export async function prefetchNews(): Promise<NewsItem[]> {
       console.error("Failed to prefetch news:", e);
       throw e;
     }
-    setCachedNews(fallbackNews);
-    return fallbackNews;
+    // Supabase-only: no placeholder rows. Callers show the skeleton, then
+    // the empty/error state. Never cache fabricated items.
+    throw new Error("News unavailable");
   })().finally(() => {
     inFlight.delete("news");
   });
@@ -130,11 +128,12 @@ export async function prefetchCalendar(): Promise<CalendarEvent[]> {
       }
     } catch (e) {
       console.error("Failed to prefetch events:", e);
+      throw e;
     }
-    // Supabase-only: no placeholder events. Cache the empty list so the
-    // calendar renders its empty state instead of stale placeholders.
-    setCachedCalendar([]);
-    return [] as CalendarEvent[];
+    // Supabase-only: no placeholder events. Throw so callers render the
+    // empty/error state — and never cache a result we did not receive, or
+    // realtime refetches would keep serving the stale entry until TTL.
+    throw new Error("Events unavailable");
   })().finally(() => {
     inFlight.delete("calendar");
   });
