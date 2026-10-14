@@ -13,7 +13,6 @@ import {
   setCachedCalendar,
   fallbackClubInfo,
   fallbackNews,
-  fallbackEvents,
 } from "./cache";
 
 // In-flight promise tracker (dedups concurrent prefetches)
@@ -131,10 +130,11 @@ export async function prefetchCalendar(): Promise<CalendarEvent[]> {
       }
     } catch (e) {
       console.error("Failed to prefetch events:", e);
-      throw e;
     }
-    setCachedCalendar(fallbackEvents);
-    return fallbackEvents;
+    // Supabase-only: no placeholder events. Cache the empty list so the
+    // calendar renders its empty state instead of stale placeholders.
+    setCachedCalendar([]);
+    return [] as CalendarEvent[];
   })().finally(() => {
     inFlight.delete("calendar");
   });

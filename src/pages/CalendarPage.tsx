@@ -2,10 +2,7 @@ import { useEffect, useState, useMemo, useCallback, useRef, memo } from "react";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { isSupabaseConfigured, type CalendarEvent } from "@/lib/supabase";
-import {
-  getCachedCalendar,
-  fallbackEvents,
-} from "@/lib/cache";
+import { getCachedCalendar } from "@/lib/cache";
 import { prefetchCalendar } from "@/lib/data";
 import { CalendarSkeleton } from "@/components/CalendarSkeleton";
 import { Button } from "@/components/ui/button";
@@ -954,14 +951,15 @@ function getStickyHeaderBottom(): number {
 }
 
 export function CalendarPage() {
-  // Immediate Data Hydration: zero skeleton flash
+  // Supabase-only: no placeholder events. Start empty and show the skeleton
+  // until the first fetch resolves; an empty table renders the empty state.
   const cachedData = getCachedCalendar();
   const [events, setEvents] = useState<CalendarEvent[]>(() => {
-    return cachedData && cachedData.length > 0 ? cachedData : fallbackEvents;
+    return cachedData ?? [];
   });
   const [loading, setLoading] = useState<boolean>(() => {
     const c = getCachedCalendar();
-    return (c && c.length > 0) || fallbackEvents.length > 0 ? false : true;
+    return c ? false : true;
   });
   // Active view mode and date navigation state
   const [viewMode, setViewMode] = useState<"month" | "week" | "list">("month");
@@ -1286,7 +1284,7 @@ export function CalendarPage() {
       setEvents(data);
     } catch (err: unknown) {
       console.error("Failed to load events:", err);
-      setEvents(fallbackEvents);
+      setEvents([]);
     } finally {
       setLoading(false);
     }
