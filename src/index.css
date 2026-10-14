@@ -885,3 +885,66 @@ html.light [data-page="calendar"] .cal-list-card .text-\[\#E8959C\] {
 html.light [data-page="calendar"] .cal-list-card .from-\[\#E0A3AA\]\/30 {
   --tw-gradient-from: rgba(37, 99, 235, 0.35) !important;
 }
+
+/* =========================================================
+   SKELETON SCREENS — layout-accurate loading placeholders
+   Light-gray geometric shapes that mimic incoming SQL rows/cards.
+   Pulse (opacity) + shimmer (sweep) so the brain reads structure
+   instantly and perceives the load as faster.
+   ========================================================= */
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  /* Dark mode: light-gray geometric base tuned for the dark canvas */
+  background-color: #26262b !important;
+}
+.skeleton-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.14) 45%,
+    rgba(255, 255, 255, 0.22) 50%,
+    rgba(255, 255, 255, 0.14) 55%,
+    transparent 80%
+  );
+  transform: translateX(-100%);
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+@keyframes skeleton-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  60%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+/* Light mode: true light-gray shapes on the white canvas */
+html.light .skeleton-shimmer {
+  background-color: #e5e7eb !important;
+}
+html.light .skeleton-shimmer::after {
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.75) 45%,
+    rgba(255, 255, 255, 0.95) 50%,
+    rgba(255, 255, 255, 0.75) 55%,
+    transparent 80%
+  );
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer::after {
+    animation: none;
+  }
+  .skeleton-shimmer {
+    animation: none !important;
+  }
+}

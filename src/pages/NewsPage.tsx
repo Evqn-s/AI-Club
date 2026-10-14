@@ -11,7 +11,7 @@ import {
 import { prefetchNews } from "@/lib/data";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { NewsSkeleton } from "@/components/NewsSkeleton";
 import { AlertCircle, RefreshCw, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -136,10 +136,7 @@ export function NewsPage() {
       )}
 
       {loading ? (
-        <div className="space-y-3">
-          <Skeleton className="h-[clamp(6rem,20vw,8rem)] w-full rounded-[var(--fluid-radius-lg)]" />
-          <Skeleton className="h-[clamp(6rem,20vw,8rem)] w-full rounded-[var(--fluid-radius-lg)]" />
-        </div>
+        <NewsSkeleton count={3} />
       ) : sortedNews.length === 0 ? (
         <Card className="glass-panel">
           <CardContent className="py-[clamp(2.5rem,10vw,4rem)] text-center text-[#9B98A0]">

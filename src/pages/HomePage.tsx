@@ -9,6 +9,7 @@ import { prefetchHome } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { HomeSkeleton } from "@/components/HomeSkeleton";
 import { Clock, Mail, ArrowRight, GraduationCap, Instagram, ExternalLink, MessageSquare } from "lucide-react";
 
 // Home renders useful fallback content immediately, then replaces it with the
@@ -18,7 +19,9 @@ export function HomePage() {
   // Render instantly from fallback content — LCP never waits on Supabase.
   // The Supabase sync (data.ts + client) loads after first paint.
   const [info, setInfo] = useState<ClubInfo>(() => cached || fallbackClubInfo);
-  const [loading, setLoading] = useState<boolean>(false);
+  // Cold start (no warm cache): show layout-accurate skeleton shapes instead
+  // of text so structure paints instantly with zero layout shift.
+  const [loading, setLoading] = useState<boolean>(() => !cached);
 
   useEffect(() => {
     let isMounted = true;
@@ -63,6 +66,12 @@ export function HomePage() {
     info?.mission ||
     fallbackClubInfo.vision ||
     "Empowering students to explore, build, and innovate with artificial intelligence.";
+
+  // First paint with no cache: skeleton shapes mimicking the SQL-backed
+  // club_info layout — no text flash, no layout shift when data lands.
+  if (loading && !cached) {
+    return <HomeSkeleton />;
+  }
 
   return (
     <div className="flex-1 flex flex-col justify-between gap-[clamp(1rem,2vw,1.75rem)] py-[clamp(0.75rem,2vw,1.25rem)]">

@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/ThemeToggle";
 import { Navbar } from "@/components/Navbar";
 import { HomePage } from "@/pages/HomePage";
 import { CalendarSkeleton } from "@/components/CalendarSkeleton";
+import { NewsSkeleton } from "@/components/NewsSkeleton";
 
 import { calendarComponentPromise } from "@/components/Navbar";
 
@@ -46,7 +47,13 @@ export function App() {
           <Switch>
             <Route path="/" component={HomePage} />
             <Route path="/news">
-              <Suspense fallback={null}>
+              <Suspense
+                fallback={
+                  <div className="w-full max-w-[var(--fluid-container-narrow)] mx-auto px-[var(--fluid-pad-x)] py-4 sm:py-6">
+                    <NewsSkeleton count={3} />
+                  </div>
+                }
+              >
                 <NewsPage />
               </Suspense>
             </Route>
