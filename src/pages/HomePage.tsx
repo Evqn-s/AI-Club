@@ -123,7 +123,7 @@ export function HomePage() {
       {/* Structured Minimalist Cards Grid */}
       <div className="grid gap-[var(--fluid-gap)] sm:grid-cols-2 flex-1 content-center">
         {/* Schedule */}
-        <Card className="border-[#242021] bg-[#141213]">
+        <Card className="glass-panel">
           <CardHeader>
             <div className="flex items-center gap-2 text-[#E0A3AA] mb-1">
               <Clock className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA]" />
@@ -133,7 +133,7 @@ export function HomePage() {
           </CardHeader>
           <CardContent>
             {info?.meeting_times ? (
-              <div className="p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021] bg-[#0A090A] text-[#E5E5E7] text-fluid-body font-medium">
+              <div className="p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021] glass-cell text-[#E5E5E7] text-fluid-body font-medium">
                 {info.meeting_times}
               </div>
             ) : (
@@ -143,7 +143,7 @@ export function HomePage() {
         </Card>
 
         {/* Contact & Social Links (Managed directly via Supabase PostgreSQL club_info table) */}
-        <Card className="border-[#242021] bg-[#141213]">
+        <Card className="glass-panel">
           <CardHeader>
             <div className="flex items-center gap-2 text-[#E0A3AA] mb-1">
               <Mail className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA]" />
@@ -156,7 +156,7 @@ export function HomePage() {
               <div className="space-y-[clamp(0.5rem,2vw,0.625rem)]">
                 {/* Email from SQL backend */}
                 {contactEmail && (
-                <div className="flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021] bg-[#0A090A] text-fluid-small">
+                <div className="flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021] glass-cell text-fluid-small">
                   <div className="flex items-center gap-2.5 text-[#9B98A0]">
                     <Mail className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA] shrink-0" />
                     <span className="font-medium uppercase tracking-[0.06em] text-fluid-label">Email</span>
@@ -172,7 +172,7 @@ export function HomePage() {
 
                 {/* Google Classroom from SQL backend — only when the record has it */}
                 {(classroomCode || classroomUrl) && (
-                <div className="flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021] bg-[#0A090A] text-fluid-small">
+                <div className="flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021] glass-cell text-fluid-small">
                   <div className="flex items-center gap-2.5 text-[#9B98A0]">
                     <GraduationCap className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA] shrink-0" />
                     <span className="font-medium uppercase tracking-[0.06em] text-fluid-label">Classroom</span>
@@ -191,7 +191,7 @@ export function HomePage() {
 
                 {/* Instagram from SQL backend — only when the record has it */}
                 {(instagramHandle || instagramUrl) && (
-                <div className="flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021] bg-[#0A090A] text-fluid-small">
+                <div className="flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021] glass-cell text-fluid-small">
                   <div className="flex items-center gap-2.5 text-[#9B98A0]">
                     <Instagram className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA] shrink-0" />
                     <span className="font-medium uppercase tracking-[0.06em] text-fluid-label">Instagram</span>

@@ -1587,45 +1587,48 @@ export function CalendarPage() {
     [viewMode, handleNext, handlePrev]
   );
 
-  // Desktop Mouse Wheel navigation: scrolling over a DAY CELL changes
-  // week/month; scrolling anywhere else (gaps, headers, gutters, padding)
-  // falls through to normal page scroll.
-  // Document-level native listener (non-passive so it can preventDefault):
-  // the viewport div isn't mounted during the loading skeleton, so an
-  // element-bound listener goes stale on first load — document always exists.
-  // Only [data-calendar-day] elements trigger navigation, so other pages
-  // (which have no such elements) are unaffected.
   const lastWheelTime = useRef<number>(0);
 
   useEffect(() => {
     const handleNativeWheel = (e: WheelEvent) => {
-      if (viewMode === "list") return; // List view handles its own internal snapping scroll
+      // 1. Ignore if in list view (let list handle its internal scroll)
+      if (viewMode === "list") return;
 
       const target = e.target;
       if (!(target instanceof Element)) return;
-      // Outside an actual day element → let the page scroll up/down normally.
-      if (!target.closest("[data-calendar-day='true']")) {
+
+      // 2. Check if cursor is anywhere within the calendar container boundary
+      const isInsideCalendar = target.closest("[data-calendar-boundary='true']");
+
+      // 3. OUTSIDE CALENDAR: Do nothing -> browser performs default vertical page scroll
+      if (!isInsideCalendar) {
         return;
       }
 
-      // Over a day cell: hijack the gesture for period navigation.
+      // 4. INSIDE CALENDAR: Block page scroll and navigate periods
       e.preventDefault();
       e.stopPropagation();
 
+      // 5. Throttle rapid wheel updates
       const now = Date.now();
       if (now - lastWheelTime.current < 90) return;
 
-      if (Math.abs(e.deltaY) > 15 || Math.abs(e.deltaX) > 15) {
-        lastWheelTime.current = now;
-        if (e.deltaY > 15 || e.deltaX > 15) {
-          handleNext();
-        } else if (e.deltaY < -15 || e.deltaX < -15) {
-          handlePrev();
-        }
+      // 6. Detect scroll delta (supports mouse vertical wheel & trackpad horizontal gestures)
+      const primaryDelta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+
+      // 7. Trigger period movement
+      if (primaryDelta > 0) {
+        handleNext(); // Wheel down or swipe right -> next week/month
+      } else if (primaryDelta < 0) {
+        handlePrev(); // Wheel up or swipe left -> previous week/month
       }
+
+      lastWheelTime.current = now;
     };
 
+    // Register non-passive listener on document
     document.addEventListener("wheel", handleNativeWheel, { passive: false });
+
     return () => {
       document.removeEventListener("wheel", handleNativeWheel);
     };
@@ -2210,7 +2213,7 @@ export function CalendarPage() {
         const isNavEntering = !enteringMonth && !foldingMonth && isCenter;
 
         return (
-          <div className="space-y-1.5 select-text max-w-4xl mx-auto w-full">
+          <div className="space-y-1.5 select-text max-w-4xl mx-auto w-fit" data-calendar-grid="true">
             {/* Weekday Labels Header */}
             <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center py-1 md:py-1.5 border-b border-[#242021]/80">
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
@@ -2225,7 +2228,7 @@ export function CalendarPage() {
 
             {/* Week rows — fan out of / fold back into the active week during mode switch.
                 During normal month navigation: the whole grid moves as one layer. */}
-            <div className="flex flex-col gap-1 sm:gap-1.5 md:gap-2">
+            <div className="flex flex-col gap-1 sm:gap-1.5 md:gap-2 w-fit mx-auto" data-calendar-grid="true">
               {weeks.map((week, rowIndex) => {
                 const delta = activeRow - rowIndex;
                 const isActiveRow = rowIndex === activeRow;
@@ -2341,6 +2344,7 @@ export function CalendarPage() {
 
   return (
     <div
+      data-calendar-boundary="true"
       data-page="calendar"
       className="space-y-3 py-2 sm:py-3 mx-auto w-full max-w-5xl lg:max-w-6xl select-none"
     >
