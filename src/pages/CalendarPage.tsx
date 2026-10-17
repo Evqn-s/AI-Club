@@ -541,7 +541,7 @@ const MonthDayCell = memo(function MonthDayCell({
         if (!isInteractive || !hasEvents) return;
         onSelectEvent(dayEvents[0]);
       }}
-      className={`min-h-[46px] sm:min-h-[54px] md:min-h-[85px] lg:min-h-[96px] xl:min-h-[105px] rounded-lg md:rounded-xl border p-1 md:p-1.5 flex flex-col justify-between transition-all ${
+      className={`min-h-[140px] sm:min-h-[160px] md:min-h-[220px] lg:min-h-[260px] xl:min-h-[300px] rounded-lg md:rounded-xl border p-1 md:p-1.5 flex flex-col justify-between transition-all ${
         hasEvents ? "cursor-pointer md:cursor-default" : ""
       } ${
         dayObj.isCurrentMonth
@@ -1616,10 +1616,11 @@ export function CalendarPage() {
       // 6. Detect scroll delta (supports mouse vertical wheel & trackpad horizontal gestures)
       const primaryDelta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
 
-      // 7. Trigger period movement
-      if (primaryDelta > 0) {
+      // 7. Trigger period movement — require a deliberate scroll so normal
+      // page scrolling doesn't accidentally flip calendar periods.
+      if (primaryDelta > 25) {
         handleNext(); // Wheel down or swipe right -> next week/month
-      } else if (primaryDelta < 0) {
+      } else if (primaryDelta < -25) {
         handlePrev(); // Wheel up or swipe left -> previous week/month
       }
 
@@ -1639,7 +1640,7 @@ export function CalendarPage() {
   const listWheelAccum = useRef<number>(0);
   const listWheelDecayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listTouchStartY = useRef<number | null>(null);
-  const WHEEL_STEP = 80; // px of accumulated deltaY per event advance
+  const WHEEL_STEP = 160; // px of accumulated deltaY per event advance (less sensitive)
 
   useEffect(() => {
     const el = listContainerRef.current;
