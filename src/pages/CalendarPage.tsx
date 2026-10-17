@@ -2214,7 +2214,7 @@ export function CalendarPage() {
         const isNavEntering = !enteringMonth && !foldingMonth && isCenter;
 
         return (
-          <div className="space-y-1.5 select-text max-w-4xl mx-auto w-fit" data-calendar-grid="true">
+          <div className="space-y-1.5 select-text max-w-4xl mx-auto w-full" data-calendar-grid="true">
             {/* Weekday Labels Header */}
             <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center py-1 md:py-1.5 border-b border-[#242021]/80">
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
@@ -2229,7 +2229,7 @@ export function CalendarPage() {
 
             {/* Week rows — fan out of / fold back into the active week during mode switch.
                 During normal month navigation: the whole grid moves as one layer. */}
-            <div className="flex flex-col gap-1 sm:gap-1.5 md:gap-2 w-fit mx-auto" data-calendar-grid="true">
+            <div className="flex flex-col gap-1 sm:gap-1.5 md:gap-2 w-full" data-calendar-grid="true">
               {weeks.map((week, rowIndex) => {
                 const delta = activeRow - rowIndex;
                 const isActiveRow = rowIndex === activeRow;

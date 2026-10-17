@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HomeSkeleton } from "@/components/HomeSkeleton";
-import { Mail, ArrowRight, GraduationCap, Instagram, ExternalLink, MessageSquare } from "lucide-react";
+import { Clock, Mail, ArrowRight, GraduationCap, Instagram, ExternalLink, MessageSquare } from "lucide-react";
 
 // Home reads strictly from the Supabase club_info record: skeleton while
 // loading, content when it lands. When the database cannot be reached the
@@ -122,41 +122,50 @@ export function HomePage() {
 
       {/* Structured Minimalist Cards Grid */}
       <div className="grid gap-[var(--fluid-gap)] sm:grid-cols-2 flex-1 content-center">
-        {/* Schedule */}
-        <Card className="glass-panel">
-          <CardContent>
-            <div className="grid gap-[var(--fluid-gap-sm)] sm:grid-cols-2">
-              {/* Regular Meetings */}
-              <div className="p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021] glass-cell">
-                <div className="text-fluid-label font-medium tracking-[0.06em] uppercase text-[#9B98A0] mb-1">Regular Meetings</div>
-                {info?.meeting_times ? (
-                  <div className="text-[#E5E5E7] text-fluid-body font-medium">{info.meeting_times}</div>
-                ) : (
-                  <Skeleton className="h-[clamp(1.25rem,4vw,1.5rem)] w-3/4 rounded-[var(--fluid-radius)]" aria-label="Loading meeting times" />
-                )}
+        {/* Schedule column: two separate cards stacked vertically */}
+        <div className="flex flex-col gap-[var(--fluid-gap)]">
+          {/* Regular Meetings */}
+          <Card className="glass-panel">
+            <CardHeader>
+              <div className="flex items-center gap-2 text-[#E0A3AA] mb-1">
+                <Clock className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA]" />
+                <span className="text-fluid-label font-medium tracking-[0.08em] uppercase text-[#9B98A0]">Schedule</span>
               </div>
-              {/* Discord Server */}
-              <div className="p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021] glass-cell">
-                <div className="text-fluid-label font-medium tracking-[0.06em] uppercase text-[#9B98A0] mb-1">Discord Server</div>
+              <CardTitle className="text-[#E5E5E7]">Regular Meetings</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {info?.meeting_times ? (
+                <div className="text-[#E5E5E7] text-fluid-body font-medium">{info.meeting_times}</div>
+              ) : (
+                <Skeleton className="h-[clamp(1.25rem,4vw,1.5rem)] w-3/4 rounded-[var(--fluid-radius)]" aria-label="Loading meeting times" />
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Discord Server */}
+          <Card className="glass-panel">
+            <CardHeader>
+              <div className="flex items-center gap-2 text-[#E0A3AA] mb-1">
+                <ExternalLink className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA]" />
+                <span className="text-fluid-label font-medium tracking-[0.08em] uppercase text-[#9B98A0]">Discord Server</span>
+              </div>
+              <CardTitle className="text-[#E5E5E7]">
                 {info?.discord_server_name ? (
-                  <div className="flex items-center gap-2">
-                    <a
-                      href={info.discord_server_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-mono text-[#E0A3AA] hover:text-[#FFFFFF] hover:underline transition-colors break-all"
-                    >
-                      {info.discord_server_name}
-                    </a>
-                    <ExternalLink className="h-3 w-3 opacity-70 shrink-0" />
-                  </div>
+                  <a
+                    href={info.discord_server_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-mono text-[#E0A3AA] hover:text-[#FFFFFF] hover:underline transition-colors break-all"
+                  >
+                    {info.discord_server_name}
+                  </a>
                 ) : (
                   <Skeleton className="h-[clamp(1.25rem,4vw,1.5rem)] w-3/4 rounded-[var(--fluid-radius)]" aria-label="Loading discord server" />
                 )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </CardTitle>
+            </CardHeader>
+          </Card>
+        </div>
 
         {/* Contact & Social Links (Managed directly via Supabase PostgreSQL club_info table) */}
         <Card className="glass-panel">
