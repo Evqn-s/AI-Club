@@ -125,7 +125,7 @@ export function HomePage() {
         {/* Schedule column: two separate cards stacked vertically */}
         <div className="flex flex-col gap-[var(--fluid-gap)]">
           {/* Regular Meetings */}
-          <Card className="glass-panel">
+          <Card className="glass-panel flex-1">
             <CardHeader>
               <div className="flex items-center gap-2 text-[#E0A3AA] mb-1">
                 <Clock className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA]" />
@@ -133,7 +133,7 @@ export function HomePage() {
               </div>
               <CardTitle className="text-[#E5E5E7]">Regular Meetings</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1 flex items-center">
               {info?.meeting_times ? (
                 <div className="text-[#E5E5E7] text-fluid-body font-medium">{info.meeting_times}</div>
               ) : (
@@ -143,7 +143,7 @@ export function HomePage() {
           </Card>
 
           {/* Discord Server */}
-          <Card className="glass-panel">
+          <Card className="glass-panel flex-1">
             <CardHeader>
               <div className="flex items-center gap-2 text-[#E0A3AA] mb-1">
                 <ExternalLink className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA]" />
@@ -164,6 +164,7 @@ export function HomePage() {
                 )}
               </CardTitle>
             </CardHeader>
+            <CardContent className="flex-1" />
           </Card>
         </div>
 
