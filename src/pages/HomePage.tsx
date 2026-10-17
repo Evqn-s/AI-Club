@@ -132,13 +132,36 @@ export function HomePage() {
             <CardTitle className="text-[#E5E5E7]">Regular Meetings</CardTitle>
           </CardHeader>
           <CardContent>
-            {info?.meeting_times ? (
-              <div className="p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021] glass-cell text-[#E5E5E7] text-fluid-body font-medium">
-                {info.meeting_times}
+            <div className="grid gap-[var(--fluid-gap-sm)] sm:grid-cols-2">
+              {/* Regular Meetings */}
+              <div className="p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021] glass-cell">
+                <div className="text-fluid-label font-medium tracking-[0.06em] uppercase text-[#9B98A0] mb-1">Regular Meetings</div>
+                {info?.meeting_times ? (
+                  <div className="text-[#E5E5E7] text-fluid-body font-medium">{info.meeting_times}</div>
+                ) : (
+                  <Skeleton className="h-[clamp(1.25rem,4vw,1.5rem)] w-3/4 rounded-[var(--fluid-radius)]" aria-label="Loading meeting times" />
+                )}
               </div>
-            ) : (
-              <Skeleton className="h-[clamp(1.25rem,4vw,1.5rem)] w-3/4 rounded-[var(--fluid-radius)]" aria-label="Loading meeting times" />
-            )}
+              {/* Discord Server */}
+              <div className="p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021] glass-cell">
+                <div className="text-fluid-label font-medium tracking-[0.06em] uppercase text-[#9B98A0] mb-1">Discord Server</div>
+                {info?.discord_server_name ? (
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={info.discord_server_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-mono text-[#E0A3AA] hover:text-[#FFFFFF] hover:underline transition-colors break-all"
+                    >
+                      {info.discord_server_name}
+                    </a>
+                    <ExternalLink className="h-3 w-3 opacity-70 shrink-0" />
+                  </div>
+                ) : (
+                  <Skeleton className="h-[clamp(1.25rem,4vw,1.5rem)] w-3/4 rounded-[var(--fluid-radius)]" aria-label="Loading discord server" />
+                )}
+              </div>
+            </div>
           </CardContent>
         </Card>
 

@@ -41,7 +41,7 @@ export async function prefetchHome(): Promise<ClubInfo> {
         const { data, error } = await supabase
           .from("club_info")
           .select(
-            "id,club_name,mission,vision,meeting_times,contact_email,google_classroom_code,google_classroom_url,instagram_handle,instagram_url"
+            "id,club_name,mission,vision,meeting_times,contact_email,google_classroom_code,google_classroom_url,instagram_handle,instagram_url,discord_server_name,discord_server_url"
           )
           .single();
         if (error) throw error;

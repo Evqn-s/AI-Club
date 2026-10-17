@@ -11,6 +11,8 @@ create table if not exists public.club_info (
   google_classroom_url  text,
   instagram_handle      text,
   instagram_url         text,
+  discord_server_name   text,
+  discord_server_url    text,
   updated_at            timestamptz not null    default now()
 );
 

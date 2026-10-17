@@ -25,7 +25,16 @@ export function HomeSkeleton() {
         <div className="rounded-[var(--fluid-radius-lg)] border border-[#242021] p-[var(--fluid-card-pad)] space-y-3">
           <Skeleton className="h-4 w-24 rounded-full" />
           <Skeleton className="h-6 w-44 rounded-lg" />
-          <Skeleton className="h-[clamp(1.25rem,4vw,1.5rem)] w-3/4 rounded-[var(--fluid-radius)]" />
+          <div className="grid gap-[var(--fluid-gap-sm)] sm:grid-cols-2">
+            <div className="p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021]">
+              <Skeleton className="h-4 w-24 rounded-full" />
+              <Skeleton className="h-[clamp(1.25rem,4vw,1.5rem)] w-full rounded-[var(--fluid-radius)]" />
+            </div>
+            <div className="p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021]">
+              <Skeleton className="h-4 w-24 rounded-full" />
+              <Skeleton className="h-[clamp(1.25rem,4vw,1.5rem)] w-full rounded-[var(--fluid-radius)]" />
+            </div>
+          </div>
         </div>
         <div className="rounded-[var(--fluid-radius-lg)] border border-[#242021] p-[var(--fluid-card-pad)] space-y-3">
           <Skeleton className="h-4 w-24 rounded-full" />

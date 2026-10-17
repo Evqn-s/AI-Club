@@ -24,6 +24,8 @@ export interface ClubInfo {
   google_classroom_url?: string;
   instagram_handle?: string;
   instagram_url?: string;
+  discord_server_name?: string;
+  discord_server_url?: string;
 }
 
 export interface NewsItem {
