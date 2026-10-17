@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HomeSkeleton } from "@/components/HomeSkeleton";
-import { Clock, Mail, ArrowRight, GraduationCap, Instagram, ExternalLink, MessageSquare } from "lucide-react";
+import { Mail, ArrowRight, GraduationCap, Instagram, ExternalLink, MessageSquare } from "lucide-react";
 
 // Home reads strictly from the Supabase club_info record: skeleton while
 // loading, content when it lands. When the database cannot be reached the
@@ -124,13 +124,6 @@ export function HomePage() {
       <div className="grid gap-[var(--fluid-gap)] sm:grid-cols-2 flex-1 content-center">
         {/* Schedule */}
         <Card className="glass-panel">
-          <CardHeader>
-            <div className="flex items-center gap-2 text-[#E0A3AA] mb-1">
-              <Clock className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA]" />
-              <span className="text-fluid-label font-medium tracking-[0.08em] uppercase text-[#9B98A0]">Schedule</span>
-            </div>
-            <CardTitle className="text-[#E5E5E7]">Regular Meetings</CardTitle>
-          </CardHeader>
           <CardContent>
             <div className="grid gap-[var(--fluid-gap-sm)] sm:grid-cols-2">
               {/* Regular Meetings */}
