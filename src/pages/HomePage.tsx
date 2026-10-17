@@ -10,13 +10,18 @@ import { HomeSkeleton } from "@/components/HomeSkeleton";
 import { Clock, Mail, ArrowRight, GraduationCap, Instagram, ExternalLink, MessageSquare } from "lucide-react";
 
 // Home reads strictly from the Supabase club_info record: skeleton while
-// loading, content when it lands, error state when it cannot be reached.
+// loading, content when it lands. When the database cannot be reached the
+// page shell (hero CTAs, section chrome, footer anchors) still renders and
+// only the SQL-backed text values show skeleton shimmer — the page never
+// shows a "cannot connect" wall.
 // No placeholder content is rendered at any point.
+// SQL-backed (skeleton when missing): club_name, mission, meeting_times,
+// contact_email, google_classroom_*, instagram_*, vision.
+// Static (always rendered): section labels, CTA buttons, card chrome.
 export function HomePage() {
   const cached = getCachedHome();
   const [info, setInfo] = useState<ClubInfo | null>(() => cached);
   const [loading, setLoading] = useState<boolean>(() => !cached);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -26,13 +31,13 @@ export function HomePage() {
         .then((data) => {
           if (isMounted) {
             setInfo(data);
-            setError(null);
             setLoading(false);
           }
         })
         .catch(() => {
+          // No database: stay on the page shell with skeleton shimmer in the
+          // SQL-backed slots. Never show a "cannot connect" wall.
           if (isMounted) {
-            setError("Unable to connect to the club database.");
             setLoading(false);
           }
         });
@@ -61,36 +66,30 @@ export function HomePage() {
     return <HomeSkeleton />;
   }
 
-  if (!info) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center gap-3 py-[clamp(3rem,10vw,6rem)] text-center">
-        <p className="font-display text-fluid-body font-bold text-[#E5E5E7]">
-          {error ?? "Club information is unavailable right now."}
-        </p>
-        <p className="text-fluid-label uppercase tracking-[0.06em] text-[#67646C]">
-          Check your connection and try again.
-        </p>
-        <Button variant="glass" size="lg" type="button" onClick={() => window.location.reload()}>
-          Retry
-        </Button>
-      </div>
-    );
-  }
-
-  const contactEmail = info.contact_email;
-  const classroomCode = info.google_classroom_code;
-  const classroomUrl = info.google_classroom_url;
-  const instagramHandle = info.instagram_handle;
-  const instagramUrl = info.instagram_url;
-  const visionText = info.vision || info.mission;
+  // No database record: render the full page shell with skeleton shimmer
+  // standing in for every SQL-backed value. Static chrome (labels, CTAs,
+  // card shells, icons) renders normally — there is no "cannot connect" wall.
+  const contactEmail = info?.contact_email;
+  const classroomCode = info?.google_classroom_code;
+  const classroomUrl = info?.google_classroom_url;
+  const instagramHandle = info?.instagram_handle;
+  const instagramUrl = info?.instagram_url;
+  const visionText = info?.vision || info?.mission;
+  // Mission/vision are optional on the record — but without a record the
+  // vision slot shows shimmer so the anchor keeps its shape.
+  const showVision = info ? Boolean(visionText) : true;
 
   return (
     <div className="flex-1 flex flex-col justify-between gap-[clamp(1rem,2vw,1.75rem)] py-[clamp(0.75rem,2vw,1.25rem)]">
       {/* Editorial Centered Hero with Bold Scale & Negative Space */}
       <section className="text-center max-w-[var(--fluid-container-max)] mx-auto w-full space-y-[var(--fluid-gap)] pt-[clamp(0.5rem,1vw,1rem)] pb-[clamp(0.25rem,1vw,0.75rem)]">
+        {info?.club_name ? (
         <h1 className="text-fluid-hero font-black tracking-[-0.04em] font-display text-[#E5E5E7] leading-[0.95] select-none">
           {info.club_name}
         </h1>
+        ) : (
+        <Skeleton className="h-[clamp(3rem,10vw,5rem)] w-3/4 mx-auto rounded-2xl" aria-label="Loading club name" />
+        )}
 
         <div className="flex flex-wrap items-center justify-center gap-[clamp(0.5rem,2vw,0.75rem)] pt-[clamp(0.25rem,1.5vw,0.5rem)]">
           <Button
@@ -133,12 +132,12 @@ export function HomePage() {
             <CardTitle className="text-[#E5E5E7]">Regular Meetings</CardTitle>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <Skeleton className="h-[clamp(1.25rem,4vw,1.5rem)] w-3/4 rounded-[var(--fluid-radius)]" />
-            ) : (
+            {info?.meeting_times ? (
               <div className="p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021] bg-[#0A090A] text-[#E5E5E7] text-fluid-body font-medium">
-                {info.meeting_times || "Meeting times will be announced."}
+                {info.meeting_times}
               </div>
+            ) : (
+              <Skeleton className="h-[clamp(1.25rem,4vw,1.5rem)] w-3/4 rounded-[var(--fluid-radius)]" aria-label="Loading meeting times" />
             )}
           </CardContent>
         </Card>
@@ -153,15 +152,10 @@ export function HomePage() {
             <CardTitle className="text-[#E5E5E7]">Get in Touch</CardTitle>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="space-y-[var(--fluid-gap-sm)]">
-                <Skeleton className="h-[var(--fluid-control-h)] w-full rounded-[var(--fluid-radius)]" />
-                <Skeleton className="h-[var(--fluid-control-h)] w-full rounded-[var(--fluid-radius)]" />
-                <Skeleton className="h-[var(--fluid-control-h)] w-full rounded-[var(--fluid-radius)]" />
-              </div>
-            ) : (
+            {info ? (
               <div className="space-y-[clamp(0.5rem,2vw,0.625rem)]">
                 {/* Email from SQL backend */}
+                {contactEmail && (
                 <div className="flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021] bg-[#0A090A] text-fluid-small">
                   <div className="flex items-center gap-2.5 text-[#9B98A0]">
                     <Mail className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#E0A3AA] shrink-0" />
@@ -174,6 +168,7 @@ export function HomePage() {
                     {contactEmail}
                   </a>
                 </div>
+                )}
 
                 {/* Google Classroom from SQL backend — only when the record has it */}
                 {(classroomCode || classroomUrl) && (
@@ -213,17 +208,30 @@ export function HomePage() {
                 </div>
                 )}
               </div>
+            ) : (
+              <div className="space-y-[var(--fluid-gap-sm)]" aria-label="Loading contact details">
+                <Skeleton className="h-[var(--fluid-control-h)] w-full rounded-[var(--fluid-radius)]" />
+                <Skeleton className="h-[var(--fluid-control-h)] w-full rounded-[var(--fluid-radius)]" />
+                <Skeleton className="h-[var(--fluid-control-h)] w-full rounded-[var(--fluid-radius)]" />
+              </div>
             )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Vision Statement — bottom anchor, only when the record has one */}
-      {visionText && (
+      {/* Vision Statement — bottom anchor; shimmer when there is no record */}
+      {showVision && (
       <div className="text-center pt-[clamp(0.25rem,1vw,0.75rem)] pb-[clamp(0.5rem,1.5vw,1rem)] max-w-[var(--fluid-container-narrow)] mx-auto px-[var(--fluid-pad-x)]">
+        {visionText ? (
         <p className="text-fluid-body text-[#9B98A0] font-normal tracking-wide leading-relaxed">
           {visionText}
         </p>
+        ) : (
+        <div className="space-y-2" aria-label="Loading vision statement">
+          <Skeleton className="h-4 w-full rounded-md" />
+          <Skeleton className="h-4 w-2/3 mx-auto rounded-md" />
+        </div>
+        )}
       </div>
       )}
     </div>

@@ -652,6 +652,26 @@ html {
   }
 }
 
+/* 5b. Small-desktop fit (1024-1440px wide OR short desktop heights): keep the
+   clamp() system for large screens untouched, but compress vertical rhythm so
+   Home + Calendar land above the fold with no page scroll.
+   - Hero / gaps / section + card padding pull toward their floors
+   - Month day cells drop from 96px to ~64px so 6 rows + toolbar fit 720-800px */
+@media (min-width: 1024px) and (max-width: 1440px), (min-width: 1024px) and (max-height: 860px) {
+  :root {
+    --text-fluid-hero: clamp(2.5rem, 1.25rem + 4vw, 3.75rem);
+    --fluid-gap: clamp(0.5rem, 0.5rem + 1vw, 0.875rem);
+    --fluid-gap-sm: clamp(0.375rem, 0.375rem + 0.75vw, 0.625rem);
+    --fluid-section-y: clamp(0.75rem, 0.5rem + 1.5vw, 1.25rem);
+    --fluid-stack: clamp(0.75rem, 0.5rem + 2vw, 1.5rem);
+    --fluid-card-pad: clamp(0.75rem, 0.5rem + 1.5vw, 1.25rem);
+  }
+  /* Calendar month grid: shrink day-cell floors so rows + toolbar fit */
+  [data-page="calendar"] .grid.grid-cols-7 > div[class*="min-h-"] {
+    min-height: 64px !important;
+  }
+}
+
 /* 6. Respect users who ask for reduced motion / very small screens */
 @media (max-width: 320px) {
   html {

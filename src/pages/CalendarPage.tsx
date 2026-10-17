@@ -1587,25 +1587,18 @@ export function CalendarPage() {
     [viewMode, handleNext, handlePrev]
   );
 
-  // Desktop Mouse Wheel navigation: scrolling changes week/month
+  // Desktop Mouse Wheel navigation: scrolling changes week/month.
+  // React-managed (non-passive via preventDefault is impossible in React, so
+  // this is a passive intent detector): the viewport has `overflow: hidden`
+  // and the page is fit-to-viewport on small-desktop, so there is no competing
+  // scroll to suppress. React re-binding on every viewMode/handle change is
+  // exactly what fixes the stale native listener that made month scroll dead
+  // until you toggled to week/list and back.
   const lastWheelTime = useRef<number>(0);
 
-  // Non-passive native wheel listener: completely prevents window scrolling while interacting with the calendar
-  useEffect(() => {
-    const el = viewportRef.current;
-    if (!el) return;
-
-    const handleNativeWheel = (e: WheelEvent) => {
+  const handleGridWheel = useCallback(
+    (e: React.WheelEvent) => {
       if (viewMode === "list") return; // List view handles its own internal snapping scroll
-
-      const target = e.target;
-      if (!(target instanceof Element) || !target.closest("[data-calendar-day='true']")) {
-        return;
-      }
-
-      // Stop page from scrolling while scrolling the calendar
-      e.preventDefault();
-      e.stopPropagation();
 
       const now = Date.now();
       if (now - lastWheelTime.current < 90) return;
@@ -1618,13 +1611,9 @@ export function CalendarPage() {
           handlePrev();
         }
       }
-    };
-
-    el.addEventListener("wheel", handleNativeWheel, { passive: false });
-    return () => {
-      el.removeEventListener("wheel", handleNativeWheel);
-    };
-  }, [viewMode, handleNext, handlePrev]);
+    },
+    [viewMode, handleNext, handlePrev]
+  );
 
   // List wheel handler: accumulated-delta pager — each 80px of scroll = one event advance.
   // A fast flick accumulates quickly and advances multiple events naturally.
@@ -2205,7 +2194,7 @@ export function CalendarPage() {
         const isNavEntering = !enteringMonth && !foldingMonth && isCenter;
 
         return (
-          <div className="space-y-1.5 select-text max-w-4xl mx-auto w-full">
+          <div className="space-y-1.5 select-text max-w-4xl mx-auto w-full" data-calendar-grid="true">
             {/* Weekday Labels Header */}
             <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center py-1 md:py-1.5 border-b border-[#242021]/80">
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
@@ -2220,7 +2209,7 @@ export function CalendarPage() {
 
             {/* Week rows — fan out of / fold back into the active week during mode switch.
                 During normal month navigation: the whole grid moves as one layer. */}
-            <div className="flex flex-col gap-1 sm:gap-1.5 md:gap-2">
+            <div className="flex flex-col gap-1 sm:gap-1.5 md:gap-2" data-calendar-grid="true">
               {weeks.map((week, rowIndex) => {
                 const delta = activeRow - rowIndex;
                 const isActiveRow = rowIndex === activeRow;
@@ -2493,6 +2482,7 @@ export function CalendarPage() {
             to the browser while keeping pinch-zoom for accessibility. */}
         <div
           ref={viewportRef}
+          onWheel={viewMode === "list" ? undefined : handleGridWheel}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
           className={`relative w-full py-1 ${
