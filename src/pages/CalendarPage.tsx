@@ -21,6 +21,52 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 
+// Display helper: "18:00" → "6:00 PM". Falls back to the raw string when
+// the stored value isn't HH:MM (day-long labels like "All Day" stay as-is).
+function formatTime12h(time: string): string {
+  const m = time.trim().match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return time;
+  let h = Number(m[1]);
+  const min = m[2];
+  if (Number.isNaN(h) || h < 0 || h > 23) return time;
+  const suffix = h >= 12 ? "PM" : "AM";
+  h = h % 12;
+  if (h === 0) h = 12;
+  return `${h}:${min} ${suffix}`;
+}
+
+// Click-to-reveal time for calendar surfaces: renders nothing until the
+// viewer taps the clock affordance. Each instance owns its open state so
+// opening one event never opens others.
+function RevealTime({
+  time,
+  className,
+  iconClassName,
+}: {
+  time: string;
+  className?: string;
+  iconClassName?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen(true);
+        }}
+        aria-label="Show event time"
+        title="Show time"
+        className={className}
+      >
+        <Clock className={iconClassName} />
+      </button>
+    );
+  }
+  return <span className={className}>{formatTime12h(time)}</span>;
+}
+
 // Dynamic today — computed once at module load so every helper uses real current date
 const _NOW = new Date();
 const TODAY_YEAR = _NOW.getFullYear();
@@ -485,9 +531,11 @@ const MonthEventCard = memo(function MonthEventCard({
             <span className="text-[11px] font-bold font-display text-[#E5E5E7] leading-tight truncate">
               {evt.title}
             </span>
-            <span className="text-[9px] font-mono text-[#E0A3AA] shrink-0 font-semibold">
-              {evt.time}
-            </span>
+            <RevealTime
+                time={evt.time}
+                className="text-[9px] font-mono text-[#E0A3AA] shrink-0 font-semibold hover:text-[#FFFFFF] transition-colors cursor-pointer"
+                iconClassName="h-3 w-3"
+              />
           </div>
           {evt.description && (
             <p className="hidden lg:block text-[10px] text-[#9B98A0] leading-snug line-clamp-2 break-words">
@@ -754,10 +802,11 @@ const MobileWeekView = memo(function MobileWeekView({
                 } ${evt.id === highlightedEventId ? "cal-search-match" : ""}`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-mono font-bold text-[#E0A3AA] flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5 text-[#E0A3AA]" />
-                    {evt.time}
-                  </span>
+                  <RevealTime
+                    time={evt.time}
+                    className="text-xs font-mono font-bold text-[#E0A3AA] flex items-center gap-1.5 hover:text-[#FFFFFF] transition-colors cursor-pointer"
+                    iconClassName="h-3.5 w-3.5 text-[#E0A3AA]"
+                  />
                   {evt.id === highlightedEventId && (
                     <span className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-[#E0A3AA] text-[#0A090A]">
                       Match
@@ -899,10 +948,11 @@ const DesktopWeekView = memo(function DesktopWeekView({
                     >
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between gap-1">
-                          <span className="text-xs font-mono font-semibold text-[#E0A3AA] flex items-center gap-1">
-                            <Clock className="h-3 w-3 text-[#E0A3AA]" />
-                            {evt.time}
-                          </span>
+                          <RevealTime
+                            time={evt.time}
+                            className="text-xs font-mono font-semibold text-[#E0A3AA] flex items-center gap-1 hover:text-[#FFFFFF] transition-colors cursor-pointer"
+                            iconClassName="h-3 w-3 text-[#E0A3AA]"
+                          />
                           {isHighlighted && (
                             <span className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-[#E0A3AA] text-[#0A090A]">
                               Match
@@ -1614,12 +1664,18 @@ export function CalendarPage() {
   );
 
   // 1:1 wheel paging: one wheel gesture tick = exactly one period.
-  // No throttle/cooldown/accumulation — but the page only advances ONCE per
-  // physical gesture burst, then locks until deltas pause (gesture end).
-  // This keeps the old "one tick = one period" feel while making repeated
-  // inertia/momentum events from the same flick unable to chain extra pages.
+  // No throttle/cooldown/accumulation — but repeated inertia/momentum events
+  // from the same flick can't chain extra pages. The lock re-arms as soon as
+  // the viewer shows NEW intent, so you never have to lift/move the cursor:
+  //   - direction reversal always counts as a new tick (scroll back instantly)
+  //   - sustained pushing in the same direction re-arms after REARM_PX of
+  //     travel (keep pushing → keep paging, no pause needed)
+  //   - inertia coasting (decaying deltas, no real push) stays locked out
   const wheelGestureActive = useRef<boolean>(false);
   const wheelGestureTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wheelLastSign = useRef<number>(0);
+  const wheelAccum = useRef<number>(0);
+  const WHEEL_REARM_PX = 60;
 
   // Mark the current gesture burst finished after deltas stop arriving.
   // 140ms comfortably covers intra-gesture event gaps but ends well before
@@ -1628,6 +1684,8 @@ export function CalendarPage() {
     if (wheelGestureTimer.current) clearTimeout(wheelGestureTimer.current);
     wheelGestureTimer.current = setTimeout(() => {
       wheelGestureActive.current = false;
+      wheelLastSign.current = 0;
+      wheelAccum.current = 0;
       wheelGestureTimer.current = null;
     }, 140);
   }, []);
@@ -1658,22 +1716,37 @@ export function CalendarPage() {
       e.preventDefault();
       e.stopPropagation();
 
-      // 5. One advance per gesture burst — ignore inertia/repeat events
-      // until the burst ends (no deltas for 140ms).
-      if (wheelGestureActive.current) {
-        armWheelGestureEnd();
-        return;
-      }
-
-      // 6. Any intentional tick (mouse notch or trackpad nudge) advances one period.
-      // No delta threshold: e.deltaY/deltaX sign alone decides direction.
+      // 5. Any intentional tick advances one period — sign decides direction.
+      // Re-arm WITHOUT lifting the finger when new intent is detected:
+      // direction flip, or enough same-direction travel (sustained push).
+      // Pure inertia coasting (small decaying deltas) stays locked out.
       const primaryDelta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
       if (primaryDelta === 0) return;
+      const sign = primaryDelta > 0 ? 1 : -1;
 
-      wheelGestureActive.current = true;
+      if (wheelGestureActive.current) {
+        if (sign !== wheelLastSign.current) {
+          // Reversed direction = deliberate new tick, always re-arm.
+          wheelLastSign.current = sign;
+          wheelAccum.current = 0;
+        } else {
+          wheelAccum.current += Math.abs(primaryDelta);
+          if (wheelAccum.current < WHEEL_REARM_PX) {
+            // Still coasting on the same flick — swallow, keep lock.
+            armWheelGestureEnd();
+            return;
+          }
+          // Sustained push — re-arm for the next page.
+          wheelAccum.current = 0;
+        }
+      } else {
+        wheelGestureActive.current = true;
+        wheelLastSign.current = sign;
+        wheelAccum.current = 0;
+      }
       armWheelGestureEnd();
 
-      if (primaryDelta > 0) {
+      if (sign > 0) {
         handleNext(); // Wheel down or swipe right -> next week/month
       } else {
         handlePrev(); // Wheel up or swipe left -> previous week/month
@@ -1688,10 +1761,12 @@ export function CalendarPage() {
     };
   }, [viewMode, handleNext, handlePrev, armWheelGestureEnd]);
 
-  // List wheel pager — 1:1 with no inertia: one gesture burst = one event.
-  // Same burst-lock as the month/week pager above.
+  // List wheel pager — 1:1 with no inertia: re-arms on new intent without
+  // lifting the finger (direction flip or sustained push), same as above.
   const listWheelGestureActive = useRef<boolean>(false);
   const listWheelGestureTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const listWheelLastSign = useRef<number>(0);
+  const listWheelAccum = useRef<number>(0);
   const listTouchStartY = useRef<number | null>(null);
 
   useEffect(() => {
@@ -1699,32 +1774,47 @@ export function CalendarPage() {
     if (!el || viewMode !== "list") return;
     if (isMobileList) return; // Mobile: native scrolling, no wheel hijacking
 
+    const rearmListGestureEnd = () => {
+      if (listWheelGestureTimer.current) clearTimeout(listWheelGestureTimer.current);
+      listWheelGestureTimer.current = setTimeout(() => {
+        listWheelGestureActive.current = false;
+        listWheelLastSign.current = 0;
+        listWheelAccum.current = 0;
+        listWheelGestureTimer.current = null;
+      }, 140);
+    };
+
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       e.stopPropagation();
 
-      // Same burst rule: first tick of a burst advances once, inertia
-      // leftovers in the same burst are swallowed until deltas pause 140ms.
-      if (listWheelGestureActive.current) {
-        if (listWheelGestureTimer.current) clearTimeout(listWheelGestureTimer.current);
-        listWheelGestureTimer.current = setTimeout(() => {
-          listWheelGestureActive.current = false;
-          listWheelGestureTimer.current = null;
-        }, 140);
-        return;
-      }
-
-      // Any intentional tick advances exactly one event — sign decides direction.
+      // Same re-arm rule as the month/week pager: direction flip or
+      // sustained same-direction push counts as a new tick; inertia
+      // coasting is swallowed.
       const primaryDelta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
       if (primaryDelta === 0) return;
+      const sign = primaryDelta > 0 ? 1 : -1;
 
-      listWheelGestureActive.current = true;
-      listWheelGestureTimer.current = setTimeout(() => {
-        listWheelGestureActive.current = false;
-        listWheelGestureTimer.current = null;
-      }, 140);
+      if (listWheelGestureActive.current) {
+        if (sign !== listWheelLastSign.current) {
+          listWheelLastSign.current = sign;
+          listWheelAccum.current = 0;
+        } else {
+          listWheelAccum.current += Math.abs(primaryDelta);
+          if (listWheelAccum.current < WHEEL_REARM_PX) {
+            rearmListGestureEnd();
+            return;
+          }
+          listWheelAccum.current = 0;
+        }
+      } else {
+        listWheelGestureActive.current = true;
+        listWheelLastSign.current = sign;
+        listWheelAccum.current = 0;
+      }
+      rearmListGestureEnd();
 
-      if (primaryDelta > 0) {
+      if (sign > 0) {
         handleNext();
       } else {
         handlePrev();
@@ -1971,15 +2061,11 @@ export function CalendarPage() {
                           </span>
                         )}
                       </h3>
-                      <span
-                        className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-mono font-bold whitespace-nowrap ${
-                          isTop
-                            ? "text-[#E0A3AA] border-[#E0A3AA]/30 bg-[#E0A3AA]/10"
-                            : "text-[#9B98A0] border-white/10 bg-white/5"
-                        }`}
-                      >
-                        {evt.time}
-                      </span>
+                      <RevealTime
+                        time={evt.time}
+                        className="shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-mono font-bold whitespace-nowrap hover:border-[#E0A3AA]/50 transition-colors cursor-pointer text-[#9B98A0] border-white/10 bg-white/5"
+                        iconClassName="h-3 w-3 inline mr-1"
+                      />
                     </div>
                     <p className="text-xs font-mono text-[#9B98A0] flex items-center gap-1.5">
                       <MapPin className="h-3 w-3 text-[#9B98A0] shrink-0" />
@@ -2098,10 +2184,11 @@ export function CalendarPage() {
                           <CalendarIcon className="h-3.5 w-3.5 text-[#E0A3AA]" />
                           {evt.date}
                         </span>
-                        <span className="flex items-center gap-1 text-[#9B98A0]">
-                          <Clock className="h-3.5 w-3.5 text-[#9B98A0]" />
-                          {evt.time}
-                        </span>
+                        <RevealTime
+                          time={evt.time}
+                          className="flex items-center gap-1 text-[#9B98A0] hover:text-[#E0A3AA] transition-colors cursor-pointer"
+                          iconClassName="h-3.5 w-3.5 text-[#9B98A0]"
+                        />
                       </div>
                     </div>
 
@@ -2176,10 +2263,11 @@ export function CalendarPage() {
                       <CalendarIcon className="h-3.5 w-3.5 text-[#E0A3AA]" />
                       {evt.date}
                     </span>
-                    <span className="text-xs font-mono text-[#9B98A0] flex items-center gap-1">
-                      <Clock className="h-3 w-3 text-[#9B98A0]" />
-                      {evt.time}
-                    </span>
+                    <RevealTime
+                      time={evt.time}
+                      className="text-xs font-mono text-[#9B98A0] flex items-center gap-1 hover:text-[#E0A3AA] transition-colors cursor-pointer"
+                      iconClassName="h-3 w-3 text-[#9B98A0]"
+                    />
                   </div>
                   <h4 className="font-display font-extrabold text-sm sm:text-base text-[#E5E5E7] leading-snug">
                     {evt.title}
@@ -2759,7 +2847,11 @@ export function CalendarPage() {
                   <CalendarIcon className="h-3.5 w-3.5 text-[#E0A3AA] shrink-0" />
                   <span>{selectedEvent.date}</span>
                   <Clock className="h-3.5 w-3.5 text-[#E0A3AA] shrink-0 ml-3" />
-                  <span>{selectedEvent.time}</span>
+                  <RevealTime
+                    time={selectedEvent.time}
+                    className="hover:text-[#E0A3AA] transition-colors cursor-pointer"
+                    iconClassName="h-3.5 w-3.5 inline mr-1"
+                  />
                 </div>
                 <div className="flex items-center gap-2 font-sans text-xs">
                   <MapPin className="h-3.5 w-3.5 text-[#E0A3AA] shrink-0" />
