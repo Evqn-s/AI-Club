@@ -96,7 +96,7 @@ function SideScrollbar({
       onPointerMove={handlePointerMove}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
-      className="cal-side-scrollbar absolute right-1 top-1/2 -translate-y-1/2 z-30 hidden md:flex flex-col items-center w-5 h-[min(46vh,420px)] rounded-full glass-cell cursor-pointer touch-none select-none"
+      className="cal-side-scrollbar fixed right-0 top-1/2 -translate-y-1/2 z-40 hidden md:flex flex-col items-center w-5 h-[min(46vh,420px)] rounded-full glass-cell cursor-pointer touch-none select-none"
     >
       <div className="cal-side-scrollbar-track relative flex-1 w-1.5 my-2 rounded-full overflow-hidden">
         <div
@@ -1311,13 +1311,36 @@ export function CalendarPage() {
   useEffect(() => {
     activeIndexRefForScrub.current = activeIndex;
   }, [activeIndex]);
+  // Page scroll position (0..1) for the month-view scrollbar, which drives
+  // the actual document scroll rather than calendar paging.
+  const [pageScrollValue, setPageScrollValue] = useState(0);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const update = () => {
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = window.innerHeight;
+      const maxScroll = Math.max(0, scrollHeight - clientHeight);
+      setPageScrollValue(maxScroll === 0 ? 0 : window.scrollY / maxScroll);
+    };
+    window.addEventListener("scroll", update, { passive: true });
+    update();
+    return () => window.removeEventListener("scroll", update);
+  }, []);
+
   const scrubMonthTo = useCallback(
     (fraction: number) => {
       if (selectedEventRef.current) return;
+      if (viewMode === "month") {
+        // Month view: drag the thumb to scroll the actual page up/down.
+        const scrollHeight = document.documentElement.scrollHeight;
+        const clientHeight = window.innerHeight;
+        const maxScroll = Math.max(0, scrollHeight - clientHeight);
+        window.scrollTo({ top: maxScroll * fraction, behavior: "smooth" });
+        return;
+      }
       const current = activeIndexRefForScrub.current;
       const target = Math.round(current + (fraction - 0.5) * SCRUB_WINDOW * 2);
       if (target === current) return;
-      if (viewMode === "month") setMonthDirection(target > current ? 1 : -1);
       if (viewMode === "week") setWeekDirection(target > current ? 1 : -1);
       setActiveIndex(target);
       triggerTransition();
@@ -1448,6 +1471,7 @@ export function CalendarPage() {
       if (total === 0) return;
       const target = Math.min(total - 1, Math.max(0, Math.round(fraction * (total - 1))));
       if (target === listActiveIndex) return;
+      setListActiveIndex(target);
       scrollEventToTop(target);
       triggerTransition();
     },
@@ -2787,7 +2811,7 @@ export function CalendarPage() {
           />
         ) : (
           <SideScrollbar
-            value={0.5}
+            value={viewMode === "month" ? pageScrollValue : 0.5}
             onScrub={scrubMonthTo}
             ariaLabel={viewMode === "month" ? "Scroll months" : "Scroll weeks"}
           />
