@@ -371,29 +371,55 @@ const MonthPreview = memo(function MonthPreview({
   events: CalendarEvent[];
 }) {
   const { monthDays } = getMonthData(getDateForMonth(monthIndex));
-  const eventDates = new Set(events.map((event) => event.date));
+  const eventsByDate = useMemo(() => buildEventDateIndex(events), [events]);
 
   return (
     <div className="space-y-1.5 select-none max-w-4xl mx-auto w-full" aria-hidden="true">
       <div className="grid grid-cols-7 gap-1 sm:gap-2 py-1 md:py-1.5 border-b border-[#242021]/80" />
       <div className="grid grid-cols-7 gap-1 sm:gap-1.5 md:gap-2">
-        {monthDays.map((day) => (
-          <div
-            key={day.dateString}
-            className={`min-h-[46px] sm:min-h-[54px] md:min-h-[85px] lg:min-h-[96px] xl:min-h-[105px] rounded-lg md:rounded-xl border p-1 md:p-1.5 ${
-              day.isCurrentMonth
-                ? "glass-cell"
-                : "border-white/5 bg-white/[0.015] opacity-35"
-            }`}
-          >
-            <span className="text-[10px] md:text-xs font-mono text-[#67646C]">
-              {day.dayNumber}
-            </span>
-            {eventDates.has(day.dateString) && (
-              <span className="block h-1.5 w-1.5 mt-2 rounded-full bg-[#E0A3AA]" />
-            )}
-          </div>
-        ))}
+        {monthDays.map((day) => {
+          const dayEvents = eventsByDate.get(day.dateString) || [];
+          return (
+            <div
+              key={day.dateString}
+              className={`min-h-[46px] sm:min-h-[54px] md:min-h-[85px] lg:min-h-[96px] xl:min-h-[105px] rounded-lg md:rounded-xl border p-1 md:p-1.5 flex flex-col gap-1 ${
+                day.isCurrentMonth
+                  ? "glass-cell"
+                  : "border-white/5 bg-white/[0.015] opacity-35"
+              }`}
+            >
+              <span className="text-[10px] md:text-xs font-mono text-[#67646C]">
+                {day.dayNumber}
+              </span>
+              {/* Mirror the real month cells: up to 2 static event chips
+                  (title-only, no description/location) instead of dots, so
+                  the swiped-behind sheet reads like the loaded grid. */}
+              <div className="hidden md:flex flex-col gap-1 w-full">
+                {dayEvents.slice(0, 2).map((evt) => (
+                  <div
+                    key={evt.id}
+                    className="w-full text-left p-1 md:p-1.5 rounded-lg border glass-chip"
+                  >
+                    <span className="block text-[11px] font-bold font-display text-[#E5E5E7] leading-snug line-clamp-3 break-words">
+                      {evt.title}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {/* Mobile: keep the accent dots, matching the real cells. */}
+              {dayEvents.length > 0 && (
+                <div className="flex md:hidden items-center justify-center gap-1 py-1">
+                  {dayEvents.map((evt) => (
+                    <span
+                      key={evt.id}
+                      className="h-2.5 w-2.5 rounded-full bg-[#E0A3AA] shadow-[0_0_6px_rgba(224,163,170,0.6)]"
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -499,7 +525,7 @@ const MonthEventCard = memo(function MonthEventCard({
             {evt.title}
           </span>
           {evt.description && (
-            <p className="hidden lg:block text-[10px] text-[#9B98A0] leading-snug line-clamp-2 break-words">
+            <p className="hidden lg:block text-[10px] text-[#9B98A0] leading-snug line-clamp-3 break-words max-h-[3lh] overflow-hidden">
               {evt.description}
             </p>
           )}
@@ -2447,12 +2473,14 @@ export function CalendarPage() {
       data-page="calendar"
       className="space-y-3 py-2 sm:py-3 mx-auto w-full max-w-5xl lg:max-w-6xl select-none relative"
     >
-      {/* Modal-open dim veil over month/week grids: blocks pointer interaction
-          with the calendar until the viewer clicks out (backdrop or Close). */}
+      {/* Modal-open veil over month/week grids: transparent pointer blocker so
+          the calendar can't be interacted with until the viewer clicks out
+          (backdrop or Close). No dimming — everything outside the modal keeps
+          its original look. */}
       {selectedEvent && (
         <div
           aria-hidden="true"
-          className="absolute inset-0 z-30 rounded-2xl bg-black/60 backdrop-blur-[1px] transition-opacity duration-200"
+          className="absolute inset-0 z-30 rounded-2xl bg-transparent"
         />
       )}
       {/* Page Header */}
@@ -2779,11 +2807,11 @@ export function CalendarPage() {
       {selectedEvent && (
         <div
           onClick={() => setSelectedEvent(null)}
-          className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 animate-in fade-in duration-200"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-2xl glass-panel p-5 sm:p-6 shadow-2xl relative overflow-hidden bg-black/70 ring-1 ring-[#E0A3AA]/30"
+            className="w-full max-w-lg rounded-2xl glass-panel p-5 sm:p-6 shadow-2xl relative overflow-hidden bg-black/50"
           >
             {/* Close Button */}
             <button
