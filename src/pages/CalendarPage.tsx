@@ -1324,22 +1324,6 @@ export function CalendarPage() {
     },
     [triggerTransition, viewMode]
   );
-  const listScrollValue = useMemo(() => {
-    const total = Math.max(1, filteredListEvents.length - 1);
-    return Math.min(1, Math.max(0, listActiveIndex / total));
-  }, [listActiveIndex, filteredListEvents.length]);
-  const scrubListTo = useCallback(
-    (fraction: number) => {
-      if (selectedEventRef.current) return;
-      const total = filteredListEvents.length;
-      if (total === 0) return;
-      const target = Math.min(total - 1, Math.max(0, Math.round(fraction * (total - 1))));
-      if (target === listActiveIndex) return;
-      scrollEventToTop(target);
-      triggerTransition();
-    },
-    [filteredListEvents.length, listActiveIndex, scrollEventToTop, triggerTransition]
-  );
 
   // Settle the route-entry month unfold: the initial "month" transition above
   // animates the viewport/scroll rows in, then clears so later interactions
@@ -1449,6 +1433,26 @@ export function CalendarPage() {
 
     return result;
   }, [events, searchQuery, listSortNewest]);
+
+  // List-view scrollbar scrubbing (placed after filteredListEvents so the
+  // declaration order is valid): maps the thumb fraction to the event index
+  // and drives the pager — never the page scroll.
+  const listScrollValue = useMemo(() => {
+    const total = Math.max(1, filteredListEvents.length - 1);
+    return Math.min(1, Math.max(0, listActiveIndex / total));
+  }, [listActiveIndex, filteredListEvents.length]);
+  const scrubListTo = useCallback(
+    (fraction: number) => {
+      if (selectedEventRef.current) return;
+      const total = filteredListEvents.length;
+      if (total === 0) return;
+      const target = Math.min(total - 1, Math.max(0, Math.round(fraction * (total - 1))));
+      if (target === listActiveIndex) return;
+      scrollEventToTop(target);
+      triggerTransition();
+    },
+    [filteredListEvents.length, listActiveIndex, scrollEventToTop, triggerTransition]
+  );
 
   // Fetch data: strictly from public.events table.
   // The cache is invalidated first so realtime pings and retries always
