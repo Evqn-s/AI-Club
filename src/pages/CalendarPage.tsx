@@ -35,38 +35,6 @@ function formatTime12h(time: string): string {
   return `${h}:${min} ${suffix}`;
 }
 
-// Click-to-reveal time for calendar surfaces: renders nothing until the
-// viewer taps the clock affordance. Each instance owns its open state so
-// opening one event never opens others.
-function RevealTime({
-  time,
-  className,
-  iconClassName,
-}: {
-  time: string;
-  className?: string;
-  iconClassName?: string;
-}) {
-  const [open, setOpen] = useState(false);
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpen(true);
-        }}
-        aria-label="Show event time"
-        title="Show time"
-        className={className}
-      >
-        <Clock className={iconClassName} />
-      </button>
-    );
-  }
-  return <span className={className}>{formatTime12h(time)}</span>;
-}
-
 // Dynamic today — computed once at module load so every helper uses real current date
 const _NOW = new Date();
 const TODAY_YEAR = _NOW.getFullYear();
@@ -527,16 +495,9 @@ const MonthEventCard = memo(function MonthEventCard({
             } ${isHighlighted ? "cal-search-match" : ""}`}
       >
         <div className="space-y-0.5 w-full">
-          <div className="flex items-start justify-between gap-1 w-full">
-            <span className="text-[11px] font-bold font-display text-[#E5E5E7] leading-tight truncate">
-              {evt.title}
-            </span>
-            <RevealTime
-                time={evt.time}
-                className="text-[9px] font-mono text-[#E0A3AA] shrink-0 font-semibold hover:text-[#FFFFFF] transition-colors cursor-pointer"
-                iconClassName="h-3 w-3"
-              />
-          </div>
+          <span className="text-[11px] font-bold font-display text-[#E5E5E7] leading-snug line-clamp-3 break-words">
+            {evt.title}
+          </span>
           {evt.description && (
             <p className="hidden lg:block text-[10px] text-[#9B98A0] leading-snug line-clamp-2 break-words">
               {evt.description}
@@ -801,22 +762,16 @@ const MobileWeekView = memo(function MobileWeekView({
                     : "glass-panel glass-panel-hover"
                 } ${evt.id === highlightedEventId ? "cal-search-match" : ""}`}
               >
-                <div className="flex items-center justify-between gap-2">
-                  <RevealTime
-                    time={evt.time}
-                    className="text-xs font-mono font-bold text-[#E0A3AA] flex items-center gap-1.5 hover:text-[#FFFFFF] transition-colors cursor-pointer"
-                    iconClassName="h-3.5 w-3.5 text-[#E0A3AA]"
-                  />
+                <div className="flex items-start justify-between gap-2">
+                  <h4 className="font-display font-extrabold text-base text-[#E5E5E7] leading-snug break-words pr-1">
+                    {evt.title}
+                  </h4>
                   {evt.id === highlightedEventId && (
                     <span className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-[#E0A3AA] text-[#0A090A]">
                       Match
                     </span>
                   )}
                 </div>
-
-                <h4 className="font-display font-extrabold text-base text-[#E5E5E7]">
-                  {evt.title}
-                </h4>
 
                 {evt.description && (
                   <p className="text-xs text-[#9B98A0] leading-relaxed">
@@ -948,21 +903,15 @@ const DesktopWeekView = memo(function DesktopWeekView({
                     >
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between gap-1">
-                          <RevealTime
-                            time={evt.time}
-                            className="text-xs font-mono font-semibold text-[#E0A3AA] flex items-center gap-1 hover:text-[#FFFFFF] transition-colors cursor-pointer"
-                            iconClassName="h-3 w-3 text-[#E0A3AA]"
-                          />
+                          <h4 className="font-display font-bold text-xs lg:text-sm text-[#E5E5E7] leading-snug line-clamp-3 break-words pr-1">
+                            {evt.title}
+                          </h4>
                           {isHighlighted && (
                             <span className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-[#E0A3AA] text-[#0A090A]">
                               Match
                             </span>
                           )}
                         </div>
-
-                        <h4 className="font-display font-bold text-xs lg:text-sm text-[#E5E5E7] leading-snug">
-                          {evt.title}
-                        </h4>
 
                         {evt.description && (
                           <p className="text-xs text-[#9B98A0] leading-relaxed line-clamp-3">
@@ -1277,6 +1226,12 @@ export function CalendarPage() {
   const [highlightedEventId, setHighlightedEventId] = useState<string | null>(null);
   const [highlightedDateString, setHighlightedDateString] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  // Ref mirror so wheel/scroll callbacks (bound once) can see modal-open
+  // state without re-subscribing listeners on every open/close.
+  const selectedEventRef = useRef<CalendarEvent | null>(null);
+  useEffect(() => {
+    selectedEventRef.current = selectedEvent;
+  }, [selectedEvent]);
   const eventsByDate = useMemo(() => buildEventDateIndex(events), [events]);
 
   // Unified event selection handler: opens details and syncs active day
@@ -1385,7 +1340,9 @@ export function CalendarPage() {
     };
   }, [fetchEvents]);
 
-  // Modal ESC key listener
+  // Modal ESC key listener — Escape always closes the open event.
+  // While an event is open the calendar is locked: arrows/wheel can't
+  // navigate until the viewer clicks out (backdrop, Close, or Escape).
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
@@ -1565,8 +1522,9 @@ export function CalendarPage() {
     return `https://calendar.google.com/calendar/render?${params.toString()}`;
   }, []);
 
-  // Stepper handlers
+  // Stepper handlers — locked while an event modal is open.
   const handlePrev = useCallback(() => {
+    if (selectedEventRef.current) return;
     if (viewMode === "list") {
       setListActiveIndex((prev) => {
         const next = Math.max(0, prev - 1);
@@ -1582,6 +1540,7 @@ export function CalendarPage() {
   }, [viewMode, triggerTransition, scrollEventToTop]);
 
   const handleNext = useCallback(() => {
+    if (selectedEventRef.current) return;
     if (viewMode === "list") {
       setListActiveIndex((prev) => {
         const maxIdx = Math.max(0, filteredListEvents.length - 1);
@@ -1598,6 +1557,7 @@ export function CalendarPage() {
   }, [viewMode, filteredListEvents.length, triggerTransition, scrollEventToTop]);
 
   const handleToday = useCallback(() => {
+    if (selectedEventRef.current) return;
     if (viewMode === "list") {
       if (filteredListEvents.length === 0) return;
       const todayTime = new Date(TODAY_YEAR, TODAY_MONTH, TODAY_DAY, 12, 0, 0).getTime();
@@ -1631,6 +1591,7 @@ export function CalendarPage() {
 
   const handleTouchEnd = useCallback(
     (e: React.TouchEvent) => {
+      if (selectedEventRef.current) return;
       if (viewMode === "list") return;
       if (touchStartX.current === null || touchStartY.current === null) return;
       const deltaX = e.changedTouches[0].clientX - touchStartX.current;
@@ -1651,6 +1612,7 @@ export function CalendarPage() {
 
   const handlePanEnd = useCallback(
     (_e: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      if (selectedEventRef.current) return;
       if (viewMode === "list") return;
       if (Math.abs(info.offset.x) > 45 && Math.abs(info.offset.x) > Math.abs(info.offset.y) * 1.3) {
         if (info.offset.x < 0) {
@@ -1839,6 +1801,7 @@ export function CalendarPage() {
 
   const handleListTouchEnd = useCallback(
     (e: React.TouchEvent) => {
+      if (selectedEventRef.current) return;
       if (isMobileList) return;
     if (listTouchStartY.current === null) return;
     const deltaY = e.changedTouches[0].clientY - listTouchStartY.current;
@@ -1851,9 +1814,11 @@ export function CalendarPage() {
     }
   }, [handleNext, handlePrev, isMobileList]);
 
-  // View switch handler — symmetrical multi-phase transitions
+  // View switch handler — symmetrical multi-phase transitions.
+  // Locked while an event modal is open.
   const handleViewToggle = useCallback(
     (newMode: "month" | "week" | "list") => {
+      if (selectedEventRef.current) return;
       if (newMode === viewMode && modeTransition === null) return;
       notifyAnimationStart();
       clearModeTimer();
@@ -2048,25 +2013,18 @@ export function CalendarPage() {
                     <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-[#E0A3AA] to-transparent" />
                   )}
                   <div className="flex flex-col gap-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <h3
-                        className={`font-display font-bold leading-tight flex-1 text-[15px] ${
-                          isTop ? "text-white" : "text-[#EDEDEF]"
-                        }`}
-                      >
-                        {evt.title}
-                        {isHighlighted && searchQuery && (
-                          <span className="ml-2 inline-flex items-center rounded-full bg-[#E0A3AA]/15 border border-[#E0A3AA]/40 px-2 py-0.5 text-[10px] font-sans font-bold uppercase tracking-wider text-[#E0A3AA] align-middle">
-                            Match
-                          </span>
-                        )}
-                      </h3>
-                      <RevealTime
-                        time={evt.time}
-                        className="shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-mono font-bold whitespace-nowrap hover:border-[#E0A3AA]/50 transition-colors cursor-pointer text-[#9B98A0] border-white/10 bg-white/5"
-                        iconClassName="h-3 w-3 inline mr-1"
-                      />
-                    </div>
+                    <h3
+                      className={`font-display font-bold leading-tight flex-1 text-[15px] line-clamp-3 break-words ${
+                        isTop ? "text-white" : "text-[#EDEDEF]"
+                      }`}
+                    >
+                      {evt.title}
+                      {isHighlighted && searchQuery && (
+                        <span className="ml-2 inline-flex items-center rounded-full bg-[#E0A3AA]/15 border border-[#E0A3AA]/40 px-2 py-0.5 text-[10px] font-sans font-bold uppercase tracking-wider text-[#E0A3AA] align-middle">
+                          Match
+                        </span>
+                      )}
+                    </h3>
                     <p className="text-xs font-mono text-[#9B98A0] flex items-center gap-1.5">
                       <MapPin className="h-3 w-3 text-[#9B98A0] shrink-0" />
                       <span className="truncate">{evt.location}</span>
@@ -2144,10 +2102,13 @@ export function CalendarPage() {
           </div>
         ) : (
           <AnimatePresence mode="popLayout" initial={false}>
-            {visibleEvents.map((evt, visIdx) => {
+            {visibleEvents.slice(0, 5).map((evt, visIdx) => {
               const evtIdx = listActiveIndex + visIdx;
               const isTop = visIdx === 0;
               const isHighlighted = evt.id === highlightedEventId;
+              // Flow stagger, capped: index 0..4 → 0s..0.32s. Only the events
+              // visible on one page (max 5) participate, so the flow is tight.
+              const flowDelay = Math.min(visIdx, 4) * 0.08;
 
               if (isTop) {
                 return (
@@ -2161,8 +2122,8 @@ export function CalendarPage() {
                     exit={{ opacity: 0, y: -60, scale: 0.94, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
                     transition={{
                       layout: { type: "spring", stiffness: 320, damping: 28 },
-                      opacity: { duration: 0.18 },
-                      y: { type: "spring", stiffness: 320, damping: 28 },
+                      opacity: { duration: 0.18, delay: flowDelay },
+                      y: { type: "spring", stiffness: 320, damping: 28, delay: flowDelay },
                     }}
                     onClick={() => handleSelectEvent(evt)}
                     className="p-5 sm:p-6 rounded-2xl border cursor-pointer space-y-3.5 shadow-2xl relative overflow-hidden glass-panel border-[#E0A3AA] border-t-white/60 ring-2 ring-[#E0A3AA]/70 shadow-[0_16px_40px_rgba(0,0,0,0.6),0_0_28px_rgba(224,163,170,0.25)] shrink-0 hover:border-t-white/80 transition-all bg-gradient-to-br from-[#2D1619]/60 via-white/[0.05] to-white/[0.02]"
@@ -2184,11 +2145,6 @@ export function CalendarPage() {
                           <CalendarIcon className="h-3.5 w-3.5 text-[#E0A3AA]" />
                           {evt.date}
                         </span>
-                        <RevealTime
-                          time={evt.time}
-                          className="flex items-center gap-1 text-[#9B98A0] hover:text-[#E0A3AA] transition-colors cursor-pointer"
-                          iconClassName="h-3.5 w-3.5 text-[#9B98A0]"
-                        />
                       </div>
                     </div>
 
@@ -2243,10 +2199,11 @@ export function CalendarPage() {
                   data-event-index={evtIdx}
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: visIdx <= 2 ? 1 - visIdx * 0.12 : 0.65, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.96 }}
+                  exit={{ opacity: 0, y: 24, scale: 0.96, transition: { duration: 0.2, delay: flowDelay, ease: [0.4, 0, 1, 1] } }}
                   transition={{
                     layout: { type: "spring", stiffness: 320, damping: 28 },
-                    opacity: { duration: 0.2 },
+                    opacity: { duration: 0.2, delay: flowDelay },
+                    y: { type: "spring", stiffness: 320, damping: 28, delay: flowDelay },
                   }}
                   onClick={() => {
                     setListActiveIndex(evtIdx);
@@ -2263,11 +2220,6 @@ export function CalendarPage() {
                       <CalendarIcon className="h-3.5 w-3.5 text-[#E0A3AA]" />
                       {evt.date}
                     </span>
-                    <RevealTime
-                      time={evt.time}
-                      className="text-xs font-mono text-[#9B98A0] flex items-center gap-1 hover:text-[#E0A3AA] transition-colors cursor-pointer"
-                      iconClassName="h-3 w-3 text-[#9B98A0]"
-                    />
                   </div>
                   <h4 className="font-display font-extrabold text-sm sm:text-base text-[#E5E5E7] leading-snug">
                     {evt.title}
@@ -2493,8 +2445,16 @@ export function CalendarPage() {
     <div
       data-calendar-boundary="true"
       data-page="calendar"
-      className="space-y-3 py-2 sm:py-3 mx-auto w-full max-w-5xl lg:max-w-6xl select-none"
+      className="space-y-3 py-2 sm:py-3 mx-auto w-full max-w-5xl lg:max-w-6xl select-none relative"
     >
+      {/* Modal-open dim veil over month/week grids: blocks pointer interaction
+          with the calendar until the viewer clicks out (backdrop or Close). */}
+      {selectedEvent && (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 z-30 rounded-2xl bg-black/60 backdrop-blur-[1px] transition-opacity duration-200"
+        />
+      )}
       {/* Page Header */}
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl sm:text-3xl font-display font-extrabold tracking-tight text-[#E5E5E7]">
@@ -2819,11 +2779,11 @@ export function CalendarPage() {
       {selectedEvent && (
         <div
           onClick={() => setSelectedEvent(null)}
-          className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 animate-in fade-in duration-200"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-2xl glass-panel p-5 sm:p-6 shadow-2xl relative overflow-hidden bg-black/50"
+            className="w-full max-w-lg rounded-2xl glass-panel p-5 sm:p-6 shadow-2xl relative overflow-hidden bg-black/70 ring-1 ring-[#E0A3AA]/30"
           >
             {/* Close Button */}
             <button
@@ -2847,11 +2807,7 @@ export function CalendarPage() {
                   <CalendarIcon className="h-3.5 w-3.5 text-[#E0A3AA] shrink-0" />
                   <span>{selectedEvent.date}</span>
                   <Clock className="h-3.5 w-3.5 text-[#E0A3AA] shrink-0 ml-3" />
-                  <RevealTime
-                    time={selectedEvent.time}
-                    className="hover:text-[#E0A3AA] transition-colors cursor-pointer"
-                    iconClassName="h-3.5 w-3.5 inline mr-1"
-                  />
+                  <span className="font-semibold text-[#E0A3AA]">{formatTime12h(selectedEvent.time)}</span>
                 </div>
                 <div className="flex items-center gap-2 font-sans text-xs">
                   <MapPin className="h-3.5 w-3.5 text-[#E0A3AA] shrink-0" />
