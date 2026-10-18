@@ -91,7 +91,7 @@ export function HomePage() {
   const showVision = info ? Boolean(visionText) : true;
 
   return (
-    <div className="flex-1 flex flex-col justify-between gap-[clamp(1rem,2vw,1.75rem)] py-[clamp(0.75rem,2vw,1.25rem)]">
+    <div className="flex-1 flex flex-col justify-between gap-[clamp(1rem,2vw,1.75rem)] py-[clamp(0.75rem,2vw,1.25rem)] page-enter">
       {/* Editorial Centered Hero with Bold Scale & Negative Space */}
       <section className="text-center max-w-[var(--fluid-container-max)] mx-auto w-full space-y-[var(--fluid-gap)] pt-[clamp(0.5rem,1vw,1rem)] pb-[clamp(0.25rem,1vw,0.75rem)]">
         {info?.club_name ? (

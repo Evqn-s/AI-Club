@@ -1139,7 +1139,13 @@ export function CalendarPage() {
   // Month ⇄ Week ⇄ List mode transition state ("deck of cards" unfold / fold)
   const [modeTransition, setModeTransition] = useState<
     "month" | "week-fold" | "week" | "week-shrink" | "list" | null
-  >(null);
+  >(
+    // Route entry: replay the month "unfold" the viewer sees when switching
+    // week/list → month, so navigating from another page opens with the
+    // same animation. Non-month defaults aren't used (month is the landing
+    // view), so a plain "month" initial value is exact.
+    "month"
+  );
   const [modeAnchorWeek, setModeAnchorWeek] = useState<string | null>(null);
   const modeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -1174,6 +1180,26 @@ export function CalendarPage() {
       notifyAnimationComplete();
     }, isBurst ? 180 : 550);
   }, [notifyAnimationStart, notifyAnimationComplete]);
+
+  // Settle the route-entry month unfold: the initial "month" transition above
+  // animates the viewport/scroll rows in, then clears so later interactions
+  // start from the idle state. Skipped for reduced-motion users.
+  useEffect(() => {
+    if (modeTransition !== "month") return;
+    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setModeTransition(null);
+      return;
+    }
+    notifyAnimationStart();
+    modeTimerRef.current = setTimeout(() => {
+      setModeTransition(null);
+      notifyAnimationComplete();
+    }, MODE_UNFOLD_MS);
+    return () => {
+      clearModeTimer();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -1587,7 +1613,30 @@ export function CalendarPage() {
     [viewMode, handleNext, handlePrev]
   );
 
-  const lastWheelTime = useRef<number>(0);
+  // 1:1 wheel paging: one wheel gesture tick = exactly one period.
+  // No throttle/cooldown/accumulation — but the page only advances ONCE per
+  // physical gesture burst, then locks until deltas pause (gesture end).
+  // This keeps the old "one tick = one period" feel while making repeated
+  // inertia/momentum events from the same flick unable to chain extra pages.
+  const wheelGestureActive = useRef<boolean>(false);
+  const wheelGestureTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Mark the current gesture burst finished after deltas stop arriving.
+  // 140ms comfortably covers intra-gesture event gaps but ends well before
+  // the next deliberate tick, so stopping the finger stops paging instantly.
+  const armWheelGestureEnd = useCallback(() => {
+    if (wheelGestureTimer.current) clearTimeout(wheelGestureTimer.current);
+    wheelGestureTimer.current = setTimeout(() => {
+      wheelGestureActive.current = false;
+      wheelGestureTimer.current = null;
+    }, 140);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (wheelGestureTimer.current) clearTimeout(wheelGestureTimer.current);
+    };
+  }, []);
 
   useEffect(() => {
     const handleNativeWheel = (e: WheelEvent) => {
@@ -1609,22 +1658,26 @@ export function CalendarPage() {
       e.preventDefault();
       e.stopPropagation();
 
-      // 5. Throttle rapid wheel updates
-      const now = Date.now();
-      if (now - lastWheelTime.current < 90) return;
-
-      // 6. Detect scroll delta (supports mouse vertical wheel & trackpad horizontal gestures)
-      const primaryDelta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-
-      // 7. Trigger period movement — require a deliberate scroll so normal
-      // page scrolling doesn't accidentally flip calendar periods.
-      if (primaryDelta > 25) {
-        handleNext(); // Wheel down or swipe right -> next week/month
-      } else if (primaryDelta < -25) {
-        handlePrev(); // Wheel up or swipe left -> previous week/month
+      // 5. One advance per gesture burst — ignore inertia/repeat events
+      // until the burst ends (no deltas for 140ms).
+      if (wheelGestureActive.current) {
+        armWheelGestureEnd();
+        return;
       }
 
-      lastWheelTime.current = now;
+      // 6. Any intentional tick (mouse notch or trackpad nudge) advances one period.
+      // No delta threshold: e.deltaY/deltaX sign alone decides direction.
+      const primaryDelta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (primaryDelta === 0) return;
+
+      wheelGestureActive.current = true;
+      armWheelGestureEnd();
+
+      if (primaryDelta > 0) {
+        handleNext(); // Wheel down or swipe right -> next week/month
+      } else {
+        handlePrev(); // Wheel up or swipe left -> previous week/month
+      }
     };
 
     // Register non-passive listener on document
@@ -1633,14 +1686,13 @@ export function CalendarPage() {
     return () => {
       document.removeEventListener("wheel", handleNativeWheel);
     };
-  }, [viewMode, handleNext, handlePrev]);
+  }, [viewMode, handleNext, handlePrev, armWheelGestureEnd]);
 
-  // List wheel handler: accumulated-delta pager — each 80px of scroll = one event advance.
-  // A fast flick accumulates quickly and advances multiple events naturally.
-  const listWheelAccum = useRef<number>(0);
-  const listWheelDecayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // List wheel pager — 1:1 with no inertia: one gesture burst = one event.
+  // Same burst-lock as the month/week pager above.
+  const listWheelGestureActive = useRef<boolean>(false);
+  const listWheelGestureTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listTouchStartY = useRef<number | null>(null);
-  const WHEEL_STEP = 160; // px of accumulated deltaY per event advance (less sensitive)
 
   useEffect(() => {
     const el = listContainerRef.current;
@@ -1651,32 +1703,38 @@ export function CalendarPage() {
       e.preventDefault();
       e.stopPropagation();
 
-      // Accumulate normalized delta (cap single-event delta to avoid huge trackpad jumps)
-      const delta = Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY), 120);
-      listWheelAccum.current += delta;
-
-      // Fire an advance for each WHEEL_STEP crossed
-      while (Math.abs(listWheelAccum.current) >= WHEEL_STEP) {
-        if (listWheelAccum.current > 0) {
-          handleNext();
-          listWheelAccum.current -= WHEEL_STEP;
-        } else {
-          handlePrev();
-          listWheelAccum.current += WHEEL_STEP;
-        }
+      // Same burst rule: first tick of a burst advances once, inertia
+      // leftovers in the same burst are swallowed until deltas pause 140ms.
+      if (listWheelGestureActive.current) {
+        if (listWheelGestureTimer.current) clearTimeout(listWheelGestureTimer.current);
+        listWheelGestureTimer.current = setTimeout(() => {
+          listWheelGestureActive.current = false;
+          listWheelGestureTimer.current = null;
+        }, 140);
+        return;
       }
 
-      // Decay accumulator after gesture ends so leftover delta doesn't carry over
-      if (listWheelDecayTimer.current) clearTimeout(listWheelDecayTimer.current);
-      listWheelDecayTimer.current = setTimeout(() => {
-        listWheelAccum.current = 0;
-      }, 150);
+      // Any intentional tick advances exactly one event — sign decides direction.
+      const primaryDelta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (primaryDelta === 0) return;
+
+      listWheelGestureActive.current = true;
+      listWheelGestureTimer.current = setTimeout(() => {
+        listWheelGestureActive.current = false;
+        listWheelGestureTimer.current = null;
+      }, 140);
+
+      if (primaryDelta > 0) {
+        handleNext();
+      } else {
+        handlePrev();
+      }
     };
 
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => {
       el.removeEventListener("wheel", onWheel);
-      if (listWheelDecayTimer.current) clearTimeout(listWheelDecayTimer.current);
+      if (listWheelGestureTimer.current) clearTimeout(listWheelGestureTimer.current);
     };
   }, [viewMode, handleNext, handlePrev, isMobileList]);
 

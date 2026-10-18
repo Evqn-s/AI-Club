@@ -845,6 +845,31 @@ html.light .cal-slide-veil {
   }
 }
 
+/* =========================================================
+   PAGE ENTRANCE — subtle fade + rise for the home route.
+   Runs once per mount (route entry). Respects reduced motion.
+   ========================================================= */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: page-enter 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter {
+    animation: none;
+  }
+}
+
 /* Light mode: accent glow turns sapphire blue to match the theme remap */
 html.light .cal-today::after {
   background: radial-gradient(
