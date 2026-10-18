@@ -1,24 +1,51 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
+import { ArrowRight, MessageSquare } from "lucide-react";
 
 // Mirrors src/pages/HomePage.tsx exactly — same root, hero, button sizes,
 // card chrome (glass-panel), headers, outlined boxes (glass-cell) and vision
 // anchor. Static chrome (labels, titles) renders as real text so the
 // skeleton has identical geometry; only SQL-backed values shimmer.
+// The hero title ("AI Club") and both CTAs are static values — they render
+// as real, fully functional content so the page is interactive while the
+// Supabase record loads (View Schedule prefetches /calendar; Ask AI opens
+// the globally-mounted chat widget via the aiclub:open-chat event).
 export function HomeSkeleton() {
   return (
     <div
       role="status"
       aria-label="Loading club information"
       className="flex-1 flex flex-col justify-between gap-[clamp(1rem,2vw,1.75rem)] py-[clamp(0.75rem,2vw,1.25rem)] animate-in fade-in duration-200"
-      aria-hidden="true"
     >
-      {/* Hero — same shell as HomePage: title slot + two glass pill CTAs */}
+      {/* Hero — real title + functional CTAs (identical markup to HomePage) */}
       <section className="text-center max-w-[var(--fluid-container-max)] mx-auto w-full space-y-[var(--fluid-gap)] pt-[clamp(0.5rem,1vw,1rem)] pb-[clamp(0.25rem,1vw,0.75rem)]">
-        <Skeleton className="h-[clamp(3rem,10vw,5rem)] w-3/4 mx-auto rounded-2xl" />
+        <h1 className="text-fluid-hero font-black tracking-[-0.04em] font-display text-[#E5E5E7] leading-[0.95] select-none">
+          AI Club
+        </h1>
         <div className="flex flex-wrap items-center justify-center gap-[clamp(0.5rem,2vw,0.75rem)] pt-[clamp(0.25rem,1.5vw,0.5rem)]">
-          <Skeleton className="min-h-[clamp(2.75rem,2.25rem_+_3vw,3.25rem)] w-[clamp(11rem,30vw,14rem)] rounded-full" />
-          <Skeleton className="min-h-[clamp(2.75rem,2.25rem_+_3vw,3.25rem)] w-[clamp(8rem,24vw,10.5rem)] rounded-full" />
+          <Button asChild variant="glass" size="lg">
+            <Link
+              href="/calendar"
+              onMouseEnter={() => import("@/lib/data").then(({ prefetchRoute }) => prefetchRoute("/calendar"))}
+              onFocus={() => import("@/lib/data").then(({ prefetchRoute }) => prefetchRoute("/calendar"))}
+              onTouchStart={() => import("@/lib/data").then(({ prefetchRoute }) => prefetchRoute("/calendar"))}
+            >
+              <span>View Schedule</span>
+              <ArrowRight className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] ml-1.5" />
+            </Link>
+          </Button>
+          <Button
+            variant="glass"
+            size="lg"
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent("aiclub:open-chat"))}
+            className="text-[#E5E5E7] hover:text-[#FFFFFF]"
+          >
+            <MessageSquare className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)]" />
+            <span>Ask AI</span>
+          </Button>
         </div>
       </section>
 
