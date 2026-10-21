@@ -28,10 +28,12 @@ import {
 function SideScrollbar({
   value,
   onScrub,
+  onJump,
   ariaLabel,
 }: {
   value: number; // 0..1 thumb position
-  onScrub: (fraction: number) => void;
+  onScrub: (fraction: number) => void; // called while dragging (instant follow)
+  onJump?: (fraction: number) => void; // called on track click (may animate)
   ariaLabel: string;
 }) {
   const trackRef = useRef<HTMLDivElement | null>(null);
@@ -50,9 +52,10 @@ function SideScrollbar({
       if (selectedEventRefGlobal.current) return;
       draggingRef.current = true;
       (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-      onScrub(fractionFromClientY(e.clientY));
+      // A click/tap on the track is a "jump" — may animate. Drag moves use onScrub.
+      onJump?.(fractionFromClientY(e.clientY));
     },
-    [fractionFromClientY, onScrub]
+    [fractionFromClientY, onJump]
   );
 
   const handlePointerMove = useCallback(
@@ -1177,7 +1180,7 @@ export function CalendarPage() {
   //   sits just clear of the sticky navbar. The index is pinned for the length
   //   of the animation so the passive tracker cannot hijack the highlight.
   const scrollEventToTop = useCallback(
-    (index: number) => {
+    (index: number, behavior: ScrollBehavior = "smooth") => {
       const container = listContainerRef.current;
       if (!container) return;
       const el = container.querySelector<HTMLElement>(`[data-event-index="${index}"]`);
@@ -1201,7 +1204,7 @@ export function CalendarPage() {
       const topOffset = el.offsetTop - container.offsetTop;
       container.scrollTo({
         top: Math.max(0, topOffset),
-        behavior: "smooth",
+        behavior,
       });
     },
     [isMobileList]
@@ -1301,12 +1304,8 @@ export function CalendarPage() {
   }, [notifyAnimationStart, notifyAnimationComplete]);
 
   // ---- Custom scrollbar scrubbing ----
-  // Month/week: scrubbing maps the thumb fraction to a bounded period offset
-  // window (±12) around the active index, so dragging the bar drives the
-  // actual calendar period like paging would (page scroll untouched).
-  // List: scrubbing maps the fraction to the event index (pager), so the bar
-  // drives events, never the page scroll.
-  const SCRUB_WINDOW = 12;
+  // Month/week: scrubbing scrolls the actual page up/down (no period paging).
+  // List: scrubbing also scrolls the page, never the event pager.
   const activeIndexRefForScrub = useRef(0);
   useEffect(() => {
     activeIndexRefForScrub.current = activeIndex;
@@ -1327,25 +1326,30 @@ export function CalendarPage() {
     return () => window.removeEventListener("scroll", update);
   }, []);
 
+  // Drag (instant — no animation) — follows the thumb finger-for-finger.
   const scrubMonthTo = useCallback(
     (fraction: number) => {
       if (selectedEventRef.current) return;
-      if (viewMode === "month") {
-        // Month view: drag the thumb to scroll the actual page up/down.
-        const scrollHeight = document.documentElement.scrollHeight;
-        const clientHeight = window.innerHeight;
-        const maxScroll = Math.max(0, scrollHeight - clientHeight);
-        window.scrollTo({ top: maxScroll * fraction, behavior: "smooth" });
-        return;
-      }
-      const current = activeIndexRefForScrub.current;
-      const target = Math.round(current + (fraction - 0.5) * SCRUB_WINDOW * 2);
-      if (target === current) return;
-      if (viewMode === "week") setWeekDirection(target > current ? 1 : -1);
-      setActiveIndex(target);
-      triggerTransition();
+      // Scroll the page up/down directly — no prev/next period paging.
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = window.innerHeight;
+      const maxScroll = Math.max(0, scrollHeight - clientHeight);
+      window.scrollTo({ top: maxScroll * fraction });
     },
-    [triggerTransition, viewMode]
+    []
+  );
+
+  // Click/jump (may animate) — track tap jumps to the tapped position.
+  const jumpMonthTo = useCallback(
+    (fraction: number) => {
+      if (selectedEventRef.current) return;
+      // Smooth-scroll the page to the tapped position — no prev/next period paging.
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = window.innerHeight;
+      const maxScroll = Math.max(0, scrollHeight - clientHeight);
+      window.scrollTo({ top: maxScroll * fraction, behavior: "smooth" });
+    },
+    []
   );
 
   // Settle the route-entry month unfold: the initial "month" transition above
@@ -1457,25 +1461,31 @@ export function CalendarPage() {
     return result;
   }, [events, searchQuery, listSortNewest]);
 
-  // List-view scrollbar scrubbing (placed after filteredListEvents so the
-  // declaration order is valid): maps the thumb fraction to the event index
-  // and drives the pager — never the page scroll.
-  const listScrollValue = useMemo(() => {
-    const total = Math.max(1, filteredListEvents.length - 1);
-    return Math.min(1, Math.max(0, listActiveIndex / total));
-  }, [listActiveIndex, filteredListEvents.length]);
+
+
+  // List-view scrollbar drag (instant — no animation) — follows the thumb.
+  // Drag — just scroll the page up/down, no event pager.
   const scrubListTo = useCallback(
     (fraction: number) => {
       if (selectedEventRef.current) return;
-      const total = filteredListEvents.length;
-      if (total === 0) return;
-      const target = Math.min(total - 1, Math.max(0, Math.round(fraction * (total - 1))));
-      if (target === listActiveIndex) return;
-      setListActiveIndex(target);
-      scrollEventToTop(target);
-      triggerTransition();
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = window.innerHeight;
+      const maxScroll = Math.max(0, scrollHeight - clientHeight);
+      window.scrollTo({ top: maxScroll * fraction });
     },
-    [filteredListEvents.length, listActiveIndex, scrollEventToTop, triggerTransition]
+    []
+  );
+
+  // List-view scrollbar click/jump — smooth-scroll the page, no event pager.
+  const jumpListTo = useCallback(
+    (fraction: number) => {
+      if (selectedEventRef.current) return;
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = window.innerHeight;
+      const maxScroll = Math.max(0, scrollHeight - clientHeight);
+      window.scrollTo({ top: maxScroll * fraction, behavior: "smooth" });
+    },
+    []
   );
 
   // Fetch data: strictly from public.events table.
@@ -2805,14 +2815,16 @@ export function CalendarPage() {
             Pointer-only, so wheel/swipe gestures are untouched. */}
         {viewMode === "list" ? (
           <SideScrollbar
-            value={listScrollValue}
+            value={pageScrollValue}
             onScrub={scrubListTo}
+            onJump={jumpListTo}
             ariaLabel="Scroll events"
           />
         ) : (
           <SideScrollbar
-            value={viewMode === "month" ? pageScrollValue : 0.5}
+            value={pageScrollValue}
             onScrub={scrubMonthTo}
+            onJump={jumpMonthTo}
             ariaLabel={viewMode === "month" ? "Scroll months" : "Scroll weeks"}
           />
         )}
@@ -2835,7 +2847,7 @@ export function CalendarPage() {
           className={`relative w-full py-1 ${
             isMobileList && viewMode === "list"
               ? ""
-              : "overflow-hidden select-none overscroll-contain"
+              : "overflow-hidden select-none overscroll-contain max-h-[calc(100dvh-14rem)]"
           }`}
           style={
             isMobileList && viewMode === "list"
