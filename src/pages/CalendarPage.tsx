@@ -1252,7 +1252,7 @@ export function CalendarPage() {
   const [highlightedEventId, setHighlightedEventId] = useState<string | null>(null);
   const [highlightedDateString, setHighlightedDateString] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  // Ref mirror so wheel/scroll callbacks (bound once) can see modal-open
+  // Ref mirror so callbacks (bound once) can see modal-open
   // state without re-subscribing listeners on every open/close.
   const selectedEventRef = useRef<CalendarEvent | null>(null);
   useEffect(() => {
@@ -1367,7 +1367,7 @@ export function CalendarPage() {
   }, [fetchEvents]);
 
   // Modal ESC key listener — Escape always closes the open event.
-  // While an event is open the calendar is locked: arrows/wheel can't
+  // While an event is open the calendar is locked: arrows can't
   // navigate until the viewer clicks out (backdrop, Close, or Escape).
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -1651,170 +1651,8 @@ export function CalendarPage() {
     [viewMode, handleNext, handlePrev]
   );
 
-  // 1:1 wheel paging: one wheel gesture tick = exactly one period.
-  // No throttle/cooldown/accumulation — but repeated inertia/momentum events
-  // from the same flick can't chain extra pages. The lock re-arms as soon as
-  // the viewer shows NEW intent, so you never have to lift/move the cursor:
-  //   - direction reversal always counts as a new tick (scroll back instantly)
-  //   - sustained pushing in the same direction re-arms after REARM_PX of
-  //     travel (keep pushing → keep paging, no pause needed)
-  //   - inertia coasting (decaying deltas, no real push) stays locked out
-  const wheelGestureActive = useRef<boolean>(false);
-  const wheelGestureTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const wheelLastSign = useRef<number>(0);
-  const wheelAccum = useRef<number>(0);
-  const WHEEL_REARM_PX = 60;
-
-  // Mark the current gesture burst finished after deltas stop arriving.
-  // 140ms comfortably covers intra-gesture event gaps but ends well before
-  // the next deliberate tick, so stopping the finger stops paging instantly.
-  const armWheelGestureEnd = useCallback(() => {
-    if (wheelGestureTimer.current) clearTimeout(wheelGestureTimer.current);
-    wheelGestureTimer.current = setTimeout(() => {
-      wheelGestureActive.current = false;
-      wheelLastSign.current = 0;
-      wheelAccum.current = 0;
-      wheelGestureTimer.current = null;
-    }, 140);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (wheelGestureTimer.current) clearTimeout(wheelGestureTimer.current);
-    };
-  }, []);
-
-  useEffect(() => {
-    const handleNativeWheel = (e: WheelEvent) => {
-      // 1. Ignore if in list view (let list handle its internal scroll)
-      if (viewMode === "list") return;
-
-      const target = e.target;
-      if (!(target instanceof Element)) return;
-
-      // 2. Check if cursor is anywhere within the calendar container boundary
-      const isInsideCalendar = target.closest("[data-calendar-boundary='true']");
-
-      // 3. OUTSIDE CALENDAR: Do nothing -> browser performs default vertical page scroll
-      if (!isInsideCalendar) {
-        return;
-      }
-
-      // 4. INSIDE CALENDAR: Block page scroll and navigate periods
-      e.preventDefault();
-      e.stopPropagation();
-
-      // 5. Any intentional tick advances one period — sign decides direction.
-      // Re-arm WITHOUT lifting the finger when new intent is detected:
-      // direction flip, or enough same-direction travel (sustained push).
-      // Pure inertia coasting (small decaying deltas) stays locked out.
-      const primaryDelta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-      if (primaryDelta === 0) return;
-      const sign = primaryDelta > 0 ? 1 : -1;
-
-      if (wheelGestureActive.current) {
-        if (sign !== wheelLastSign.current) {
-          // Reversed direction = deliberate new tick, always re-arm.
-          wheelLastSign.current = sign;
-          wheelAccum.current = 0;
-        } else {
-          wheelAccum.current += Math.abs(primaryDelta);
-          if (wheelAccum.current < WHEEL_REARM_PX) {
-            // Still coasting on the same flick — swallow, keep lock.
-            armWheelGestureEnd();
-            return;
-          }
-          // Sustained push — re-arm for the next page.
-          wheelAccum.current = 0;
-        }
-      } else {
-        wheelGestureActive.current = true;
-        wheelLastSign.current = sign;
-        wheelAccum.current = 0;
-      }
-      armWheelGestureEnd();
-
-      if (sign > 0) {
-        handleNext(); // Wheel down or swipe right -> next week/month
-      } else {
-        handlePrev(); // Wheel up or swipe left -> previous week/month
-      }
-    };
-
-    // Register non-passive listener on document
-    document.addEventListener("wheel", handleNativeWheel, { passive: false });
-
-    return () => {
-      document.removeEventListener("wheel", handleNativeWheel);
-    };
-  }, [viewMode, handleNext, handlePrev, armWheelGestureEnd]);
-
-  // List wheel pager — 1:1 with no inertia: re-arms on new intent without
-  // lifting the finger (direction flip or sustained push), same as above.
-  const listWheelGestureActive = useRef<boolean>(false);
-  const listWheelGestureTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const listWheelLastSign = useRef<number>(0);
-  const listWheelAccum = useRef<number>(0);
+  // Touch swipe on list container — desktop pager only; mobile uses native scroll
   const listTouchStartY = useRef<number | null>(null);
-
-  useEffect(() => {
-    const el = listContainerRef.current;
-    if (!el || viewMode !== "list") return;
-    if (isMobileList) return; // Mobile: native scrolling, no wheel hijacking
-
-    const rearmListGestureEnd = () => {
-      if (listWheelGestureTimer.current) clearTimeout(listWheelGestureTimer.current);
-      listWheelGestureTimer.current = setTimeout(() => {
-        listWheelGestureActive.current = false;
-        listWheelLastSign.current = 0;
-        listWheelAccum.current = 0;
-        listWheelGestureTimer.current = null;
-      }, 140);
-    };
-
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      // Same re-arm rule as the month/week pager: direction flip or
-      // sustained same-direction push counts as a new tick; inertia
-      // coasting is swallowed.
-      const primaryDelta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-      if (primaryDelta === 0) return;
-      const sign = primaryDelta > 0 ? 1 : -1;
-
-      if (listWheelGestureActive.current) {
-        if (sign !== listWheelLastSign.current) {
-          listWheelLastSign.current = sign;
-          listWheelAccum.current = 0;
-        } else {
-          listWheelAccum.current += Math.abs(primaryDelta);
-          if (listWheelAccum.current < WHEEL_REARM_PX) {
-            rearmListGestureEnd();
-            return;
-          }
-          listWheelAccum.current = 0;
-        }
-      } else {
-        listWheelGestureActive.current = true;
-        listWheelLastSign.current = sign;
-        listWheelAccum.current = 0;
-      }
-      rearmListGestureEnd();
-
-      if (sign > 0) {
-        handleNext();
-      } else {
-        handlePrev();
-      }
-    };
-
-    el.addEventListener("wheel", onWheel, { passive: false });
-    return () => {
-      el.removeEventListener("wheel", onWheel);
-      if (listWheelGestureTimer.current) clearTimeout(listWheelGestureTimer.current);
-    };
-  }, [viewMode, handleNext, handlePrev, isMobileList]);
 
   // Touch swipe on list container — desktop pager only; mobile uses native scroll
   const handleListTouchStart = useCallback(
@@ -2624,7 +2462,7 @@ export function CalendarPage() {
           </button>
         </>
 
-        {/* Viewport with swipe, pan, and desktop wheel support.
+        {/* Viewport with swipe and pan support.
             In mobile list mode this wrapper must neither clip nor CONTAIN its
             scroll. `overscroll-behavior: contain` on a box that cannot itself
             scroll strangles the chain up to the document, so a touch anywhere
