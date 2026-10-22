@@ -759,46 +759,6 @@ html.light .cal-nav-arrow svg {
 }
 
 /* =========================================================
-   CALENDAR SIDE SCROLLBAR (glass thumb track) — THEME-AWARE
-   Dark mode: faint white inner track, brand-red gradient thumb.
-   Light mode: grey inner track so it reads on white glass,
-   blue accent thumb to match the light theme's cal-nav-arrow.
-   Thumb widens slightly on track hover for affordance.
-   ========================================================= */
-.cal-side-scrollbar .cal-side-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-}
-.cal-side-scrollbar:hover .cal-side-scrollbar-track {
-  background: rgba(255, 255, 255, 0.16);
-}
-html.light .cal-side-scrollbar .cal-side-scrollbar-track {
-  background: rgba(0, 0, 0, 0.12);
-}
-html.light .cal-side-scrollbar:hover .cal-side-scrollbar-track {
-  background: rgba(0, 0, 0, 0.18);
-}
-.cal-side-scrollbar .cal-side-scrollbar-thumb {
-  width: 0.375rem; /* w-1.5 */
-  transition: width 0.18s ease, filter 0.18s ease, top 0.15s ease;
-}
-.cal-side-scrollbar:hover .cal-side-scrollbar-thumb,
-.cal-side-scrollbar:focus-visible .cal-side-scrollbar-thumb {
-  width: 0.5rem;
-  filter: brightness(1.12);
-}
-html.light .cal-side-scrollbar .cal-side-scrollbar-thumb {
-  background: linear-gradient(to bottom, #3B82F6, #1D4ED8);
-  box-shadow: 0 0 8px rgba(37, 99, 235, 0.35);
-}
-.cal-side-scrollbar:focus-visible {
-  outline: none;
-  border-color: rgba(224, 163, 170, 0.55);
-}
-html.light .cal-side-scrollbar:focus-visible {
-  border-color: rgba(37, 99, 235, 0.55);
-}
-
-/* =========================================================
    CALENDAR PERIOD-PAGING MAIN VEIL (transition-only)
    While a month/week change is in flight the centre slide gets this
    translucent veil behind its content, so the main period reads as solidly

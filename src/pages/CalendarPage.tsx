@@ -21,100 +21,6 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 
-// Custom glass side scrollbar: a draggable thumb on a slim track.
-// Dragging maps pointer Y to a 0..1 fraction reported via onScrub.
-// Clicking the track jumps toward the click. Purely pointer-driven —
-// never hijacks wheel/touch scrolling, so swipe gestures keep working.
-function SideScrollbar({
-  value,
-  onScrub,
-  ariaLabel,
-}: {
-  value: number; // 0..1 thumb position
-  onScrub: (fraction: number) => void;
-  ariaLabel: string;
-}) {
-  const trackRef = useRef<HTMLDivElement | null>(null);
-  const draggingRef = useRef(false);
-
-  const fractionFromClientY = useCallback((clientY: number) => {
-    const track = trackRef.current;
-    if (!track) return 0;
-    const rect = track.getBoundingClientRect();
-    if (rect.height <= 0) return 0;
-    return Math.min(1, Math.max(0, (clientY - rect.top) / rect.height));
-  }, []);
-
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent) => {
-      if (selectedEventRefGlobal.current) return;
-      draggingRef.current = true;
-      (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-      onScrub(fractionFromClientY(e.clientY));
-    },
-    [fractionFromClientY, onScrub]
-  );
-
-  const handlePointerMove = useCallback(
-    (e: React.PointerEvent) => {
-      if (!draggingRef.current) return;
-      e.preventDefault();
-      onScrub(fractionFromClientY(e.clientY));
-    },
-    [fractionFromClientY, onScrub]
-  );
-
-  const endDrag = useCallback(() => {
-    draggingRef.current = false;
-  }, []);
-
-  return (
-    <div
-      ref={trackRef}
-      role="slider"
-      aria-label={ariaLabel}
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={Math.round(value * 100)}
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
-          e.preventDefault();
-          onScrub(Math.max(0, value - 0.05));
-        } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
-          e.preventDefault();
-          onScrub(Math.min(1, value + 0.05));
-        } else if (e.key === "Home") {
-          e.preventDefault();
-          onScrub(0);
-        } else if (e.key === "End") {
-          e.preventDefault();
-          onScrub(1);
-        }
-      }}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={endDrag}
-      onPointerCancel={endDrag}
-      className="cal-side-scrollbar fixed right-0 top-1/2 -translate-y-1/2 z-40 hidden md:flex flex-col items-center w-5 h-[min(46vh,420px)] rounded-full glass-cell cursor-pointer touch-none select-none"
-    >
-      <div className="cal-side-scrollbar-track relative flex-1 w-1.5 my-2 rounded-full overflow-hidden">
-        <div
-          className="cal-side-scrollbar-thumb absolute left-0 right-0 mx-auto rounded-full bg-gradient-to-b from-[#E0A3AA] to-[#8F232E] shadow-[0_0_10px_rgba(224,163,170,0.5)]"
-          style={{
-            top: `${value * 82}%`,
-            height: "18%",
-          }}
-        />
-      </div>
-    </div>
-  );
-}
-
-// Module-level mirror of the modal-open flag so SideScrollbar (declared above
-// the component) can ignore drags while an event is open.
-const selectedEventRefGlobal: { current: unknown } = { current: null };
-
 // Display helper: "18:00" → "6:00 PM". Falls back to the raw string when
 // the stored value isn't HH:MM (day-long labels like "All Day" stay as-is).
 function formatTime12h(time: string): string {
@@ -1300,54 +1206,6 @@ export function CalendarPage() {
     }, isBurst ? 180 : 550);
   }, [notifyAnimationStart, notifyAnimationComplete]);
 
-  // ---- Custom scrollbar scrubbing ----
-  // Month/week: scrubbing maps the thumb fraction to a bounded period offset
-  // window (±12) around the active index, so dragging the bar drives the
-  // actual calendar period like paging would (page scroll untouched).
-  // List: scrubbing maps the fraction to the event index (pager), so the bar
-  // drives events, never the page scroll.
-  const SCRUB_WINDOW = 12;
-  const activeIndexRefForScrub = useRef(0);
-  useEffect(() => {
-    activeIndexRefForScrub.current = activeIndex;
-  }, [activeIndex]);
-  // Page scroll position (0..1) for the month-view scrollbar, which drives
-  // the actual document scroll rather than calendar paging.
-  const [pageScrollValue, setPageScrollValue] = useState(0);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const update = () => {
-      const scrollHeight = document.documentElement.scrollHeight;
-      const clientHeight = window.innerHeight;
-      const maxScroll = Math.max(0, scrollHeight - clientHeight);
-      setPageScrollValue(maxScroll === 0 ? 0 : window.scrollY / maxScroll);
-    };
-    window.addEventListener("scroll", update, { passive: true });
-    update();
-    return () => window.removeEventListener("scroll", update);
-  }, []);
-
-  const scrubMonthTo = useCallback(
-    (fraction: number) => {
-      if (selectedEventRef.current) return;
-      if (viewMode === "month") {
-        // Month view: drag the thumb to scroll the actual page up/down.
-        const scrollHeight = document.documentElement.scrollHeight;
-        const clientHeight = window.innerHeight;
-        const maxScroll = Math.max(0, scrollHeight - clientHeight);
-        window.scrollTo({ top: maxScroll * fraction, behavior: "smooth" });
-        return;
-      }
-      const current = activeIndexRefForScrub.current;
-      const target = Math.round(current + (fraction - 0.5) * SCRUB_WINDOW * 2);
-      if (target === current) return;
-      if (viewMode === "week") setWeekDirection(target > current ? 1 : -1);
-      setActiveIndex(target);
-      triggerTransition();
-    },
-    [triggerTransition, viewMode]
-  );
-
   // Settle the route-entry month unfold: the initial "month" transition above
   // animates the viewport/scroll rows in, then clears so later interactions
   // start from the idle state. Skipped for reduced-motion users.
@@ -1399,7 +1257,6 @@ export function CalendarPage() {
   const selectedEventRef = useRef<CalendarEvent | null>(null);
   useEffect(() => {
     selectedEventRef.current = selectedEvent;
-    selectedEventRefGlobal.current = selectedEvent;
   }, [selectedEvent]);
   const eventsByDate = useMemo(() => buildEventDateIndex(events), [events]);
 
@@ -1456,27 +1313,6 @@ export function CalendarPage() {
 
     return result;
   }, [events, searchQuery, listSortNewest]);
-
-  // List-view scrollbar scrubbing (placed after filteredListEvents so the
-  // declaration order is valid): maps the thumb fraction to the event index
-  // and drives the pager — never the page scroll.
-  const listScrollValue = useMemo(() => {
-    const total = Math.max(1, filteredListEvents.length - 1);
-    return Math.min(1, Math.max(0, listActiveIndex / total));
-  }, [listActiveIndex, filteredListEvents.length]);
-  const scrubListTo = useCallback(
-    (fraction: number) => {
-      if (selectedEventRef.current) return;
-      const total = filteredListEvents.length;
-      if (total === 0) return;
-      const target = Math.min(total - 1, Math.max(0, Math.round(fraction * (total - 1))));
-      if (target === listActiveIndex) return;
-      setListActiveIndex(target);
-      scrollEventToTop(target);
-      triggerTransition();
-    },
-    [filteredListEvents.length, listActiveIndex, scrollEventToTop, triggerTransition]
-  );
 
   // Fetch data: strictly from public.events table.
   // The cache is invalidated first so realtime pings and retries always
@@ -2291,24 +2127,14 @@ export function CalendarPage() {
             )}
           </div>
         ) : (
-          <AnimatePresence
-            // Keyed by the active page: paging swaps the whole stack, so the
-            // outgoing cards run their staggered exits (flow out) and the
-            // incoming cards run staggered enters (flow in) — a proper
-            // element-by-element list animation in both directions.
-            key={`list-page-${listActiveIndex}`}
-            mode="popLayout"
-            initial={false}
-          >
+          <AnimatePresence mode="popLayout" initial={false}>
             {visibleEvents.slice(0, 5).map((evt, visIdx) => {
               const evtIdx = listActiveIndex + visIdx;
               const isTop = visIdx === 0;
               const isHighlighted = evt.id === highlightedEventId;
-              // Flow stagger, capped: index 0..4 → enter 0s..0.28s with a
-              // rise+settle; exits mirror in reverse (last out first) so the
-              // stack visibly pours away instead of blinking out.
-              const enterDelay = Math.min(visIdx, 4) * 0.07;
-              const exitDelay = Math.min(4 - Math.min(visIdx, 4), 4) * 0.05;
+              // Flow stagger, capped: index 0..4 → 0s..0.32s. Only the events
+              // visible on one page (max 5) participate, so the flow is tight.
+              const flowDelay = Math.min(visIdx, 4) * 0.08;
 
               if (isTop) {
                 return (
@@ -2317,14 +2143,13 @@ export function CalendarPage() {
                     layout
                     data-event-item
                     data-event-index={evtIdx}
-                    initial={{ opacity: 0, y: -28, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -72, scale: 0.92, transition: { duration: 0.24, delay: exitDelay, ease: [0.4, 0, 1, 1] } }}
+                    initial={{ opacity: 0, y: -24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -60, scale: 0.94, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
                     transition={{
-                      layout: { type: "spring", stiffness: 300, damping: 26 },
-                      opacity: { duration: 0.22, delay: enterDelay },
-                      y: { type: "spring", stiffness: 300, damping: 26, delay: enterDelay },
-                      scale: { duration: 0.22, delay: enterDelay },
+                      layout: { type: "spring", stiffness: 320, damping: 28 },
+                      opacity: { duration: 0.18, delay: flowDelay },
+                      y: { type: "spring", stiffness: 320, damping: 28, delay: flowDelay },
                     }}
                     onClick={() => handleSelectEvent(evt)}
                     className="p-5 sm:p-6 rounded-2xl border cursor-pointer space-y-3.5 shadow-2xl relative overflow-hidden glass-panel border-[#E0A3AA] border-t-white/60 ring-2 ring-[#E0A3AA]/70 shadow-[0_16px_40px_rgba(0,0,0,0.6),0_0_28px_rgba(224,163,170,0.25)] shrink-0 hover:border-t-white/80 transition-all bg-gradient-to-br from-[#2D1619]/60 via-white/[0.05] to-white/[0.02]"
@@ -2398,14 +2223,13 @@ export function CalendarPage() {
                   layout
                   data-event-item
                   data-event-index={evtIdx}
-                  initial={{ opacity: 0, y: 28, scale: 0.98 }}
-                  animate={{ opacity: visIdx <= 2 ? 1 - visIdx * 0.12 : 0.65, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 32, scale: 0.94, transition: { duration: 0.22, delay: exitDelay, ease: [0.4, 0, 1, 1] } }}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: visIdx <= 2 ? 1 - visIdx * 0.12 : 0.65, y: 0 }}
+                  exit={{ opacity: 0, y: 24, scale: 0.96, transition: { duration: 0.2, delay: flowDelay, ease: [0.4, 0, 1, 1] } }}
                   transition={{
-                    layout: { type: "spring", stiffness: 300, damping: 26 },
-                    opacity: { duration: 0.22, delay: enterDelay },
-                    y: { type: "spring", stiffness: 300, damping: 26, delay: enterDelay },
-                    scale: { duration: 0.22, delay: enterDelay },
+                    layout: { type: "spring", stiffness: 320, damping: 28 },
+                    opacity: { duration: 0.2, delay: flowDelay },
+                    y: { type: "spring", stiffness: 320, damping: 28, delay: flowDelay },
                   }}
                   onClick={() => {
                     setListActiveIndex(evtIdx);
@@ -2794,28 +2618,11 @@ export function CalendarPage() {
           <button
             onClick={handleNext}
             aria-label="Next Period"
-            className="cal-nav-arrow hidden md:flex absolute right-12 top-48 -translate-y-1/2 z-30 h-10 w-10 items-center justify-center rounded-full shadow-xl group cursor-pointer"
+            className="cal-nav-arrow hidden md:flex absolute right-2 top-48 -translate-y-1/2 z-30 h-10 w-10 items-center justify-center rounded-full shadow-xl group cursor-pointer"
           >
             <ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
           </button>
         </>
-
-        {/* Custom side scrollbar — month drives the calendar period (never the
-            page scroll); list drives the event pager (never the page scroll).
-            Pointer-only, so wheel/swipe gestures are untouched. */}
-        {viewMode === "list" ? (
-          <SideScrollbar
-            value={listScrollValue}
-            onScrub={scrubListTo}
-            ariaLabel="Scroll events"
-          />
-        ) : (
-          <SideScrollbar
-            value={viewMode === "month" ? pageScrollValue : 0.5}
-            onScrub={scrubMonthTo}
-            ariaLabel={viewMode === "month" ? "Scroll months" : "Scroll weeks"}
-          />
-        )}
 
         {/* Viewport with swipe, pan, and desktop wheel support.
             In mobile list mode this wrapper must neither clip nor CONTAIN its
