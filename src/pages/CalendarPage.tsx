@@ -282,8 +282,6 @@ function getCoverflowArcTransform(offset: number, isTransitioning: boolean) {
 
   // Secondary slides stay fully visible during the slide so the 3D coverflow
   // arc (rotated, receding, translucent) reads exactly as it always did.
-  // The main period is distinguished by the translucent veil over the centre
-  // slide — see .cal-slide-veil — not by dimming or masking its neighbours.
   if (offset === -1) {
     return {
       rotateY: 35,
@@ -2669,39 +2667,13 @@ export function CalendarPage() {
                         transformStyle: viewMode === "week" ? "preserve-3d" : undefined,
                         transformOrigin: "center center",
                         willChange: "transform, opacity",
-                        backfaceVisibility: "hidden",
+                        backfaceVisibility: "visible",
+                        backgroundColor: "transparent",
                       }}
                       className={`${isCenter && isMonth ? "relative" : "absolute inset-0"} w-full rounded-2xl ${
                         isCenter ? "pointer-events-auto" : "pointer-events-none"
                       }`}
                     >
-                      {/* Main-period veil: fades in while a month/week change is in
-                          flight and back out the moment the arc settles, so the
-                          centre slide reads as the solid "main page" instead of
-                          one more sheet of glass while the neighbours arc past.
-                          Only ~45% opaque, so the neighbouring slides stay
-                          clearly visible — the 3D depth IS the animation. At
-                          rest it is fully transparent and the original
-                          translucent glass look is untouched.
-                          Month/Week only — list view is a long scroll surface,
-                          not the calendar itself. */}
-                      {isCenter && viewMode !== "list" && (
-                        <motion.div
-                          aria-hidden="true"
-                          className="cal-slide-veil absolute inset-0 rounded-2xl pointer-events-none"
-                          initial={false}
-                          animate={{ opacity: isTransitioning ? 1 : 0 }}
-                          transition={{
-                            duration: isTransitioning ? 0.15 : 0.3,
-                            ease: "easeOut",
-                          }}
-                        />
-                      )}
-                      {/* `relative` (zero offsets, no layout change) makes the
-                          calendar content a positioned sibling painted in tree
-                          order after the veil, so it is guaranteed to sit above
-                          it even inside the slide's preserve-3d context, where
-                          z-sorting rules are subtler than in plain 2D. */}
                       <div className="relative w-full">
                         {renderCalendarContent(itemIndex, isCenter, isMonth && !isCenter)}
                       </div>
