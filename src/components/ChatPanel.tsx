@@ -57,7 +57,7 @@ function TypewriterMessage({
     <>
       {displayedText}
       {isTyping && (
-        <span className="typing-cursor inline-block w-1.5 h-3 ml-0.5 bg-[#FF3B30] animate-pulse align-middle" />
+        <span className="typing-cursor inline-block w-1.5 h-3 ml-0.5 bg-[#0A84FF] animate-pulse align-middle" />
       )}
     </>
   );
@@ -191,12 +191,12 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
         role="dialog"
         aria-modal="true"
         aria-label="Club AI Assistant Chat Window"
-        className="chat-panel-glass flex flex-col w-[var(--fluid-chat-w)] max-w-[calc(100vw-2rem)] h-[var(--fluid-chat-h)] max-h-[85vh] glass-panel backdrop-blur-xl rounded-[var(--fluid-radius-lg)] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150"
+        className="flex flex-col w-[var(--fluid-chat-w)] max-w-[calc(100vw-2rem)] h-[var(--fluid-chat-h)] max-h-[85vh] glass-panel rounded-[var(--fluid-radius-lg)] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150"
       >
         {/* Header */}
-        <div className="chat-panel-chrome flex items-center justify-between px-[clamp(1rem,3vw,1.25rem)] py-[clamp(0.75rem,2.5vw,0.875rem)] border-b border-white/10">
+        <div className="flex items-center justify-between px-[clamp(1rem,3vw,1.25rem)] py-[clamp(0.75rem,2.5vw,0.875rem)] bg-white/[0.04] border-b border-white/10 backdrop-blur-md">
           <div className="flex items-center gap-[clamp(0.5rem,2vw,0.75rem)]">
-            <div className="p-[clamp(0.25rem,1.5vw,0.375rem)] rounded-full glass-chip text-[#FF3B30]">
+            <div className="p-[clamp(0.25rem,1.5vw,0.375rem)] rounded-full glass-chip text-[#0A84FF]">
               <Bot className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)]" />
             </div>
             <div>
@@ -233,15 +233,15 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
                 className={`flex gap-[clamp(0.5rem,2vw,0.625rem)] ${isUser ? "justify-end" : "justify-start"}`}
               >
                 {!isUser && (
-                  <div className="h-[clamp(1.25rem,4vw,1.5rem)] w-[clamp(1.25rem,4vw,1.5rem)] rounded-full glass-chip text-[#FF3B30] flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="h-[clamp(1.25rem,4vw,1.5rem)] w-[clamp(1.25rem,4vw,1.5rem)] rounded-full glass-chip text-[#0A84FF] flex items-center justify-center shrink-0 mt-0.5">
                     <Bot className="h-[clamp(0.625rem,2vw,0.75rem)] w-[clamp(0.625rem,2vw,0.75rem)]" />
                   </div>
                 )}
                 <div
-                  className={`chat-message-bubble rounded-[var(--fluid-radius)] px-[clamp(0.75rem,2.5vw,1rem)] py-[clamp(0.5rem,2vw,0.625rem)] max-w-[82%] text-fluid-small leading-relaxed ${
+                  className={`rounded-[var(--fluid-radius)] px-[clamp(0.75rem,2.5vw,1rem)] py-[clamp(0.5rem,2vw,0.625rem)] max-w-[82%] text-fluid-small leading-relaxed ${
                     isUser
-                      ? "chat-message-user font-normal"
-                      : "chat-message-assistant glass-cell"
+                      ? "bg-[#0A84FF] text-white shadow-sm font-normal"
+                      : "glass-cell text-white"
                   }`}
                 >
                   {isUser ? (
@@ -268,20 +268,20 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
           {/* Processing indicator while waiting for response */}
           {isWaitingForFirstToken && (
             <div className="flex gap-[clamp(0.5rem,2vw,0.625rem)] justify-start">
-              <div className="h-[clamp(1.25rem,4vw,1.5rem)] w-[clamp(1.25rem,4vw,1.5rem)] rounded-full glass-chip text-[#FF3B30] flex items-center justify-center shrink-0 mt-0.5">
+              <div className="h-[clamp(1.25rem,4vw,1.5rem)] w-[clamp(1.25rem,4vw,1.5rem)] rounded-full glass-chip text-[#0A84FF] flex items-center justify-center shrink-0 mt-0.5">
                 <Bot className="h-[clamp(0.625rem,2vw,0.75rem)] w-[clamp(0.625rem,2vw,0.75rem)]" />
               </div>
-              <div className="chat-message-bubble chat-message-assistant rounded-[var(--fluid-radius)] px-[clamp(0.75rem,2.5vw,1rem)] py-[clamp(0.5rem,2vw,0.625rem)] glass-cell text-[#8E8E93] text-fluid-small flex items-center gap-1.5">
-                <span className="thinking-dot inline-block h-[clamp(0.25rem,1vw,0.375rem)] w-[clamp(0.25rem,1vw,0.375rem)] rounded-full bg-[#FF3B30] animate-bounce"></span>
-                <span className="thinking-dot inline-block h-[clamp(0.25rem,1vw,0.375rem)] w-[clamp(0.25rem,1vw,0.375rem)] rounded-full bg-[#FF3B30] animate-bounce [animation-delay:0.2s]"></span>
-                <span className="thinking-dot inline-block h-[clamp(0.25rem,1vw,0.375rem)] w-[clamp(0.25rem,1vw,0.375rem)] rounded-full bg-[#FF3B30] animate-bounce [animation-delay:0.4s]"></span>
+              <div className="rounded-[var(--fluid-radius)] px-[clamp(0.75rem,2.5vw,1rem)] py-[clamp(0.5rem,2vw,0.625rem)] glass-cell text-[#8E8E93] text-fluid-small flex items-center gap-1.5">
+                <span className="thinking-dot inline-block h-[clamp(0.25rem,1vw,0.375rem)] w-[clamp(0.25rem,1vw,0.375rem)] rounded-full bg-[#0A84FF] animate-bounce"></span>
+                <span className="thinking-dot inline-block h-[clamp(0.25rem,1vw,0.375rem)] w-[clamp(0.25rem,1vw,0.375rem)] rounded-full bg-[#0A84FF] animate-bounce [animation-delay:0.2s]"></span>
+                <span className="thinking-dot inline-block h-[clamp(0.25rem,1vw,0.375rem)] w-[clamp(0.25rem,1vw,0.375rem)] rounded-full bg-[#0A84FF] animate-bounce [animation-delay:0.4s]"></span>
                 <span className="ml-1 text-fluid-label uppercase tracking-[0.05em] font-medium">Processing</span>
               </div>
             </div>
           )}
 
           {error && (
-            <div role="alert" className="status-error rounded-[var(--fluid-radius)] border p-[var(--fluid-gap-sm)] text-fluid-small">
+            <div className="rounded-[var(--fluid-radius)] bg-white/10 border border-[#FF453A]/40 p-[var(--fluid-gap-sm)] text-fluid-small text-[#FF453A]">
               Failed to receive answer. Please verify your connection or try again.
             </div>
           )}
@@ -290,7 +290,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Chat Input with 5-second cooldown after typing completes */}
-        <form ref={formRef} onSubmit={handleFormSubmit} className="chat-panel-chrome p-[var(--fluid-gap-sm)] border-t border-white/10 flex gap-[clamp(0.375rem,1.5vw,0.5rem)]">
+        <form ref={formRef} onSubmit={handleFormSubmit} className="p-[var(--fluid-gap-sm)] bg-white/[0.04] border-t border-white/10 backdrop-blur-md flex gap-[clamp(0.375rem,1.5vw,0.5rem)]">
           <Input
             ref={inputRef}
             value={input}
@@ -306,7 +306,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
             disabled={isSubmitDisabled}
             size="icon"
             aria-label={cooldown > 0 ? `Cooldown: ${cooldownDisplay}s remaining` : isTyping ? "AI is typing" : "Send message"}
-            className="shrink-0 bg-[#FF3B30] hover:bg-[#D32F2F] text-white transition-all active:scale-95 cursor-pointer rounded-full"
+            className="shrink-0 bg-[#0A84FF] hover:bg-[#0071E3] text-white transition-all active:scale-95 cursor-pointer rounded-full"
           >
             {cooldown > 0 ? (
               <span className="text-fluid-label font-mono font-bold text-white">{cooldownDisplay}s</span>

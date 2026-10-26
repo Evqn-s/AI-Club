@@ -36,12 +36,13 @@ export function HomeSkeleton() {
             </Link>
           </Button>
           <Button
-            variant="ask-ai"
+            variant="glass"
             size="lg"
             type="button"
             onClick={() => window.dispatchEvent(new CustomEvent("aiclub:open-chat"))}
+            className="text-white hover:text-white"
           >
-            <MessageSquare className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-white" />
+            <MessageSquare className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#0A84FF]" />
             <span>Ask AI</span>
           </Button>
         </div>

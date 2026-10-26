@@ -87,7 +87,6 @@ export function HomePage() {
             asChild
             variant="glass"
             size="lg"
-            className="home-cta"
           >
             <Link
               href="/calendar"
@@ -100,13 +99,13 @@ export function HomePage() {
             </Link>
           </Button>
           <Button
-             variant="ask-ai"
+            variant="glass"
             size="lg"
             type="button"
-            className="home-cta"
             onClick={() => window.dispatchEvent(new CustomEvent("aiclub:open-chat"))}
+            className="text-white hover:text-white"
           >
-            <MessageSquare className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#FF3B30]" />
+            <MessageSquare className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#0A84FF]" />
             <span>Ask AI</span>
           </Button>
         </div>
@@ -120,7 +119,7 @@ export function HomePage() {
           <Card className="glass-panel flex-1">
             <CardHeader>
               <div className="flex items-center gap-2 mb-1">
-                <Clock className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#FF3B30]" />
+                <Clock className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#0A84FF]" />
                 <span className="text-fluid-label font-medium tracking-[0.05em] uppercase text-[#8E8E93]">Schedule</span>
               </div>
               <CardTitle className="text-white font-semibold">Regular Meetings</CardTitle>
@@ -138,7 +137,7 @@ export function HomePage() {
           <Card className="glass-panel flex-1">
             <CardHeader>
               <div className="flex items-center gap-2 mb-1">
-                <DiscordIcon className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#FF3B30]" />
+                <DiscordIcon className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#0A84FF]" />
                 <span className="text-fluid-label font-medium tracking-[0.05em] uppercase text-[#8E8E93]">Discord Server</span>
               </div>
               <CardTitle className="text-white font-semibold">
@@ -149,14 +148,14 @@ export function HomePage() {
               {info?.discord_server_name || info?.discord_server_url ? (
                 <div className="w-full flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] glass-cell text-fluid-small">
                   <div className="flex items-center gap-2.5 text-[#8E8E93]">
-                    <DiscordIcon className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#FF3B30] shrink-0" />
+                    <DiscordIcon className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#0A84FF] shrink-0" />
                     <span className="font-medium uppercase tracking-[0.05em] text-fluid-label">Discord</span>
                   </div>
                   <a
                     href={info?.discord_server_url || "https://discord.com"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-medium text-[#FF3B30] hover:text-[#FF6961] hover:underline transition-colors flex items-center gap-1.5 break-all"
+                    className="font-medium text-[#0A84FF] hover:text-[#64D2FF] hover:underline transition-colors flex items-center gap-1.5 break-all"
                   >
                     <span>{info?.discord_server_name || "Join Server"}</span>
                     <ExternalLink className="h-3 w-3 opacity-70 shrink-0" />
@@ -173,7 +172,7 @@ export function HomePage() {
         <Card className="glass-panel">
           <CardHeader>
             <div className="flex items-center gap-2 mb-1">
-              <Mail className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#FF3B30]" />
+              <Mail className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#0A84FF]" />
               <span className="text-fluid-label font-medium tracking-[0.05em] uppercase text-[#8E8E93]">Connect</span>
             </div>
             <CardTitle className="text-white font-semibold">Get in Touch</CardTitle>
@@ -185,12 +184,12 @@ export function HomePage() {
                 {contactEmail && (
                   <div className="flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] glass-cell text-fluid-small">
                     <div className="flex items-center gap-2.5 text-[#8E8E93]">
-                      <Mail className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#FF3B30] shrink-0" />
+                      <Mail className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#0A84FF] shrink-0" />
                       <span className="font-medium uppercase tracking-[0.05em] text-fluid-label">Email</span>
                     </div>
                     <a
                       href={`mailto:${contactEmail}`}
-                      className="font-medium text-[#FF3B30] hover:text-[#FF6961] hover:underline transition-colors break-all"
+                      className="font-medium text-[#0A84FF] hover:text-[#64D2FF] hover:underline transition-colors break-all"
                     >
                       {contactEmail}
                     </a>
@@ -201,14 +200,14 @@ export function HomePage() {
                 {(classroomCode || classroomUrl) && (
                   <div className="flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] glass-cell text-fluid-small">
                     <div className="flex items-center gap-2.5 text-[#8E8E93]">
-                      <GraduationCap className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#FF3B30] shrink-0" />
+                      <GraduationCap className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#0A84FF] shrink-0" />
                       <span className="font-medium uppercase tracking-[0.05em] text-fluid-label">Classroom</span>
                     </div>
                     <a
                       href={classroomUrl || "https://classroom.google.com"}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-medium text-[#FF3B30] hover:text-[#FF6961] hover:underline transition-colors flex items-center gap-1.5 break-all"
+                      className="font-medium text-[#0A84FF] hover:text-[#64D2FF] hover:underline transition-colors flex items-center gap-1.5 break-all"
                     >
                       <span>Code: {classroomCode}</span>
                       <ExternalLink className="h-3 w-3 opacity-70 shrink-0" />
@@ -220,14 +219,14 @@ export function HomePage() {
                 {(instagramHandle || instagramUrl) && (
                   <div className="flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] glass-cell text-fluid-small">
                     <div className="flex items-center gap-2.5 text-[#8E8E93]">
-                      <Instagram className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#FF3B30] shrink-0" />
+                      <Instagram className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#0A84FF] shrink-0" />
                       <span className="font-medium uppercase tracking-[0.05em] text-fluid-label">Instagram</span>
                     </div>
                     <a
                       href={instagramUrl || "https://instagram.com"}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-medium text-[#FF3B30] hover:text-[#FF6961] hover:underline transition-colors flex items-center gap-1.5 break-all"
+                      className="font-medium text-[#0A84FF] hover:text-[#64D2FF] hover:underline transition-colors flex items-center gap-1.5 break-all"
                     >
                       <span>{instagramHandle}</span>
                       <ExternalLink className="h-3 w-3 opacity-70 shrink-0" />

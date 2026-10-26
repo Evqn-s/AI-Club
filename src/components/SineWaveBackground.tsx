@@ -54,15 +54,13 @@ export function SineWaveBackground() {
 
         let r: number, g: number, b: number;
         if (isLight) {
-          // Light mode: Apple system blue, with slight variation by strand depth.
-          r = Math.round(d * 10);
-          g = Math.round(113 + d * 19);
-          b = Math.round(227 + d * 28);
+          r = Math.round(30 + d * 37);
+          g = Math.round(64 + d * 86);
+          b = Math.round(175 + d * 60);
         } else {
-          // Dark mode: desaturated crimson tint — rgba(255,59,48,0.25)
-          r = Math.round(200 + d * 55);
-          g = Math.round(40 + d * 20);
-          b = Math.round(35 + d * 15);
+          r = Math.round(40 + d * 60);
+          g = Math.round(120 + d * 80);
+          b = Math.round(230 + d * 25);
         }
 
         const grad = ctx.createLinearGradient(0, 0, width, 0);

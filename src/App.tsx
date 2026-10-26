@@ -31,7 +31,7 @@ export function App() {
 
   return (
     <ThemeProvider>
-      <div className="min-h-screen flex flex-col bg-[var(--bg-main)] text-[var(--text-main)] relative selection:bg-[#FF3B30] selection:text-white transition-colors duration-200">
+      <div className="min-h-screen flex flex-col bg-[var(--bg-main)] text-[var(--text-main)] relative selection:bg-[#0A84FF] selection:text-white transition-colors duration-200">
         {/* Decorative canvas — mounts after paint, never blocks LCP */}
         <Suspense fallback={null}>
           <OrganicBackground />

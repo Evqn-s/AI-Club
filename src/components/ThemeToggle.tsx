@@ -1,4 +1,4 @@
-import { createContext, useContext, useLayoutEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 
 type Theme = "dark" | "light";
@@ -28,9 +28,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return "dark";
   });
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     // Persist after every state change and apply it again for non-click changes
-    // such as restoring the saved preference before the first browser paint.
+    // such as restoring the saved preference during the first render.
     applyTheme(theme);
     localStorage.setItem("aiclub-theme", theme);
   }, [theme]);

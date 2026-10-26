@@ -388,7 +388,7 @@ const MonthPreview = memo(function MonthPreview({
                   : "border-white/5 bg-white/[0.015] opacity-35"
               }`}
             >
-              <span className="text-xs font-mono text-white/50">
+              <span className="text-[10px] md:text-xs font-mono text-white/50">
                 {day.dayNumber}
               </span>
               {/* Mirror the real month cells: up to 2 static event chips
@@ -400,7 +400,7 @@ const MonthPreview = memo(function MonthPreview({
                     key={evt.id}
                     className="w-full text-left p-1 md:p-1.5 rounded-lg border glass-chip"
                   >
-                    <span className="block text-xs font-bold font-display text-white leading-snug line-clamp-3 break-words">
+                    <span className="block text-[11px] font-bold font-display text-white leading-snug line-clamp-3 break-words">
                       {evt.title}
                     </span>
                   </div>
@@ -412,7 +412,7 @@ const MonthPreview = memo(function MonthPreview({
                   {dayEvents.map((evt) => (
                     <span
                       key={evt.id}
-                      className="h-2.5 w-2.5 rounded-full bg-[#FF3B30] shadow-sm"
+                      className="h-2.5 w-2.5 rounded-full bg-[#0A84FF] shadow-sm"
                     />
                   ))}
                 </div>
@@ -514,25 +514,25 @@ const MonthEventCard = memo(function MonthEventCard({
           e.stopPropagation();
           onSelect(evt);
         }}
-            className={`w-full min-h-[28px] text-left p-1 md:p-1.5 rounded-lg border transition-all flex flex-col justify-between ${
+            className={`w-full text-left p-1 md:p-1.5 rounded-lg border transition-all flex flex-col justify-between ${
           isHighlighted
-            ? "bg-[#FF3B30]/10 border border-white/10 border-t-white/20 shadow-[0_10px_30px_-5px_rgba(0,0,0,0.4)]"
+            ? "bg-[#0A84FF]/20 border-[#0A84FF] border-t-white/50 ring-1 ring-[#0A84FF]/60 shadow-sm"
             : "glass-chip"
             } ${isHighlighted ? "cal-search-match" : ""}`}
       >
         <div className="space-y-0.5 w-full">
-          <span className="text-xs font-bold font-display text-white leading-snug line-clamp-3 break-words">
+          <span className="text-[11px] font-bold font-display text-white leading-snug line-clamp-3 break-words">
             {evt.title}
           </span>
           {evt.description && (
-            <p className="hidden lg:block text-xs text-white/60 leading-snug line-clamp-3 break-words max-h-[3lh] overflow-hidden">
+            <p className="hidden lg:block text-[10px] text-white/60 leading-snug line-clamp-3 break-words max-h-[3lh] overflow-hidden">
               {evt.description}
             </p>
           )}
         </div>
         {evt.location && (
-          <div className="hidden lg:flex items-center gap-1 mt-1 pt-0.5 border-t border-white/10 text-xs text-white/50 truncate">
-            <MapPin className="h-2 w-2 shrink-0 text-[#FF3B30]" />
+          <div className="hidden lg:flex items-center gap-1 mt-1 pt-0.5 border-t border-white/10 text-[9px] text-white/50 truncate">
+            <MapPin className="h-2 w-2 shrink-0 text-[#0A84FF]" />
             <span className="truncate">{evt.location}</span>
           </div>
         )}
@@ -576,17 +576,17 @@ const MonthDayCell = memo(function MonthDayCell({
         if (!isInteractive || !hasEvents) return;
         onSelectEvent(dayEvents[0]);
       }}
-      className={`calendar-month-cell min-h-[140px] sm:min-h-[160px] md:min-h-[220px] lg:min-h-[260px] xl:min-h-[300px] rounded-lg md:rounded-xl border p-1 md:p-1.5 flex flex-col justify-between transition-all ${
+      className={`min-h-[140px] sm:min-h-[160px] md:min-h-[220px] lg:min-h-[260px] xl:min-h-[300px] rounded-lg md:rounded-xl border p-1 md:p-1.5 flex flex-col justify-between transition-all ${
         hasEvents ? "cursor-pointer md:cursor-default" : ""
       } ${
         dayObj.isCurrentMonth
           ? "glass-cell glass-cell-hover"
-          : "bg-white/[0.015] border-white/5 border-t-white/10 opacity-35"
+          : "backdrop-blur-sm bg-white/[0.015] border-white/5 border-t-white/10 opacity-35"
       } ${
         isDateSearched
-          ? "border border-white/10 border-t-white/20 shadow-[0_10px_30px_-5px_rgba(0,0,0,0.4)]"
+          ? "ring-2 ring-[#0A84FF] border-[#0A84FF] border-t-white/60 shadow-sm"
           : dayObj.isToday
-          ? "border border-white/10 border-t-white/20 shadow-[0_10px_30px_-5px_rgba(0,0,0,0.32)]"
+          ? "ring-1 ring-[#0A84FF]/60 border-white/20 border-t-white/50 shadow-sm"
           : ""
       } ${
         // Today gets a soft breathing halo (see .cal-today in index.css) so it
@@ -598,9 +598,9 @@ const MonthDayCell = memo(function MonthDayCell({
       {/* Day header — NO today dot */}
       <div className="flex items-center justify-between pb-0.5 border-b border-white/10">
         <span
-          className={`text-xs font-mono font-semibold ${
+          className={`text-[10px] md:text-xs font-mono font-semibold ${
             dayObj.isToday
-              ? "text-[#FF3B30] font-bold"
+              ? "text-[#0A84FF] font-bold"
               : dayObj.isCurrentMonth
               ? "text-white"
               : "text-white/40"
@@ -609,7 +609,7 @@ const MonthDayCell = memo(function MonthDayCell({
           {dayObj.dayNumber}
         </span>
         {dayObj.isToday && (
-          <span className="text-xs font-mono uppercase tracking-[0.05em] text-[#FF3B30] font-bold px-1.5 py-0.5 rounded-full bg-[#FF3B30]/15 border border-[#FF3B30]/30 hidden md:inline">
+          <span className="text-[9px] font-mono uppercase tracking-[0.05em] text-[#0A84FF] font-bold px-1.5 py-0.5 rounded-full bg-[#0A84FF]/15 border border-[#0A84FF]/30 hidden md:inline">
             Today
           </span>
         )}
@@ -622,8 +622,8 @@ const MonthDayCell = memo(function MonthDayCell({
             key={evt.id}
             className={`h-2.5 w-2.5 rounded-full transition-all ${
               evt.id === highlightedEventId || isAnyHighlighted || isDateSearched
-                ? "bg-[#FF3B30] scale-125 shadow-[0_4px_12px_rgba(0,0,0,0.2)]"
-                : "bg-[#FF3B30] shadow-[0_4px_12px_rgba(0,0,0,0.2)]"
+                ? "bg-[#0A84FF] ring-2 ring-[#0A84FF] scale-125 shadow-sm"
+                : "bg-[#0A84FF] shadow-sm"
             }`}
           />
         ))}
@@ -720,13 +720,13 @@ const MobileWeekView = memo(function MobileWeekView({
                 }
                 setInternalSelectedDay(d.dateString);
               }}
-              className={`flex-1 min-w-[44px] min-h-[44px] py-1.5 px-1 rounded-xl border flex flex-col items-center gap-0.5 transition-all shadow-md ${
+              className={`flex-1 min-w-[44px] py-1.5 px-1 rounded-xl border flex flex-col items-center gap-0.5 transition-all shadow-md ${
                 isSelected
-                  ? "calendar-week-selected glass-panel text-[#FF3B30] shadow-sm"
+                  ? "glass-panel ring-1 ring-[#0A84FF] border-[#0A84FF] border-t-white/60 text-[#0A84FF] shadow-sm"
                   : "glass-cell glass-cell-hover text-white/60"
               } ${d.isToday ? "cal-today" : ""}`}
             >
-              <span className="text-xs font-mono uppercase">{d.dayName}</span>
+              <span className="text-[10px] font-mono uppercase">{d.dayName}</span>
               <span
                 className={`text-sm font-bold font-display ${
                   isSelected ? "text-[#FFFFFF]" : "text-white"
@@ -738,8 +738,8 @@ const MobileWeekView = memo(function MobileWeekView({
                 className={`h-2 w-2 rounded-full ${
                   hasEvents
                     ? isSelected
-                      ? "bg-[#FF3B30] shadow-sm"
-                      : "bg-[#FF3B30]/70 shadow-sm"
+                      ? "bg-[#0A84FF] shadow-sm"
+                      : "bg-[#0A84FF]/70 shadow-sm"
                     : "bg-transparent"
                 }`}
               />
@@ -784,7 +784,7 @@ const MobileWeekView = memo(function MobileWeekView({
                 }}
                 className={`p-4 rounded-xl border transition-all cursor-pointer space-y-3 shadow-lg hover:shadow-xl ${
                   evt.id === highlightedEventId
-                    ? "bg-[#FF3B30]/20 border-[#FF3B30] border-t-white/50 ring-1 ring-[#FF3B30]/60"
+                    ? "bg-[#0A84FF]/20 border-[#0A84FF] border-t-white/50 ring-1 ring-[#0A84FF]/60"
                     : "glass-panel glass-panel-hover"
                 } ${evt.id === highlightedEventId ? "cal-search-match" : ""}`}
               >
@@ -793,7 +793,7 @@ const MobileWeekView = memo(function MobileWeekView({
                     {evt.title}
                   </h4>
                   {evt.id === highlightedEventId && (
-                    <span className="text-xs font-mono font-bold uppercase tracking-[0.05em] px-2 py-0.5 rounded-full bg-[#FF3B30] text-white">
+                    <span className="text-[9px] font-mono font-bold uppercase tracking-[0.05em] px-2 py-0.5 rounded-full bg-[#0A84FF] text-white">
                       Match
                     </span>
                   )}
@@ -807,7 +807,7 @@ const MobileWeekView = memo(function MobileWeekView({
 
                 {evt.location && (
                   <div className="flex items-center gap-1.5 text-xs text-white/60 pt-2 border-t border-white/10">
-                    <MapPin className="h-3.5 w-3.5 text-[#FF3B30]" />
+                    <MapPin className="h-3.5 w-3.5 text-[#0A84FF]" />
                     <span>{evt.location}</span>
                   </div>
                 )}
@@ -827,7 +827,7 @@ const MobileWeekView = memo(function MobileWeekView({
                       className="flex items-center justify-center gap-2"
                     >
                       <span>Add to Google Calendar</span>
-                      <ExternalLink className="h-3.5 w-3.5 text-[#FF3B30]" />
+                      <ExternalLink className="h-3.5 w-3.5 text-[#0A84FF]" />
                     </a>
                   </Button>
                 </div>
@@ -876,9 +876,9 @@ const DesktopWeekView = memo(function DesktopWeekView({
             data-calendar-day="true"
             className={`rounded-2xl border p-2.5 flex flex-col gap-2.5 min-h-[350px] lg:min-h-[380px] transition-all shadow-2xl ${
               isDateSearched
-                ? "glass-panel ring-2 ring-[#FF3B30] border-[#FF3B30] border-t-white/60 shadow-lg"
+                ? "glass-panel ring-2 ring-[#0A84FF] border-[#0A84FF] border-t-white/60 shadow-lg"
                 : dayObj.isToday
-                  ? "glass-panel border-white/20 border-t-white/50 shadow-sm cal-today"
+                ? "glass-panel ring-1 ring-[#0A84FF]/60 border-white/20 border-t-white/50 shadow-sm cal-today"
                 : "glass-cell glass-cell-hover"
               } ${isDateSearched ? "cal-search-match" : ""}`}
           >
@@ -889,14 +889,14 @@ const DesktopWeekView = memo(function DesktopWeekView({
                 </span>
                 <div
                   className={`text-xl lg:text-2xl font-display font-extrabold ${
-                    dayObj.isToday ? "text-[#FF3B30]" : "text-white"
+                    dayObj.isToday ? "text-[#0A84FF]" : "text-white"
                   }`}
                 >
                   {dayObj.dayNumber}
                 </div>
               </div>
               {dayObj.isToday && (
-                <span className="text-xs uppercase font-mono tracking-[0.05em] px-2 py-0.5 rounded-full bg-[#FF3B30]/15 border border-[#FF3B30]/30 text-[#FF3B30]">
+                <span className="text-[10px] uppercase font-mono tracking-[0.05em] px-2 py-0.5 rounded-full bg-[#0A84FF]/15 border border-[#0A84FF]/30 text-[#0A84FF]">
                   Today
                 </span>
               )}
@@ -923,7 +923,7 @@ const DesktopWeekView = memo(function DesktopWeekView({
                       }}
                       className={`p-3 rounded-xl border cursor-pointer flex flex-col justify-between transition-all min-h-[75%] shadow-lg hover:shadow-xl ${
                         isHighlighted
-                          ? "bg-[#FF3B30]/20 border-[#FF3B30] border-t-white/50 ring-1 ring-[#FF3B30]/60 shadow-sm"
+                          ? "bg-[#0A84FF]/20 border-[#0A84FF] border-t-white/50 ring-1 ring-[#0A84FF]/60 shadow-sm"
                           : "glass-chip"
                       } ${isHighlighted ? "cal-search-match" : ""}`}
                     >
@@ -933,7 +933,7 @@ const DesktopWeekView = memo(function DesktopWeekView({
                             {evt.title}
                           </h4>
                           {isHighlighted && (
-                            <span className="text-xs font-mono font-bold uppercase tracking-[0.05em] px-2 py-0.5 rounded-full bg-[#FF3B30] text-white">
+                            <span className="text-[9px] font-mono font-bold uppercase tracking-[0.05em] px-2 py-0.5 rounded-full bg-[#0A84FF] text-white">
                               Match
                             </span>
                           )}
@@ -947,7 +947,7 @@ const DesktopWeekView = memo(function DesktopWeekView({
                       </div>
 
                       <div className="flex items-center gap-1.5 text-xs text-white/60 pt-1.5 border-t border-white/10 mt-1.5 truncate">
-                        <MapPin className="h-3 w-3 text-[#FF3B30] shrink-0" />
+                        <MapPin className="h-3 w-3 text-[#0A84FF] shrink-0" />
                         <span className="truncate">{evt.location}</span>
                       </div>
                     </motion.div>
@@ -1924,12 +1924,12 @@ export function CalendarPage() {
                   <div className="flex items-center gap-2 px-1 mb-2">
                     <span
                       className={`text-xs font-mono font-bold uppercase tracking-widest ${
-                        isTop ? "text-[#FF3B30]" : "text-white/60"
+                        isTop ? "text-[#0A84FF]" : "text-white/60"
                       }`}
                     >
                       {evt.date}
                     </span>
-                    <div className="h-px flex-1 bg-gradient-to-r from-[#FF3B30]/30 to-transparent" />
+                    <div className="h-px flex-1 bg-gradient-to-r from-[#0A84FF]/30 to-transparent" />
                   </div>
                 )}
                 <article
@@ -1939,15 +1939,15 @@ export function CalendarPage() {
                   }}
                   className={`cal-list-card relative rounded-2xl border text-left w-full overflow-hidden cursor-pointer p-4 ${
                     isTop || isHighlighted
-                      ? "cal-list-card--top border border-white/10 bg-white/[0.08] shadow-[0_10px_30px_-5px_rgba(0,0,0,0.4)]"
-                      : "border-white/10 bg-[#121215]/80 shadow-[0_10px_30px_-5px_rgba(0,0,0,0.3)]"
+                      ? "cal-list-card--top border-[#0A84FF]/50 bg-white/[0.08] backdrop-blur-[28px] shadow-lg"
+                      : "border-white/10 bg-[#121215]/80"
                   }`}
                 >
                   {isHighlighted && !isTop && (
-                    <div className="absolute inset-x-0 top-0 h-0.5 bg-[#FF3B30]" />
+                    <div className="absolute inset-x-0 top-0 h-0.5 bg-[#0A84FF]" />
                   )}
                   {isTop && (
-                    <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-[#FF3B30] to-transparent" />
+                    <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-[#0A84FF] to-transparent" />
                   )}
                   <div className="flex flex-col gap-3">
                     <h3
@@ -1957,7 +1957,7 @@ export function CalendarPage() {
                     >
                       {evt.title}
                       {isHighlighted && searchQuery && (
-                        <span className="ml-2 inline-flex items-center rounded-full bg-[#FF3B30]/15 border border-[#FF3B30]/40 px-2 py-0.5 text-xs font-sans font-bold uppercase tracking-wider text-[#FF3B30] align-middle">
+                        <span className="ml-2 inline-flex items-center rounded-full bg-[#0A84FF]/15 border border-[#0A84FF]/40 px-2 py-0.5 text-[10px] font-sans font-bold uppercase tracking-wider text-[#0A84FF] align-middle">
                           Match
                         </span>
                       )}
@@ -1972,7 +1972,7 @@ export function CalendarPage() {
                         the colour changes here. */}
                     {evt.description && (
                       <p
-                        className={`text-sm leading-relaxed line-clamp-2 ${
+                        className={`text-[13px] leading-relaxed line-clamp-2 ${
                           isTop ? "text-[#C9C7CE]" : "text-[#8A8790]"
                         }`}
                       >
@@ -1982,9 +1982,9 @@ export function CalendarPage() {
                     {evt.category ? (
                       <div className="flex flex-wrap gap-1.5">
                         <span
-                          className={`rounded-md border px-2 py-0.5 text-xs font-mono font-semibold ${
+                          className={`rounded-md border px-2 py-0.5 text-[10px] font-mono font-semibold ${
                             isTop
-                              ? "text-[#FF3B30] border-[#FF3B30]/30 bg-[#FF3B30]/10"
+                              ? "text-[#0A84FF] border-[#0A84FF]/30 bg-[#0A84FF]/10"
                               : "text-white/60 border-white/10 bg-white/5"
                           }`}
                         >
@@ -2029,7 +2029,7 @@ export function CalendarPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => setSearchQuery("")}
-                className="text-xs text-[#FF3B30] border-white/15 glass-button"
+                className="text-xs text-[#0A84FF] border-white/15 glass-button"
               >
                 Clear Search
               </Button>
@@ -2063,23 +2063,23 @@ export function CalendarPage() {
                       y: { type: "spring", stiffness: 320, damping: 28, delay: flowDelay },
                     }}
                     onClick={() => handleSelectEvent(evt)}
-                    className="p-5 sm:p-6 rounded-2xl border cursor-pointer space-y-3.5 shadow-2xl relative overflow-hidden glass-panel border-[#FF3B30]/40 border-t-white/60 ring-1 ring-[#FF3B30]/50 shrink-0 hover:border-t-white/80 transition-all"
+                    className="p-5 sm:p-6 rounded-2xl border cursor-pointer space-y-3.5 shadow-2xl relative overflow-hidden glass-panel border-[#0A84FF]/40 border-t-white/60 ring-1 ring-[#0A84FF]/50 shrink-0 hover:border-t-white/80 transition-all"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono font-bold uppercase tracking-[0.05em] px-2.5 py-0.5 rounded-full bg-[#FF3B30] text-white flex items-center gap-1 shadow-sm">
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-[0.05em] px-2.5 py-0.5 rounded-full bg-[#0A84FF] text-white flex items-center gap-1 shadow-sm">
                           <CalendarIcon className="h-3 w-3" />
                           Current Event
                         </span>
                         {evt.category && (
-                          <span className="text-xs font-mono font-bold uppercase tracking-[0.05em] px-2 py-0.5 rounded-full bg-white/10 border border-white/15 text-white/90">
+                          <span className="text-[10px] font-mono font-bold uppercase tracking-[0.05em] px-2 py-0.5 rounded-full bg-white/10 border border-white/15 text-white/90">
                             {evt.category}
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-3 text-xs font-mono text-[#FF3B30]">
+                      <div className="flex items-center gap-3 text-xs font-mono text-[#0A84FF]">
                         <span className="flex items-center gap-1.5 font-bold">
-                          <CalendarIcon className="h-3.5 w-3.5 text-[#FF3B30]" />
+                          <CalendarIcon className="h-3.5 w-3.5 text-[#0A84FF]" />
                           {evt.date}
                         </span>
                       </div>
@@ -2098,7 +2098,7 @@ export function CalendarPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-white/10">
                       {evt.location ? (
                         <div className="flex items-center gap-1.5 text-xs text-white/60 truncate">
-                          <MapPin className="h-3.5 w-3.5 text-[#FF3B30]" />
+                          <MapPin className="h-3.5 w-3.5 text-[#0A84FF]" />
                           <span className="truncate">{evt.location}</span>
                         </div>
                       ) : (
@@ -2119,7 +2119,7 @@ export function CalendarPage() {
                             className="flex items-center gap-1.5"
                           >
                             <span>Add to Google Calendar</span>
-                            <ExternalLink className="h-3 w-3 text-[#FF3B30]" />
+                            <ExternalLink className="h-3 w-3 text-[#0A84FF]" />
                           </a>
                         </Button>
                       </div>
@@ -2148,13 +2148,13 @@ export function CalendarPage() {
                   }}
                   className={`p-4 rounded-xl border cursor-pointer space-y-2.5 shrink-0 transition-all ${
                     isHighlighted
-                      ? "glass-panel ring-1 ring-[#FF3B30] border-[#FF3B30] border-t-white/50"
+                      ? "glass-panel ring-1 ring-[#0A84FF] border-[#0A84FF] border-t-white/50"
                       : "glass-panel glass-panel-hover"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-mono font-bold text-[#FF3B30] flex items-center gap-1.5">
-                      <CalendarIcon className="h-3.5 w-3.5 text-[#FF3B30]" />
+                    <span className="text-xs font-mono font-bold text-[#0A84FF] flex items-center gap-1.5">
+                      <CalendarIcon className="h-3.5 w-3.5 text-[#0A84FF]" />
                       {evt.date}
                     </span>
                   </div>
@@ -2169,14 +2169,14 @@ export function CalendarPage() {
                   <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-white/10">
                     {evt.location ? (
                       <div className="flex items-center gap-1.5 text-xs text-white/60 truncate">
-                        <MapPin className="h-3.5 w-3.5 text-[#FF3B30]" />
+                        <MapPin className="h-3.5 w-3.5 text-[#0A84FF]" />
                         <span className="truncate">{evt.location}</span>
                       </div>
                     ) : (
                       <span />
                     )}
                     {evt.category && (
-                      <span className="text-xs font-mono font-bold uppercase tracking-[0.05em] px-2 py-0.5 rounded-full bg-white/10 border border-white/15 text-white/80 shrink-0">
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-[0.05em] px-2 py-0.5 rounded-full bg-white/10 border border-white/15 text-white/80 shrink-0">
                         {evt.category}
                       </span>
                     )}
@@ -2255,7 +2255,7 @@ export function CalendarPage() {
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
                 <span
                   key={day}
-                  className="text-xs font-mono font-semibold uppercase tracking-[0.05em] text-white/60"
+                  className="text-[10px] md:text-xs font-mono font-semibold uppercase tracking-[0.05em] text-white/60"
                 >
                   {day}
                 </span>
@@ -2411,19 +2411,18 @@ export function CalendarPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search event title or day (e.g. 'Workshop', 'Sep 15', '22')..."
-            className="w-full min-h-[44px] pl-9 pr-12 py-1.5 text-fluid-small glass-cell rounded-full text-white placeholder:text-white/40 focus:outline-none focus:border-[#FF3B30] focus:ring-1 focus:ring-[#FF3B30] transition-all"
+            className="w-full pl-9 pr-9 py-1.5 text-xs glass-cell rounded-full text-white placeholder:text-white/40 focus:outline-none focus:border-[#0A84FF] focus:ring-1 focus:ring-[#0A84FF] transition-all"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              aria-label="Clear event search"
-              className="absolute right-1 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] text-white/40 hover:text-white flex items-center justify-center"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
             >
               <X className="h-3.5 w-3.5" />
             </button>
           )}
           {isSearching && (
-            <span className="absolute right-8 top-1/2 -translate-y-1/2 text-xs font-mono text-[#FF3B30]">
+            <span className="absolute right-8 top-1/2 -translate-y-1/2 text-[10px] font-mono text-[#0A84FF]">
               searching...
             </span>
           )}
@@ -2435,10 +2434,10 @@ export function CalendarPage() {
           <div className="flex items-center p-1 rounded-full glass-cell shadow-inner">
             <button
               onClick={() => handleViewToggle("month")}
-              className={`flex items-center gap-1.5 min-h-[44px] px-3 py-1 text-xs font-mono uppercase tracking-wider rounded-full transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono uppercase tracking-wider rounded-full transition-all ${
                 viewMode === "month"
-                  ? "nav-tab-active bg-[rgba(255,59,48,0.2)] text-[#FF3B30] font-bold shadow-sm border border-[rgba(255,59,48,0.35)]"
-                  : "text-white/60 hover:text-[#FF3B30]"
+                  ? "bg-white/20 text-white font-semibold shadow-sm border border-white/25 border-t-white/40"
+                  : "text-white/60 hover:text-white"
               }`}
             >
               <CalendarDays className="h-3.5 w-3.5" />
@@ -2446,10 +2445,10 @@ export function CalendarPage() {
             </button>
             <button
               onClick={() => handleViewToggle("week")}
-              className={`flex items-center gap-1.5 min-h-[44px] px-3 py-1 text-xs font-mono uppercase tracking-wider rounded-full transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono uppercase tracking-wider rounded-full transition-all ${
                 viewMode === "week"
-                  ? "nav-tab-active bg-[rgba(255,59,48,0.2)] text-[#FF3B30] font-bold shadow-sm border border-[rgba(255,59,48,0.35)]"
-                  : "text-white/60 hover:text-[#FF3B30]"
+                  ? "bg-white/20 text-white font-semibold shadow-sm border border-white/25 border-t-white/40"
+                  : "text-white/60 hover:text-white"
               }`}
             >
               <CalendarRange className="h-3.5 w-3.5" />
@@ -2457,10 +2456,10 @@ export function CalendarPage() {
             </button>
             <button
               onClick={() => handleViewToggle("list")}
-              className={`flex items-center gap-1.5 min-h-[44px] px-3 py-1 text-xs font-mono uppercase tracking-wider rounded-full transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono uppercase tracking-wider rounded-full transition-all ${
                 viewMode === "list"
-                  ? "nav-tab-active bg-[rgba(255,59,48,0.2)] text-[#FF3B30] font-bold shadow-sm border border-[rgba(255,59,48,0.35)]"
-                  : "text-white/60 hover:text-[#FF3B30]"
+                  ? "bg-white/20 text-white font-semibold shadow-sm border border-white/25 border-t-white/40"
+                  : "text-white/60 hover:text-white"
               }`}
             >
               <List className="h-3.5 w-3.5" />
@@ -2472,7 +2471,7 @@ export function CalendarPage() {
           {viewMode === "list" && (
             <button
               onClick={() => setListSortNewest((v) => !v)}
-              className="flex items-center gap-1.5 min-h-[44px] px-3 py-1 text-xs font-mono uppercase tracking-wider rounded-full transition-all text-white/60 hover:text-white glass-chip active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-1 text-xs font-mono uppercase tracking-wider rounded-full transition-all text-white/60 hover:text-white glass-chip active:scale-95"
             >
               <ArrowUpDown className="h-3.5 w-3.5" />
               <span>{listSortNewest ? "Newest first" : "Oldest first"}</span>
@@ -2484,7 +2483,7 @@ export function CalendarPage() {
             <button
               onClick={handlePrev}
               aria-label="Previous Period"
-              className="min-h-[44px] min-w-[44px] rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+              className="p-1 rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -2493,14 +2492,14 @@ export function CalendarPage() {
             </span>
             <button
               onClick={handleToday}
-              className="min-h-[44px] px-2 py-0.5 text-xs font-mono font-semibold uppercase tracking-[0.05em] rounded-full text-[#FF3B30] hover:bg-white/10 transition-colors"
+              className="px-2 py-0.5 text-[11px] font-mono font-semibold uppercase tracking-[0.05em] rounded-full text-[#0A84FF] hover:bg-white/10 transition-colors"
             >
               Today
             </button>
             <button
               onClick={handleNext}
               aria-label="Next Period"
-              className="min-h-[44px] min-w-[44px] rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+              className="p-1 rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -2730,7 +2729,7 @@ export function CalendarPage() {
             <button
               onClick={() => setSelectedEvent(null)}
               aria-label="Close details"
-              className="absolute top-4 right-4 min-h-[44px] min-w-[44px] p-1.5 rounded-full glass-chip text-white/60 hover:text-white transition-all shadow-md flex items-center justify-center"
+              className="absolute top-4 right-4 p-1.5 rounded-full glass-chip text-white/60 hover:text-white transition-all shadow-md"
             >
               <X className="h-4 w-4" />
             </button>
@@ -2745,20 +2744,20 @@ export function CalendarPage() {
               {/* Date, Time, Location metadata */}
               <div className="flex flex-col gap-1.5 py-2.5 border-y border-white/10 text-white/70 text-xs font-mono">
                 <div className="flex items-center gap-2">
-                  <CalendarIcon className="h-3.5 w-3.5 text-[#FF3B30] shrink-0" />
+                  <CalendarIcon className="h-3.5 w-3.5 text-[#0A84FF] shrink-0" />
                   <span>{selectedEvent.date}</span>
-                  <Clock className="h-3.5 w-3.5 text-[#FF3B30] shrink-0 ml-3" />
-                  <span className="font-semibold text-[#FF3B30]">{formatTime12h(selectedEvent.time)}</span>
+                  <Clock className="h-3.5 w-3.5 text-[#0A84FF] shrink-0 ml-3" />
+                  <span className="font-semibold text-[#0A84FF]">{formatTime12h(selectedEvent.time)}</span>
                 </div>
                 <div className="flex items-center gap-2 font-sans text-xs">
-                  <MapPin className="h-3.5 w-3.5 text-[#FF3B30] shrink-0" />
+                  <MapPin className="h-3.5 w-3.5 text-[#0A84FF] shrink-0" />
                   <span className="text-white">{selectedEvent.location}</span>
                 </div>
               </div>
 
               {/* Description */}
               <div>
-                <h4 className="text-xs uppercase font-mono tracking-[0.05em] text-white/50 mb-1">
+                <h4 className="text-[10px] uppercase font-mono tracking-[0.05em] text-white/50 mb-1">
                   Event Details
                 </h4>
                 <p className="text-xs sm:text-sm text-white/90 leading-relaxed">
@@ -2780,7 +2779,7 @@ export function CalendarPage() {
                     rel="noopener noreferrer"
                   >
                     <span>Add to Google Calendar</span>
-                    <ExternalLink className="h-3.5 w-3.5 text-[#FF3B30]" />
+                    <ExternalLink className="h-3.5 w-3.5 text-[#0A84FF]" />
                   </a>
                 </Button>
                 <Button

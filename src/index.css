@@ -15,19 +15,15 @@ body::after {
   --color-surface-2: #1C1C1E;
   --color-surface-3: #2C2C2E;
 
-  /* Apple System Red accent palette */
-  --color-accent-subtle: rgba(211, 47, 47, 0.15);
-  --color-accent-base: #D32F2F;
-  --color-accent-strong: #B71C1C;
-  --color-accent-highlight: #D32F2F;
-  --color-accent-light: #D32F2F;
-  --color-status-error: #FFB340;
-  --color-status-error-bg: rgba(255, 179, 64, 0.12);
-  --color-status-error-border: rgba(255, 179, 64, 0.35);
+  --color-accent-subtle: rgba(10, 132, 255, 0.12);
+  --color-accent-base: #0A84FF;
+  --color-accent-strong: #0071E3;
+  --color-accent-highlight: #64D2FF;
+  --color-accent-light: #64D2FF;
 
   --color-text-primary: #FFFFFF;
-  --color-text-secondary: #B0B0B5;
-  --color-text-muted: #8E8E93;
+  --color-text-secondary: #8E8E93;
+  --color-text-muted: #636366;
   --color-border-subtle: rgba(255, 255, 255, 0.12);
   --color-border-clean: rgba(255, 255, 255, 0.18);
 
@@ -49,31 +45,21 @@ body::after {
   --bg-surface: rgba(255, 255, 255, 0.75);
   --bg-elevated: #FFFFFF;
   --text-main: #1D1D1F;
-  --color-text-primary: #1D1D1F;
-  --color-text-secondary: #57575D;
-  --color-text-muted: #57575D;
-  --color-accent-subtle: rgba(0, 102, 204, 0.12);
-  --color-accent-base: #0066CC;
-  --color-accent-strong: #0052A3;
-  --color-accent-highlight: #0066CC;
-  --color-accent-light: #0052A3;
-  --color-status-error: #995000;
-  --color-status-error-bg: rgba(153, 80, 0, 0.08);
-  --color-status-error-border: rgba(153, 80, 0, 0.3);
   --color-border-subtle: rgba(0, 0, 0, 0.08);
   color-scheme: light;
 }
 
 /* ==========================================================================
-   Frosted glass surfaces for cards, cells, and floating controls.
+   Apple Human Interface Guidelines: "Liquid Glass" Material System
+   Hardware-accelerated CSS blur (28px saturate 190%) + specular edge gradients
    ========================================================================== */
 
 /* Main Content Cards & Containers */
 .glass-panel {
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  background: rgba(28, 28, 32, 0.62);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-top-color: rgba(255, 255, 255, 0.28);
   border-bottom-color: rgba(255, 255, 255, 0.05);
   box-shadow:
@@ -82,14 +68,14 @@ body::after {
     0 1px 2px 0 rgba(0, 0, 0, 0.2);
 }
 
-.glass-panel-hover:hover,
-.glass-panel:hover {
-  background: rgba(40, 40, 44, 0.68);
-  border-color: rgba(255, 255, 255, 0.2);
-  border-top-color: rgba(255, 255, 255, 0.3);
+.glass-panel-hover:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.18);
+  border-top-color: rgba(255, 255, 255, 0.38);
   box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.24),
-    0 10px 30px -5px rgba(0, 0, 0, 0.5);
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.26),
+    0 14px 40px 0 rgba(0, 0, 0, 0.42),
+    0 2px 4px 0 rgba(0, 0, 0, 0.25);
 }
 
 /* Navigation Bars, Action Controls & Buttons */
@@ -117,9 +103,9 @@ body::after {
 
 /* Secondary Inset Cells */
 .glass-cell {
-  backdrop-filter: blur(20px) saturate(170%);
-  -webkit-backdrop-filter: blur(20px) saturate(170%);
-  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-top-color: rgba(255, 255, 255, 0.22);
   border-bottom-color: rgba(255, 255, 255, 0.04);
@@ -128,15 +114,14 @@ body::after {
 
 .glass-cell-hover:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.12);
-  border-top-color: rgba(255, 255, 255, 0.18);
+  border-top-color: rgba(255, 255, 255, 0.32);
 }
 
 /* Micro Pills & Badges */
 .glass-chip {
-  backdrop-filter: blur(18px) saturate(170%);
-  -webkit-backdrop-filter: blur(18px) saturate(170%);
-  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-top-color: rgba(255, 255, 255, 0.25);
   border-bottom-color: rgba(255, 255, 255, 0.04);
@@ -145,132 +130,31 @@ body::after {
 
 .glass-chip:hover {
   background: rgba(255, 255, 255, 0.11);
-  border-color: rgba(255, 255, 255, 0.12);
-  border-top-color: rgba(255, 255, 255, 0.18);
+  border-top-color: rgba(255, 255, 255, 0.36);
 }
 
-/* Active Navigation Tabs & Segmented Controls */
-.nav-tab-active {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-  border-top-color: rgba(255, 255, 255, 0.18) !important;
-  color: #D32F2F !important;
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.16), 0 10px 30px -5px rgba(0, 0, 0, 0.38) !important;
+/* Floating Action Button (Ask AI) */
+.ask-ai-fab {
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  background: rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-top-color: rgba(255, 255, 255, 0.42) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.32),
+    0 12px 36px 0 rgba(0, 0, 0, 0.45),
+    0 2px 8px 0 rgba(0, 0, 0, 0.25) !important;
+  color: #FFFFFF !important;
 }
 
-.nav-tab-active * {
-  color: #D32F2F !important;
-}
-
-html:not(.light) [class~="text-[#FF3B30]"],
-html:not(.light) [class~="text-[#FF453A]"] {
-  color: #D32F2F !important;
-}
-
-html:not(.light) [class~="hover:text-[#FF6961]"]:hover,
-html:not(.light) [class~="hover:text-[#FF3B30]"]:hover {
-  color: #D32F2F !important;
-}
-
-html:not(.light) [class~="bg-[#FF3B30]"] {
-  background-color: #D32F2F !important;
-}
-
-html.light [class~="bg-[#FF3B30]"] {
-  background-color: #0066CC !important;
-}
-
-html.light [class~="hover:bg-[#D32F2F]"]:hover {
-  background-color: #0052A3 !important;
-}
-
-html.light [class~="hover:text-[#FF6961]"]:hover {
-  color: #0052A3 !important;
-}
-
-html.light [class*="text-[#FF3B30]"],
-html.light [class*="text-[#FF6961]"] {
-  color: #0066CC !important;
-}
-
-html.light [class*="text-[#FF453A]"],
-html.light [class*="hover:text-[#FF453A]"]:hover {
-  color: var(--color-status-error) !important;
-}
-
-html.light [class~="bg-[#FF3B30]"],
-html.light [class~="bg-[#E03126]"],
-html.light [class~="bg-[#D32F2F]"] {
-  background-color: #0066CC !important;
-}
-
-html.light [class*="bg-[#FF3B30]/10"] {
-  background-color: rgba(0, 102, 204, 0.1) !important;
-}
-
-html.light [class*="bg-[#FF3B30]/15"] {
-  background-color: rgba(0, 102, 204, 0.15) !important;
-}
-
-html.light [class*="bg-[#FF3B30]/20"] {
-  background-color: rgba(0, 102, 204, 0.2) !important;
-}
-
-html.light [class*="bg-[#FF3B30]/70"] {
-  background-color: rgba(0, 102, 204, 0.7) !important;
-}
-
-html.light [class*="bg-[#FF453A]/10"] {
-  background-color: var(--color-status-error-bg) !important;
-}
-
-html.light [class*="bg-[#FF453A]/15"] {
-  background-color: var(--color-status-error-bg) !important;
-}
-
-html.light [class*="bg-[rgba(255,59,48,0.08"] {
-  background-color: rgba(0, 102, 204, 0.08) !important;
-}
-
-html.light [class*="bg-[rgba(255,59,48,0.2"] {
-  background-color: rgba(0, 102, 204, 0.2) !important;
-}
-
-html.light [class*="bg-[rgba(255,59,48,0.35"] {
-  background-color: rgba(0, 102, 204, 0.35) !important;
-}
-
-html.light [class*="hover:bg-[#FF3B30]"]:hover,
-html.light [class*="hover:bg-[#E03126]"]:hover,
-html.light [class*="hover:bg-[#D32F2F]"]:hover,
-html.light [class*="hover:bg-[rgba(255,59,48"]:hover {
-  background-color: #0052A3 !important;
-}
-
-html.light [class*="hover:text-[#FF3B30]"]:hover,
-html.light [class*="hover:text-[#FF6961]"]:hover {
-  color: #0052A3 !important;
-}
-
-html.light [class*="border-[#FF3B30]"],
-html.light [class*="border-[rgba(255,59,48"],
-html.light [class*="ring-[#FF3B30]"] {
-  border-color: rgba(0, 102, 204, 0.45) !important;
-  --tw-ring-color: rgba(0, 102, 204, 0.45) !important;
-}
-
-html.light [class*="border-[#FF453A]"] {
-  border-color: var(--color-status-error-border) !important;
-}
-
-.status-error {
-  color: var(--color-status-error) !important;
-  background-color: var(--color-status-error-bg) !important;
-  border-color: var(--color-status-error-border) !important;
-}
-
-.status-error-icon {
-  color: var(--color-status-error) !important;
+.ask-ai-fab:hover {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border-top-color: rgba(255, 255, 255, 0.55) !important;
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.42),
+    0 16px 44px 0 rgba(0, 0, 0, 0.52),
+    0 3px 10px 0 rgba(0, 0, 0, 0.3) !important;
 }
 
 /* ==========================================================================
@@ -278,8 +162,8 @@ html.light [class*="border-[#FF453A]"] {
    ========================================================================== */
 
 :root.light .glass-panel {
-  background: rgba(255, 255, 255, 0.52);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-top-color: rgba(255, 255, 255, 0.9);
   box-shadow:
     inset 0 1px 0 0 rgba(255, 255, 255, 0.85),
@@ -288,10 +172,8 @@ html.light [class*="border-[#FF453A]"] {
   color: #1D1D1F;
 }
 
-:root.light .glass-panel-hover:hover,
-:root.light .glass-panel:hover {
-  background: rgba(255, 255, 255, 0.68);
-  border-color: rgba(0, 102, 204, 0.2);
+:root.light .glass-panel-hover:hover {
+  background: rgba(255, 255, 255, 0.65);
   border-top-color: rgba(255, 255, 255, 1);
   box-shadow:
     inset 0 1px 0 0 rgba(255, 255, 255, 0.95),
@@ -318,29 +200,21 @@ html.light [class*="border-[#FF453A]"] {
   color: #000000;
 }
 
-:root.light nav.glass-button:hover {
-  background: rgba(255, 255, 255, 0.75);
-  box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.85),
-    0 4px 16px 0 rgba(0, 0, 0, 0.06);
-}
-
 :root.light .glass-cell {
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   border-top-color: rgba(255, 255, 255, 0.85);
   box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.8);
   color: #1D1D1F;
 }
 
 :root.light .glass-cell-hover:hover {
-  background: rgba(255, 255, 255, 0.58);
-  border-color: rgba(0, 102, 204, 0.2);
+  background: rgba(255, 255, 255, 0.8);
   border-top-color: rgba(255, 255, 255, 0.95);
 }
 
 :root.light .glass-chip {
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-top-color: rgba(255, 255, 255, 0.9);
   box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.85);
@@ -348,109 +222,26 @@ html.light [class*="border-[#FF453A]"] {
 }
 
 :root.light .glass-chip:hover {
-  background: rgba(255, 255, 255, 0.68);
+  background: rgba(255, 255, 255, 0.88);
 }
 
-html.light .nav-tab-active {
-  background: rgba(0, 102, 204, 0.12) !important;
-  border: 1px solid rgba(0, 102, 204, 0.3) !important;
-  border-top-color: rgba(255, 255, 255, 0.9) !important;
-  color: #0066CC !important;
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.8), 0 8px 24px rgba(0, 0, 0, 0.06) !important;
+html.light .ask-ai-fab {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-top-color: rgba(255, 255, 255, 1) !important;
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.95),
+    0 10px 32px 0 rgba(0, 0, 0, 0.08),
+    0 2px 6px 0 rgba(0, 0, 0, 0.04) !important;
+  color: #1D1D1F !important;
 }
 
-html.light .nav-tab-active * {
-  color: #0066CC !important;
-}
-
-html:not(.light) .calendar-month-cell.glass-cell {
-  background:
-    linear-gradient(rgba(211, 47, 47, 0.035), rgba(211, 47, 47, 0.035)),
-    rgba(150, 150, 160, 0.09);
-}
-
-html:not(.light) .calendar-month-cell.glass-cell:hover {
-  background:
-    linear-gradient(rgba(211, 47, 47, 0.055), rgba(211, 47, 47, 0.055)),
-    rgba(150, 150, 160, 0.13);
-}
-
-html.light .calendar-month-cell.glass-cell {
-  background: rgba(0, 102, 204, 0.035);
-  border-color: rgba(0, 102, 204, 0.14);
-}
-
-html:not(.light) .calendar-week-selected {
-  background: linear-gradient(
-    145deg,
-    rgba(150, 150, 160, 0.16),
-    rgba(211, 47, 47, 0.055)
-  ) !important;
-  border-color: rgba(211, 47, 47, 0.26) !important;
-  color: #D32F2F !important;
-}
-
-html.light .calendar-week-selected {
-  background: rgba(0, 102, 204, 0.04) !important;
-  border: 1px solid rgba(0, 102, 204, 0.24) !important;
-  color: #0066CC !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75) !important;
-}
-
-html:not(.light) [data-page="calendar"] .cal-today {
-  background-color: rgba(211, 47, 47, 0.1) !important;
-  border-color: rgba(211, 47, 47, 0.3) !important;
-}
-
-html.light [data-page="calendar"] .cal-today {
-  background-color: rgba(0, 102, 204, 0.12) !important;
-  border-color: rgba(0, 102, 204, 0.32) !important;
-}
-
-.home-cta {
-  min-height: 56px !important;
-  padding-inline: clamp(1.5rem, 4vw, 2rem) !important;
-  font-size: clamp(15px, 14.5px + 0.1vw, 16px) !important;
-}
-
-.chat-panel-glass {
-  backdrop-filter: blur(32px) saturate(185%);
-  -webkit-backdrop-filter: blur(32px) saturate(185%);
-  background: rgba(28, 28, 32, 0.56);
-}
-
-.chat-panel-chrome {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(20px) saturate(175%);
-  -webkit-backdrop-filter: blur(20px) saturate(175%);
-}
-
-.chat-message-bubble {
-  backdrop-filter: blur(18px) saturate(150%);
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
-}
-
-.chat-message-assistant,
-.chat-message-user {
-  background: rgba(130, 130, 140, 0.28) !important;
-  border: 1px solid rgba(255, 255, 255, 0.11);
-  color: #FFFFFF;
-}
-
-html.light .chat-panel-glass {
-  background: rgba(255, 255, 255, 0.52);
-}
-
-html.light .chat-panel-chrome {
-  background: rgba(255, 255, 255, 0.4);
-  border-color: rgba(0, 0, 0, 0.08);
-}
-
-html.light .chat-message-assistant,
-html.light .chat-message-user {
-  background: rgba(82, 86, 94, 0.12) !important;
-  border-color: rgba(0, 0, 0, 0.08);
-  color: #1D1D1F;
+html.light .ask-ai-fab:hover {
+  background: rgba(255, 255, 255, 0.95) !important;
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 1),
+    0 14px 38px 0 rgba(0, 0, 0, 0.12),
+    0 3px 8px 0 rgba(0, 0, 0, 0.06) !important;
 }
 
 /* ==========================================================================
@@ -519,25 +310,25 @@ body {
   overflow-x: clip;
 }
 
-/* Apple System Red text selection */
+/* Apple System Blue text selection */
 ::selection {
-  background-color: rgba(255, 59, 48, 0.35);
+  background-color: rgba(10, 132, 255, 0.35);
   color: #FFFFFF;
 }
 
 html.light ::selection {
-  background-color: rgba(0, 102, 204, 0.25);
+  background-color: rgba(0, 113, 227, 0.25);
   color: #1D1D1F !important;
 }
 
 /* Apple Focus indicator */
 *:focus-visible {
-  outline: 2px solid #FF3B30;
+  outline: 2px solid #0A84FF;
   outline-offset: 2px;
 }
 
 html.light *:focus-visible {
-  outline: 2px solid #0066CC;
+  outline: 2px solid #0071E3;
   outline-offset: 2px;
 }
 
@@ -552,7 +343,6 @@ html.light .perimeter-line {
 
 /* ==========================================================================
    LIGHT MODE TYPOGRAPHY & SURFACE REMAPS
-   High-contrast dark charcoal on light backgrounds
    ========================================================================== */
 
 html.light body {
@@ -568,7 +358,7 @@ header {
 
 /* Ambient canvas glows in light mode */
 html.light .ambient-glow-top {
-  background: radial-gradient(ellipse, rgba(0, 102, 204, 0.12), transparent 70%) !important;
+  background: radial-gradient(ellipse, rgba(0, 113, 227, 0.12), transparent 70%) !important;
   opacity: 0.8;
 }
 
@@ -577,7 +367,7 @@ html.light .ambient-glow-middle {
   opacity: 0.7;
 }
 
-/* Strict Apple Typography contrast in light mode — all text defaults to dark charcoal */
+/* Strict Apple Typography contrast in light mode */
 html.light h1,
 html.light h2,
 html.light h3,
@@ -590,35 +380,8 @@ html.light .text-white {
 }
 
 html.light .text-\[\#9B98A0\],
-html.light .text-\[\#67646C\],
-html.light [class*="text-[#8E8E93]"],
-html.light .text-white\/60,
-html.light .text-white\/70 {
-  color: #57575D !important;
-}
-
-html.light .text-white\/40,
-html.light .text-white\/50 {
-  color: #57575D !important;
-}
-
-html.light .text-white\/80,
-html.light .text-white\/90 {
-  color: #1D1D1F !important;
-}
-
-html.light input,
-html.light textarea,
-html.light select {
-  background-color: rgba(255, 255, 255, 0.88) !important;
-  border-color: rgba(0, 0, 0, 0.14) !important;
-  color: #1D1D1F !important;
-}
-
-html.light input::placeholder,
-html.light textarea::placeholder {
-  color: #57575D !important;
-  opacity: 1;
+html.light .text-\[\#67646C\] {
+  color: #86868B !important;
 }
 
 /* Dark mode surfaces remap in light mode */
@@ -640,14 +403,11 @@ html.light .bg-\[\#3D1E22\] {
   background-color: rgba(0, 0, 0, 0.04) !important;
 }
 
-/* Keep the navigation container still so only the hovered tab changes. */
-html.light nav a:hover:not(.nav-tab-active) {
-  background-color: rgba(0, 102, 204, 0.08) !important;
-  color: #0066CC !important;
-}
-
-html.light nav a:hover:not(.nav-tab-active) * {
-  color: #0066CC !important;
+/* Light mode hover */
+html.light [class*="hover:bg-"]:hover,
+html.light button:hover,
+html.light a:hover {
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 /* ==========================================================================
@@ -660,16 +420,13 @@ html {
 }
 
 @theme {
-  --text-xs: clamp(13px, 12.5px + 0.1vw, 14px);
-  --text-sm: clamp(14px, 13.5px + 0.1vw, 15px);
-
-  --text-fluid-hero: clamp(2.875rem, 1.375rem + 8vw, 7rem);
+  --text-fluid-hero: clamp(3.25rem, 1.5rem + 10vw, 8.5rem);
   --text-fluid-h1: clamp(2.25rem, 3.375rem - 2vw, 2.75rem);
   --text-fluid-h2: clamp(1.5rem, 2.25rem - 1.3vw, 1.875rem);
   --text-fluid-h3: clamp(1.125rem, 1.5625rem - 0.75vw, 1.3125rem);
-  --text-fluid-body: clamp(14px, 0.9375rem + 0.1vw, 15px);
-  --text-fluid-small: clamp(13px, 12.5px + 0.15vw, 14px);
-  --text-fluid-label: clamp(12px, 11.75px + 0.1vw, 13px);
+  --text-fluid-body: clamp(0.875rem, 1.125rem - 0.45vw, 1rem);
+  --text-fluid-small: clamp(0.6875rem, 0.875rem - 0.35vw, 0.78125rem);
+  --text-fluid-label: clamp(0.625rem, 0.75rem - 0.25vw, 0.6875rem);
 }
 
 :root {
@@ -678,22 +435,22 @@ html {
   --fluid-pad-x: clamp(0.75rem, 0.375rem + 2vw, 2rem);
   --fluid-section-y: clamp(1.5rem, 1rem + 4vw, 3.5rem);
   --fluid-stack: clamp(1.5rem, 1rem + 5vw, 4rem);
-  --fluid-gap: clamp(0.75rem, 0.5rem + 1.5vw, 1.5rem);
-  --fluid-gap-sm: clamp(0.5rem, 0.375rem + 1vw, 0.875rem);
-  --fluid-card-pad: clamp(0.875rem, 0.75rem + 2vw, 1.75rem);
+  --fluid-gap: clamp(0.75rem, 0.5rem + 2.5vw, 1.875rem);
+  --fluid-gap-sm: clamp(0.5rem, 0.375rem + 1.5vw, 1rem);
+  --fluid-card-pad: clamp(1rem, 0.75rem + 3vw, 2.375rem);
   --fluid-radius: clamp(0.75rem, 2.1875rem - 2.5vw, 1.5rem);
   --fluid-radius-lg: clamp(1rem, 2.8125rem - 3.2vw, 1.875rem);
   --fluid-radius-pill: 9999px;
-  --fluid-control-h: 44px;
-  --fluid-control-h-sm: 44px;
-  --fluid-icon-box: 44px;
+  --fluid-control-h: clamp(2.75rem, 4.875rem - 3.75vw, 4rem);
+  --fluid-control-h-sm: clamp(2.25rem, 3.75rem - 2.6vw, 3rem);
+  --fluid-icon-box: clamp(2.5rem, 4.0625rem - 2.75vw, 3.25rem);
   --fluid-chat-w: clamp(20rem, calc(100vw - 3rem), 23.5rem);
   --fluid-chat-h: clamp(28rem, 70vh, 32.5rem);
 }
 
 @layer base {
   body {
-    font-size: clamp(14px, 0.9375rem + 0.1vw, 15px);
+    font-size: clamp(0.875rem, 1.125rem - 0.45vw, 1rem);
     line-height: 1.6;
   }
 
@@ -714,7 +471,7 @@ html {
 
   p,
   li {
-    font-size: clamp(0.875rem, 0.9375rem - 0.1vw, 0.9375rem);
+    font-size: clamp(0.875rem, 1.125rem - 0.45vw, 1rem);
   }
 
   small,
@@ -883,18 +640,18 @@ html {
 }
 
 html.light .cal-nav-arrow {
-  background-color: rgba(255, 255, 255, 0.85) !important;
+  background-color: rgba(255, 255, 255, 0.8) !important;
   border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  border-top-color: rgba(255, 255, 255, 0.96) !important;
-  color: #1C1C1E !important;
+  border-top-color: rgba(255, 255, 255, 0.95) !important;
+  color: #1D1D1F !important;
   box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.88),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.85),
     0 4px 16px 0 rgba(0, 0, 0, 0.06) !important;
 }
 
 html.light .cal-nav-arrow:hover {
   background-color: rgba(255, 255, 255, 0.95) !important;
-  color: #1D1D1F !important;
+  color: #000000 !important;
 }
 
 html.light .cal-nav-arrow svg {
@@ -904,17 +661,17 @@ html.light .cal-nav-arrow svg {
 /* Calendar Slide Veil */
 .cal-slide-veil {
   z-index: -1;
-  background: rgba(28, 28, 30, 0.6);
+  background: rgba(0, 0, 0, 0.5);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 html.light .cal-slide-veil {
-  background: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.6);
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
 /* ==========================================================================
-   Apple Style "Today" Specular Indicator — Apple System Red halo
+   Apple Style "Today" Specular Indicator (clean specular halo, no neon red)
    ========================================================================== */
 .cal-today {
   position: relative;
@@ -929,12 +686,12 @@ html.light .cal-slide-veil {
   pointer-events: none;
   background: radial-gradient(
     120% 90% at 50% 0%,
-    rgba(255, 59, 48, 0.22) 0%,
-    rgba(255, 59, 48, 0.04) 55%,
+    rgba(10, 132, 255, 0.22) 0%,
+    rgba(10, 132, 255, 0.04) 55%,
     transparent 100%
   );
   box-shadow:
-    0 0 0 1px rgba(255, 59, 48, 0.45),
+    0 0 0 1px rgba(10, 132, 255, 0.5),
     inset 0 1px 0 0 rgba(255, 255, 255, 0.35);
   animation: cal-today-glow 3.6s ease-in-out infinite;
 }
@@ -958,45 +715,45 @@ html.light .cal-slide-veil {
 html.light .cal-today::after {
   background: radial-gradient(
     120% 90% at 50% 0%,
-    rgba(0, 102, 204, 0.18) 0%,
-    rgba(0, 102, 204, 0.04) 55%,
+    rgba(0, 113, 227, 0.18) 0%,
+    rgba(0, 113, 227, 0.04) 55%,
     transparent 100%
   );
   box-shadow:
-    0 0 0 1px rgba(0, 102, 204, 0.4),
+    0 0 0 1px rgba(0, 113, 227, 0.45),
     inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
 }
 
 /* Search matches */
 .cal-search-match {
-  background: rgba(255, 59, 48, 0.12) !important;
-  border-color: rgba(255, 59, 48, 0.45) !important;
-  box-shadow: 0 0 0 1px rgba(255, 59, 48, 0.35) !important;
+  background: rgba(10, 132, 255, 0.15) !important;
+  border-color: rgba(10, 132, 255, 0.5) !important;
+  box-shadow: 0 0 0 1px rgba(10, 132, 255, 0.4) !important;
 }
 
 html.light .cal-search-match {
-  background: rgba(0, 102, 204, 0.12) !important;
-  border-color: rgba(0, 102, 204, 0.45) !important;
-  box-shadow: 0 0 0 1px rgba(0, 102, 204, 0.35) !important;
+  background: rgba(0, 113, 227, 0.12) !important;
+  border-color: rgba(0, 113, 227, 0.45) !important;
+  box-shadow: 0 0 0 1px rgba(0, 113, 227, 0.35) !important;
 }
 
 /* Mobile List Cards */
 html.light [data-page="calendar"] .cal-list-card {
-  background: rgba(255, 255, 255, 0.82) !important;
+  background: rgba(255, 255, 255, 0.75) !important;
   border-color: rgba(0, 0, 0, 0.08) !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
 }
 
 html.light [data-page="calendar"] .cal-list-card--top {
   background: rgba(255, 255, 255, 0.9) !important;
-  border-color: rgba(0, 102, 204, 0.35) !important;
+  border-color: rgba(0, 113, 227, 0.35) !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
 }
 
 html.light [data-page="calendar"] .cal-list-card .text-\[\#EDEDEF\],
 html.light [data-page="calendar"] .cal-list-card .text-\[\#C9C7CE\],
 html.light [data-page="calendar"] .cal-list-card .text-\[\#8A8790\] {
-  color: #1C1C1E !important;
+  color: #1D1D1F !important;
 }
 
 /* ==========================================================================
@@ -1076,79 +833,6 @@ html.light .skeleton-shimmer::after {
     rgba(255, 255, 255, 0.6) 55%,
     transparent 80%
   );
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .glass-button,
-  .glass-panel,
-  .glass-cell,
-  .glass-chip,
-  .cal-nav-arrow,
-  .chat-panel-glass,
-  .chat-panel-chrome,
-  .chat-message-bubble,
-  [class*="backdrop-blur"] {
-    -webkit-backdrop-filter: none !important;
-    backdrop-filter: none !important;
-  }
-
-  .glass-button,
-  .glass-panel,
-  .glass-cell,
-  .glass-chip,
-  .cal-nav-arrow,
-  .chat-panel-glass,
-  .chat-panel-chrome,
-  .chat-message-bubble,
-  [class*="backdrop-blur"] {
-    background-color: #252528 !important;
-  }
-
-  html.light .glass-button,
-  html.light .glass-panel,
-  html.light .glass-cell,
-  html.light .glass-chip,
-  html.light .cal-nav-arrow,
-  html.light .chat-panel-glass,
-  html.light .chat-panel-chrome,
-  html.light .chat-message-bubble,
-  html.light [class*="backdrop-blur"] {
-    background-color: #FFFFFF !important;
-  }
-
-  .chat-message-assistant,
-  .chat-message-user {
-    background-color: #3A3A3C !important;
-  }
-
-  html.light .chat-message-assistant,
-  html.light .chat-message-user {
-    background-color: #E5E5EA !important;
-  }
-}
-
-@media (prefers-contrast: more) {
-  .glass-button,
-  .glass-panel,
-  .glass-cell,
-  .glass-chip,
-  .cal-nav-arrow {
-    border-color: rgba(255, 255, 255, 0.4) !important;
-    box-shadow: none !important;
-  }
-
-  html.light .glass-button,
-  html.light .glass-panel,
-  html.light .glass-cell,
-  html.light .glass-chip,
-  html.light .cal-nav-arrow {
-    border-color: rgba(0, 0, 0, 0.35) !important;
-  }
-
-  *:focus-visible {
-    outline-width: 3px;
-    outline-offset: 3px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

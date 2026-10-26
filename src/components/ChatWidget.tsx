@@ -27,12 +27,12 @@ export function ChatWidget() {
           className="fixed z-50 bottom-[clamp(1.25rem,4vw,2rem)] right-[clamp(1.25rem,4vw,2rem)]"
         >
           <Button
-            variant="ask-ai"
+            variant="glass"
             onClick={() => setIsOpen(true)}
-            className="rounded-full gap-2.5 hover:scale-[1.03] active:scale-[0.97] transition-all cursor-pointer px-[clamp(1.25rem,3.5vw,1.75rem)]"
+            className="ask-ai-fab rounded-full gap-2.5 hover:scale-[1.03] active:scale-[0.97] transition-all cursor-pointer px-[clamp(1.25rem,3.5vw,1.75rem)]"
             aria-label="Open club AI chat assistant"
           >
-            <MessageSquare className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-white" />
+            <MessageSquare className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#0A84FF]" />
             <span className="text-fluid-small uppercase tracking-[0.05em] font-semibold">Ask AI</span>
           </Button>
         </aside>
