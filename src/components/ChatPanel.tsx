@@ -4,8 +4,6 @@ import { X, Send, Bot, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const COOLDOWN_TICKS = 5;
-const COOLDOWN_TICK_MS = 500;
 const CHAR_INTERVAL_MS = 33;
 
 function TypewriterMessage({
@@ -64,14 +62,12 @@ function TypewriterMessage({
 }
 
 export function ChatPanel({ onClose }: { onClose: () => void }) {
-  const [cooldown, setCooldown] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
   const [hasPendingSubmit, setHasPendingSubmit] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const completedMessageIds = useRef<Set<string>>(new Set());
   const pendingSubmitRef = useRef(false);
 
@@ -105,18 +101,6 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Focus input when cooldown expires
-  useEffect(() => {
-    if (cooldown === 0 && !isLoading && !isTyping) {
-      inputRef.current?.focus();
-      if (pendingSubmitRef.current && input.trim()) {
-        pendingSubmitRef.current = false;
-        setHasPendingSubmit(false);
-        formRef.current?.requestSubmit();
-      }
-    }
-  }, [cooldown, isLoading, isTyping, input]);
-
   // Escape key closes chat
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -126,38 +110,15 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-  // Clean up timer on unmount
-  useEffect(() => {
-    return () => {
-      if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
-    };
-  }, []);
-
-  function startCooldown() {
-    if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
-    setCooldown(COOLDOWN_TICKS);
-    cooldownTimerRef.current = setInterval(() => {
-      setCooldown((prev) => {
-        if (prev <= 1) {
-          clearInterval(cooldownTimerRef.current!);
-          cooldownTimerRef.current = null;
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, COOLDOWN_TICK_MS);
-  }
-
   const handleTypewriterComplete = useCallback((messageId: string) => {
     completedMessageIds.current.add(messageId);
     setIsTyping(false);
-    startCooldown();
   }, []);
 
   function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!input.trim() || pendingSubmitRef.current) return;
-    if (cooldown > 0 || isLoading || isTyping) {
+    if (isLoading || isTyping) {
       pendingSubmitRef.current = true;
       setHasPendingSubmit(true);
       return;
@@ -168,12 +129,8 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
 
   const isSubmitDisabled = !input.trim() || hasPendingSubmit;
 
-  const cooldownSeconds = (cooldown * COOLDOWN_TICK_MS) / 1000;
-  const cooldownDisplay = cooldownSeconds % 1 === 0 ? String(cooldownSeconds) : cooldownSeconds.toFixed(1);
   let placeholderText = "Ask about club details...";
-  if (cooldown > 0) {
-    placeholderText = `Wait ${cooldownDisplay}s before sending again…`;
-  } else if (isTyping) {
+  if (isTyping) {
     placeholderText = "Typing response…";
   } else if (isLoading) {
     placeholderText = "Processing…";
@@ -289,7 +246,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Chat Input with 5-second cooldown after typing completes */}
+        {/* Chat Input */}
         <form ref={formRef} onSubmit={handleFormSubmit} className="p-[var(--fluid-gap-sm)] bg-white/[0.04] border-t border-white/10 backdrop-blur-md flex gap-[clamp(0.375rem,1.5vw,0.5rem)]">
           <Input
             ref={inputRef}
@@ -305,14 +262,10 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
             type="submit"
             disabled={isSubmitDisabled}
             size="icon"
-            aria-label={cooldown > 0 ? `Cooldown: ${cooldownDisplay}s remaining` : isTyping ? "AI is typing" : "Send message"}
+            aria-label={isTyping ? "AI is typing" : "Send message"}
             className="chat-send-button shrink-0 bg-[#0A84FF] hover:bg-[#0071E3] text-white transition-all active:scale-95 cursor-pointer rounded-full"
           >
-            {cooldown > 0 ? (
-              <span className="text-fluid-label font-mono font-bold text-white">{cooldownDisplay}s</span>
-            ) : (
-              <Send className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-white" />
-            )}
+            <Send className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-white" />
           </Button>
         </form>
       </div>
