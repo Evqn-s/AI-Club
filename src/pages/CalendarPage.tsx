@@ -1651,6 +1651,79 @@ export function CalendarPage() {
     [viewMode, handleNext, handlePrev]
   );
 
+  // List wheel pager — 1:1 with no inertia: re-arms on new intent without
+  // lifting the finger (direction flip or sustained push).
+  // Strictly active in list view on desktop:
+  // in month and week views this listener is NEVER attached (dynamic return),
+  // ensuring the browser's default vertical page scroll is never blocked.
+  const listWheelGestureActive = useRef<boolean>(false);
+  const listWheelGestureTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const listWheelLastSign = useRef<number>(0);
+  const listWheelAccum = useRef<number>(0);
+  const WHEEL_REARM_PX = 60;
+
+  useEffect(() => {
+    // Dynamic return: only list view on desktop intercepts wheel events.
+    // Monthly and weekly views must NOT intercept wheel or call preventDefault,
+    // allowing native page scrolling to work seamlessly.
+    if (viewMode !== "list" || isMobileList) return;
+    const el = listContainerRef.current;
+    if (!el) return;
+
+    const rearmListGestureEnd = () => {
+      if (listWheelGestureTimer.current) clearTimeout(listWheelGestureTimer.current);
+      listWheelGestureTimer.current = setTimeout(() => {
+        listWheelGestureActive.current = false;
+        listWheelLastSign.current = 0;
+        listWheelAccum.current = 0;
+        listWheelGestureTimer.current = null;
+      }, 140);
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      // Dynamic return: do not preventDefault or hijack scroll if modal is open
+      if (selectedEventRef.current) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const primaryDelta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (primaryDelta === 0) return;
+      const sign = primaryDelta > 0 ? 1 : -1;
+
+      if (listWheelGestureActive.current) {
+        if (sign !== listWheelLastSign.current) {
+          listWheelLastSign.current = sign;
+          listWheelAccum.current = 0;
+        } else {
+          listWheelAccum.current += Math.abs(primaryDelta);
+          if (listWheelAccum.current < WHEEL_REARM_PX) {
+            rearmListGestureEnd();
+            return;
+          }
+          listWheelAccum.current = 0;
+        }
+      } else {
+        listWheelGestureActive.current = true;
+        listWheelLastSign.current = sign;
+        listWheelAccum.current = 0;
+      }
+      rearmListGestureEnd();
+
+      if (sign > 0) {
+        handleNext();
+      } else {
+        handlePrev();
+      }
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      if (listWheelGestureTimer.current) clearTimeout(listWheelGestureTimer.current);
+    };
+  }, [viewMode, handleNext, handlePrev, isMobileList]);
+
   // Touch swipe on list container — desktop pager only; mobile uses native scroll
   const listTouchStartY = useRef<number | null>(null);
 
@@ -2480,12 +2553,12 @@ export function CalendarPage() {
           className={`relative w-full py-1 ${
             isMobileList && viewMode === "list"
               ? ""
-              : "overflow-hidden select-none overscroll-contain"
+              : "overflow-hidden select-none"
           }`}
           style={
             isMobileList && viewMode === "list"
               ? { touchAction: "pan-y pinch-zoom" }
-              : undefined
+              : { touchAction: "pan-y" }
           }
         >
           <motion.div
@@ -2532,6 +2605,7 @@ export function CalendarPage() {
               perspective: viewMode === "week" ? "1400px" : undefined,
               transformStyle: viewMode === "week" ? "preserve-3d" : undefined,
               willChange: "transform, opacity",
+              touchAction: "pan-y",
             }}
             className="w-full"
           >
