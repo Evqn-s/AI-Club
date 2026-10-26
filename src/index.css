@@ -47,11 +47,11 @@ body::after {
   --bg-surface: rgba(255, 255, 255, 0.75);
   --bg-elevated: #FFFFFF;
   --text-main: #1D1D1F;
-  --color-accent-subtle: rgba(255, 59, 48, 0.12);
-  --color-accent-base: #FF3B30;
-  --color-accent-strong: #E03126;
-  --color-accent-highlight: #FF6961;
-  --color-accent-light: #FF6961;
+  --color-accent-subtle: rgba(10, 132, 255, 0.12);
+  --color-accent-base: #0A84FF;
+  --color-accent-strong: #0071E3;
+  --color-accent-highlight: #64D2FF;
+  --color-accent-light: #64D2FF;
   --color-border-subtle: rgba(0, 0, 0, 0.08);
   color-scheme: light;
 }
@@ -106,37 +106,6 @@ body::after {
     inset 0 1px 0 0 rgba(255, 255, 255, 0.36),
     0 6px 20px 0 rgba(0, 0, 0, 0.3);
   color: #FFFFFF;
-}
-
-.btn-ask-ai,
-.ask-ai-fab {
-  background: #FF3B30 !important;
-  color: #FFFFFF !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  border-top-color: rgba(255, 255, 255, 0.36) !important;
-  border-bottom-color: rgba(0, 0, 0, 0.12) !important;
-  box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.26),
-    0 4px 12px rgba(0, 0, 0, 0.2),
-    0 0 12px -3px rgba(255, 59, 48, 0.18) !important;
-  backdrop-filter: blur(28px) saturate(190%);
-  -webkit-backdrop-filter: blur(28px) saturate(190%);
-}
-
-.btn-ask-ai *,
-.ask-ai-fab * {
-  color: #FFFFFF !important;
-}
-
-.btn-ask-ai:hover,
-.ask-ai-fab:hover {
-  background: #E03126 !important;
-  border-top-color: rgba(255, 255, 255, 0.46) !important;
-  box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.28),
-    0 6px 18px rgba(0, 0, 0, 0.24),
-    0 0 16px -3px rgba(255, 59, 48, 0.24) !important;
-  color: #FFFFFF !important;
 }
 
 /* Secondary Inset Cells */
@@ -210,6 +179,66 @@ html.light [class~="hover:bg-[#D32F2F]"]:hover {
 
 html.light [class~="hover:text-[#FF6961]"]:hover {
   color: #0071E3 !important;
+}
+
+html.light [class*="text-[#FF3B30]"],
+html.light [class*="text-[#FF6961]"],
+html.light [class*="text-[#FF453A]"] {
+  color: #0071E3 !important;
+}
+
+html.light [class~="bg-[#FF3B30]"],
+html.light [class~="bg-[#E03126]"],
+html.light [class~="bg-[#D32F2F]"] {
+  background-color: #0A84FF !important;
+}
+
+html.light [class*="bg-[#FF3B30]/10"] {
+  background-color: rgba(10, 132, 255, 0.1) !important;
+}
+
+html.light [class*="bg-[#FF3B30]/15"] {
+  background-color: rgba(10, 132, 255, 0.15) !important;
+}
+
+html.light [class*="bg-[#FF3B30]/20"] {
+  background-color: rgba(10, 132, 255, 0.2) !important;
+}
+
+html.light [class*="bg-[#FF3B30]/70"] {
+  background-color: rgba(10, 132, 255, 0.7) !important;
+}
+
+html.light [class*="bg-[rgba(255,59,48,0.08"] {
+  background-color: rgba(10, 132, 255, 0.08) !important;
+}
+
+html.light [class*="bg-[rgba(255,59,48,0.2"] {
+  background-color: rgba(10, 132, 255, 0.2) !important;
+}
+
+html.light [class*="bg-[rgba(255,59,48,0.35"] {
+  background-color: rgba(10, 132, 255, 0.35) !important;
+}
+
+html.light [class*="hover:bg-[#FF3B30]"]:hover,
+html.light [class*="hover:bg-[#E03126]"]:hover,
+html.light [class*="hover:bg-[#D32F2F]"]:hover,
+html.light [class*="hover:bg-[rgba(255,59,48"]:hover {
+  background-color: #0071E3 !important;
+}
+
+html.light [class*="hover:text-[#FF3B30]"]:hover,
+html.light [class*="hover:text-[#FF6961]"]:hover,
+html.light [class*="hover:text-[#FF453A]"]:hover {
+  color: #0071E3 !important;
+}
+
+html.light [class*="border-[#FF3B30]"],
+html.light [class*="border-[rgba(255,59,48"],
+html.light [class*="ring-[#FF3B30]"] {
+  border-color: rgba(10, 132, 255, 0.45) !important;
+  --tw-ring-color: rgba(10, 132, 255, 0.45) !important;
 }
 
 /* ==========================================================================
@@ -289,15 +318,15 @@ html.light [class~="hover:text-[#FF6961]"]:hover {
 }
 
 html.light .nav-tab-active {
-  background: rgba(255, 59, 48, 0.08) !important;
-  border: 1px solid rgba(255, 59, 48, 0.2) !important;
+  background: rgba(10, 132, 255, 0.12) !important;
+  border: 1px solid rgba(10, 132, 255, 0.3) !important;
   border-top-color: rgba(255, 255, 255, 0.9) !important;
-  color: #FF3B30 !important;
+  color: #0071E3 !important;
   box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.8), 0 8px 24px rgba(0, 0, 0, 0.06) !important;
 }
 
 html.light .nav-tab-active * {
-  color: #FF3B30 !important;
+  color: #0071E3 !important;
 }
 
 /* ==========================================================================

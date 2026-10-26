@@ -21,7 +21,7 @@ const buttonVariants = cva(
         glass:
           "glass-button hover:scale-[1.02] active:scale-[0.98] cursor-pointer",
         "ask-ai":
-          "bg-[#FF3B30] hover:bg-[#E03126] text-white font-medium border border-white/20 shadow-[0_4px_12px_rgba(0,0,0,0.2)] hover:shadow-[0_0_14px_-3px_rgba(255,59,48,0.18)] active:scale-[0.98] transition-all duration-200 cursor-pointer",
+          "glass-button hover:scale-[1.02] active:scale-[0.98] cursor-pointer",
       },
       size: {
         default: "h-[var(--fluid-control-h)] px-[clamp(1rem,3vw,1.5rem)]",
