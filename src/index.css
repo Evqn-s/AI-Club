@@ -209,6 +209,14 @@ html.light [class*="bg-[#FF3B30]/70"] {
   background-color: rgba(10, 132, 255, 0.7) !important;
 }
 
+html.light [class*="bg-[#FF453A]/10"] {
+  background-color: rgba(10, 132, 255, 0.1) !important;
+}
+
+html.light [class*="bg-[#FF453A]/15"] {
+  background-color: rgba(10, 132, 255, 0.15) !important;
+}
+
 html.light [class*="bg-[rgba(255,59,48,0.08"] {
   background-color: rgba(10, 132, 255, 0.08) !important;
 }
@@ -235,6 +243,7 @@ html.light [class*="hover:text-[#FF453A]"]:hover {
 }
 
 html.light [class*="border-[#FF3B30]"],
+html.light [class*="border-[#FF453A]"],
 html.light [class*="border-[rgba(255,59,48"],
 html.light [class*="ring-[#FF3B30]"] {
   border-color: rgba(10, 132, 255, 0.45) !important;
@@ -475,11 +484,6 @@ html.light .text-white\/70 {
 html.light .text-white\/40,
 html.light .text-white\/50 {
   color: #8E8E93 !important;
-}
-
-html.light a.text-\[\#FF3B30\],
-html.light .text-\[\#FF3B30\] {
-  color: #FF3B30 !important;
 }
 
 /* Dark mode surfaces remap in light mode */
