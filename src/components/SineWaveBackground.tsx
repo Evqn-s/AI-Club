@@ -58,9 +58,9 @@ export function SineWaveBackground() {
           g = Math.round(64 + d * 86);
           b = Math.round(175 + d * 60);
         } else {
-          r = Math.round(150 + d * 74);
-          g = Math.round(35 + d * 128);
-          b = Math.round(55 + d * 115);
+          r = Math.round(40 + d * 60);
+          g = Math.round(120 + d * 80);
+          b = Math.round(230 + d * 25);
         }
 
         const grad = ctx.createLinearGradient(0, 0, width, 0);

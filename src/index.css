@@ -8,168 +8,288 @@ body::after {
   transition-duration: 150ms;
   transition-timing-function: ease;
 }
+
 @theme {
-  --color-canvas: #0A090A;
-  --color-surface-1: #141213;
-  --color-surface-2: #1E1A1B;
-  --color-surface-3: #292425;
+  --color-canvas: #000000;
+  --color-surface-1: #161618;
+  --color-surface-2: #1C1C1E;
+  --color-surface-3: #2C2C2E;
 
-  --color-accent-subtle: #2A1215;
-  --color-accent-base: #52181E;
-  --color-accent-strong: #8F232E;
-  --color-accent-highlight: #E0A3AA;
-  --color-accent-light: #E0A3AA;
+  --color-accent-subtle: rgba(10, 132, 255, 0.12);
+  --color-accent-base: #0A84FF;
+  --color-accent-strong: #0071E3;
+  --color-accent-highlight: #64D2FF;
+  --color-accent-light: #64D2FF;
 
-  --color-text-primary: #E5E5E7;
-  --color-text-secondary: #9B98A0;
-  --color-text-muted: #67646C;
-  --color-border-subtle: #242021;
-  --color-border-clean: #382D30;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #8E8E93;
+  --color-text-muted: #636366;
+  --color-border-subtle: rgba(255, 255, 255, 0.12);
+  --color-border-clean: rgba(255, 255, 255, 0.18);
 
-  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
-  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", -apple-system-headline, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif;
 }
 
 :root {
-  --bg-main: #0A090A;
-  --bg-surface: #141213;
-  --bg-elevated: #0A090A;
-  --text-main: #E5E5E7;
-  --color-border-subtle: rgba(36, 32, 33, 1);
+  --bg-main: #000000;
+  --bg-surface: rgba(255, 255, 255, 0.08);
+  --bg-elevated: #161618;
+  --text-main: #FFFFFF;
+  --color-border-subtle: rgba(255, 255, 255, 0.12);
   color-scheme: dark;
 }
 
 :root.light {
-  --bg-main: #F7F9FF;
-  --bg-surface: #FFFFFF;
-  --bg-elevated: #F7F9FF;
-  --text-main: #000000;
-  --color-border-subtle: rgba(0, 0, 0, 0.12);
+  --bg-main: #F5F5F7;
+  --bg-surface: rgba(255, 255, 255, 0.75);
+  --bg-elevated: #FFFFFF;
+  --text-main: #1D1D1F;
+  --color-border-subtle: rgba(0, 0, 0, 0.08);
   color-scheme: light;
 }
 
 /* ==========================================================================
-   Spatial Glassmorphic Design System
-   Genuine translucent frosted glass with top specular light & inner rim reflection
+   Apple Human Interface Guidelines: "Liquid Glass" Material System
+   Hardware-accelerated CSS blur (28px saturate 190%) + specular edge gradients
    ========================================================================== */
+
+/* Main Content Cards & Containers */
 .glass-panel {
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.025) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-top-color: rgba(255, 255, 255, 0.45);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.22), 0 16px 36px rgba(0, 0, 0, 0.45);
-}
-.glass-panel-hover:hover {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.05) 100%);
-  border-top-color: rgba(255, 255, 255, 0.65);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.32), 0 20px 44px rgba(0, 0, 0, 0.55);
-}
-
-.glass-button {
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  background: linear-gradient(145deg, rgba(255, 200, 200, 0.12) 0%, rgba(180, 30, 40, 0.08) 100%);
-  border: 1px solid rgba(255, 180, 180, 0.18);
-  border-top-color: rgba(255, 220, 220, 0.55);
-  box-shadow: inset 0 1px 0 0 rgba(255, 210, 210, 0.28), 0 10px 24px rgba(0, 0, 0, 0.4);
-  color: #ffffff;
-}
-.glass-button:hover {
-  background: linear-gradient(145deg, rgba(255, 210, 210, 0.2) 0%, rgba(200, 50, 60, 0.12) 100%);
-  border-top-color: rgba(255, 230, 230, 0.75);
-  box-shadow: inset 0 1px 0 0 rgba(255, 220, 220, 0.42), 0 14px 32px rgba(0, 0, 0, 0.6);
-  color: #ffffff;
-}
-
-.glass-cell {
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-top-color: rgba(255, 255, 255, 0.35);
+  border-top-color: rgba(255, 255, 255, 0.28);
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
+    0 8px 32px 0 rgba(0, 0, 0, 0.36),
+    0 1px 2px 0 rgba(0, 0, 0, 0.2);
+}
+
+.glass-panel-hover:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.18);
+  border-top-color: rgba(255, 255, 255, 0.38);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.26),
+    0 14px 40px 0 rgba(0, 0, 0, 0.42),
+    0 2px 4px 0 rgba(0, 0, 0, 0.25);
+}
+
+/* Navigation Bars, Action Controls & Buttons */
+.glass-button {
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-top-color: rgba(255, 255, 255, 0.36);
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.26),
+    0 4px 16px 0 rgba(0, 0, 0, 0.24);
+  color: #FFFFFF;
+}
+
+.glass-button:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-top-color: rgba(255, 255, 255, 0.48);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.36),
+    0 6px 20px 0 rgba(0, 0, 0, 0.3);
+  color: #FFFFFF;
+}
+
+/* Secondary Inset Cells */
+.glass-cell {
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top-color: rgba(255, 255, 255, 0.22);
+  border-bottom-color: rgba(255, 255, 255, 0.04);
   box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
 }
+
 .glass-cell-hover:hover {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0.04) 100%);
-  border-top-color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.08);
+  border-top-color: rgba(255, 255, 255, 0.32);
 }
 
+/* Micro Pills & Badges */
 .glass-chip {
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.035) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-top-color: rgba(255, 255, 255, 0.45);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-top-color: rgba(255, 255, 255, 0.25);
+  border-bottom-color: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.16);
 }
+
 .glass-chip:hover {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.065) 100%);
-  border-top-color: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.11);
+  border-top-color: rgba(255, 255, 255, 0.36);
 }
+
+/* Floating Action Button (Ask AI) */
+.ask-ai-fab {
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  background: rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-top-color: rgba(255, 255, 255, 0.42) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.32),
+    0 12px 36px 0 rgba(0, 0, 0, 0.45),
+    0 2px 8px 0 rgba(0, 0, 0, 0.25) !important;
+  color: #FFFFFF !important;
+}
+
+.ask-ai-fab:hover {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border-top-color: rgba(255, 255, 255, 0.55) !important;
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.42),
+    0 16px 44px 0 rgba(0, 0, 0, 0.52),
+    0 3px 10px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ==========================================================================
+   LIGHT MODE: Apple Liquid Glass Materials (Translucent Frosted White)
+   ========================================================================== */
 
 :root.light .glass-panel {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(219, 234, 254, 0.12) 100%);
-  border: 1px solid rgba(0, 0, 0, 0.14);
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-top-color: rgba(255, 255, 255, 0.9);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.55), 0 16px 36px rgba(0, 0, 0, 0.08);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.85),
+    0 8px 32px 0 rgba(0, 0, 0, 0.05),
+    0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  color: #1D1D1F;
 }
+
 :root.light .glass-panel-hover:hover {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.16) 0%, rgba(219, 234, 254, 0.2) 100%);
+  background: rgba(255, 255, 255, 0.65);
   border-top-color: rgba(255, 255, 255, 1);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.75), 0 20px 44px rgba(0, 0, 0, 0.12);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.95),
+    0 12px 38px 0 rgba(0, 0, 0, 0.08),
+    0 2px 4px 0 rgba(0, 0, 0, 0.04);
 }
 
 :root.light .glass-button {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.2) 0%, rgba(219, 234, 254, 0.16) 100%);
-  border: 1px solid rgba(0, 0, 0, 0.14);
-  border-top-color: rgba(255, 255, 255, 0.65);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.35), 0 10px 24px rgba(0, 0, 0, 0.12);
-  color: #141213;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-top-color: rgba(255, 255, 255, 0.95);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.85),
+    0 4px 16px 0 rgba(0, 0, 0, 0.06);
+  color: #1D1D1F;
 }
+
 :root.light .glass-button:hover {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.3) 0%, rgba(219, 234, 254, 0.24) 100%);
-  border-top-color: rgba(255, 255, 255, 0.85);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.5), 0 14px 32px rgba(0, 0, 0, 0.16);
+  background: rgba(255, 255, 255, 0.9);
+  border-top-color: rgba(255, 255, 255, 1);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.95),
+    0 6px 20px 0 rgba(0, 0, 0, 0.09);
   color: #000000;
 }
 
-/* Floating Ask AI pill: genuinely translucent glass in light mode.
-   Deliberately more specific than the generic `html.light button:hover`
-   solid fill below, so the pill stays see-through at rest and on hover. */
-html.light .ask-ai-fab {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.42) 0%, rgba(219, 234, 254, 0.22) 100%) !important;
-  border: 1px solid rgba(37, 99, 235, 0.28) !important;
-  border-top-color: rgba(255, 255, 255, 0.85) !important;
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.55), 0 8px 22px rgba(37, 99, 235, 0.10) !important;
-  backdrop-filter: blur(12px) saturate(1.25) !important;
-  -webkit-backdrop-filter: blur(12px) saturate(1.25) !important;
-}
-html.light .ask-ai-fab:hover {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.58) 0%, rgba(219, 234, 254, 0.34) 100%) !important;
-  border-color: rgba(37, 99, 235, 0.55) !important;
+:root.light .glass-cell {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-top-color: rgba(255, 255, 255, 0.85);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.8);
+  color: #1D1D1F;
 }
 
-:root.light .glass-cell {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.72) 0%, rgba(219, 234, 254, 0.42) 100%);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-top-color: rgba(255, 255, 255, 0.85);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.7);
-}
 :root.light .glass-cell-hover:hover {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.88) 0%, rgba(219, 234, 254, 0.56) 100%);
+  background: rgba(255, 255, 255, 0.8);
+  border-top-color: rgba(255, 255, 255, 0.95);
 }
 
 :root.light .glass-chip {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.82) 0%, rgba(219, 234, 254, 0.5) 100%);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-top-color: rgba(255, 255, 255, 0.9);
-}
-:root.light .glass-chip:hover {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.96) 0%, rgba(219, 234, 254, 0.64) 100%);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.85);
+  color: #1D1D1F;
 }
 
-/* Globally remove scrollbars across all browsers while keeping content scrollable */
+:root.light .glass-chip:hover {
+  background: rgba(255, 255, 255, 0.88);
+}
+
+html.light .ask-ai-fab {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-top-color: rgba(255, 255, 255, 1) !important;
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.95),
+    0 10px 32px 0 rgba(0, 0, 0, 0.08),
+    0 2px 6px 0 rgba(0, 0, 0, 0.04) !important;
+  color: #1D1D1F !important;
+}
+
+html.light .ask-ai-fab:hover {
+  background: rgba(255, 255, 255, 0.95) !important;
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 1),
+    0 14px 38px 0 rgba(0, 0, 0, 0.12),
+    0 3px 8px 0 rgba(0, 0, 0, 0.06) !important;
+}
+
+/* ==========================================================================
+   Typography & Strict Apple Hierarchy
+   - Apple SF Pro native stack everywhere
+   - Zero glowing text shadows
+   - Sharp, clear contrast
+   ========================================================================== */
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif;
+  color: var(--text-main);
+  background-color: var(--bg-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Page / Hero Titles: Bold / Heavy font weight, sharp contrast, default letter spacing */
+h1,
+.text-fluid-hero {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+/* Card Headers & Section Titles: Semibold, standard tracking */
+h2,
+h3,
+h4,
+.font-display {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+/* Meta Labels & Micro-copy: Regular or Medium weight, uppercase with slight letter-spacing */
+.text-fluid-label,
+.tracking-label,
+[class*="tracking-[0.08em]"],
+[class*="tracking-[0.06em]"] {
+  letter-spacing: 0.05em !important;
+}
+
+/* Globally remove scrollbars while keeping content scrollable */
 *,
 *::before,
 *::after {
@@ -187,172 +307,92 @@ html.light .ask-ai-fab:hover {
 html,
 body {
   overflow-x: hidden;
-  /* `clip` (not `hidden`) for the x-axis on purpose. `overflow-x: hidden`
-     turns the element into a SCROLL CONTAINER and forces its overflow-y to
-     `auto`, which on phones can swallow the page's own vertical scroll
-     gesture — the line above is kept only as a fallback for browsers
-     without `clip` support, and this overrides it everywhere modern.
-     `clip` just clips the paint and never becomes a scroller. */
   overflow-x: clip;
 }
 
-body {
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
-  color: var(--text-main);
-  background-color: var(--bg-main);
-}
-
-/* Light, vibrant red text selection */
+/* Apple System Blue text selection */
 ::selection {
-  background-color: #DC2626;
+  background-color: rgba(10, 132, 255, 0.35);
   color: #FFFFFF;
 }
 
-/* Display Titles with enhanced subtle ambient glow across all pages */
-h1,
-h2,
-h3,
-.font-display {
-  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
-  letter-spacing: -0.02em;
-  text-shadow: 0 0 14px rgba(255, 255, 255, 0.22), 0 0 28px rgba(239, 68, 68, 0.2), 0 0 45px rgba(220, 38, 38, 0.12);
+html.light ::selection {
+  background-color: rgba(0, 113, 227, 0.25);
+  color: #1D1D1F !important;
 }
 
-/* Subheadings and labels */
-.tracking-label {
-  letter-spacing: 0.06em;
-}
-
-/* Focus indicator: Red in dark mode, Blue in light mode */
+/* Apple Focus indicator */
 *:focus-visible {
-  outline: 2px solid #EF4444;
+  outline: 2px solid #0A84FF;
   outline-offset: 2px;
 }
 
 html.light *:focus-visible {
-  outline: 2px solid #2563EB;
+  outline: 2px solid #0071E3;
   outline-offset: 2px;
 }
 
-/* =========================================================
-   DARK MODE: ALL OUTLINES / BORDERS ARE RED
-   ========================================================= */
-html:not(.light) header,
-html:not(.light) header nav,
-html:not(.light) [class*="border"],
-html:not(.light) .border,
-html:not(.light) .border-t,
-html:not(.light) .border-b,
-html:not(.light) .border-l,
-html:not(.light) .border-r {
-  border-color: rgba(220, 38, 38, 0.4) !important;
-}
-
-html:not(.light) [class*="hover:border"]:hover,
-html:not(.light) [class*="hover:border-"]:hover {
-  border-color: rgba(239, 68, 68, 0.85) !important;
-}
-
+/* Subtle perimeter line */
 .perimeter-line {
-  background: linear-gradient(to right, transparent, rgba(220, 38, 38, 0.35), transparent);
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.12), transparent);
 }
 
-/* =========================================================
-   LIGHT MODE: ALL OUTLINES ARE BLUE & PURE BLACK TEXT
-   - Top navigation bar is solid white with blue outline
-   - Cards and structural borders have blue outline
-   - All text is pure solid black (#000000)
-   ========================================================= */
+html.light .perimeter-line {
+  background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.08), transparent) !important;
+}
+
+/* ==========================================================================
+   LIGHT MODE TYPOGRAPHY & SURFACE REMAPS
+   ========================================================================== */
 
 html.light body {
-  background-color: #F7F9FF;
-  color: #000000 !important;
+  background-color: #F5F5F7;
+  color: #1D1D1F !important;
 }
 
-/* The top bar shares the page canvas and has no divider in either theme. */
 header {
   border-bottom-width: 0 !important;
   background-color: transparent !important;
   box-shadow: none !important;
 }
 
-/* Light mode keeps the ambient depth blue-white; the dark red backdrop glows
-   are intentionally removed so they cannot muddy the page canvas. */
+/* Ambient canvas glows in light mode */
 html.light .ambient-glow-top {
-  background: radial-gradient(ellipse, rgba(219, 234, 254, 0.42), transparent 70%) !important;
-  opacity: 0.7;
+  background: radial-gradient(ellipse, rgba(0, 113, 227, 0.12), transparent 70%) !important;
+  opacity: 0.8;
 }
 
 html.light .ambient-glow-middle {
-  background: radial-gradient(ellipse, rgba(191, 219, 254, 0.3), transparent 70%) !important;
-  opacity: 0.65;
+  background: radial-gradient(ellipse, rgba(100, 210, 255, 0.1), transparent 70%) !important;
+  opacity: 0.7;
 }
 
-/* Light top bar matches the bluish-white page canvas. */
-html.light header {
-  background-color: transparent !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
-}
-
-html.light header .bg-\[\#0A090A\],
-html.light header .bg-\[\#0A090A\]\/95 {
-  background-color: #FFFFFF !important;
-}
-
-html.light header nav {
-  background-color: #F4F4F5 !important;
-  border-color: rgba(37, 99, 235, 0.35) !important;
-}
-
-html.light header a.bg-\[\#2A1215\],
-html.light header a.bg-\[\#241416\] {
-  background-color: #000000 !important;
-  color: #FFFFFF !important;
-  border-color: rgba(37, 99, 235, 0.45) !important;
-}
-
-/* Strict pure black text for all typography in light mode */
-html.light,
-html.light body,
+/* Strict Apple Typography contrast in light mode */
 html.light h1,
 html.light h2,
 html.light h3,
 html.light h4,
-html.light p,
-html.light span:not(header a.bg-\[\#2A1215\] *):not(header a.bg-\[\#241416\] *),
-html.light a:not(header a.bg-\[\#2A1215\]):not(header a.bg-\[\#241416\]),
-html.light time,
-html.light div,
-html.light input,
-html.light button,
-html.light svg:not(.keep-color),
 html.light .text-\[\#E5E5E7\],
-html.light .text-\[\#9B98A0\],
-html.light .text-\[\#67646C\],
-html.light .text-\[\#EF4444\],
-html.light .text-\[\#F87171\],
-html.light .text-\[\#E0A3AA\],
-html.light .text-\[\#BD6B75\],
+html.light .text-\[\#FFFFFF\],
 html.light .text-white {
-  color: #000000 !important;
+  color: #1D1D1F !important;
+  text-shadow: none !important;
 }
 
-/* Selection in light mode: blue */
-html.light ::selection {
-  background-color: #2563EB;
-  color: #FFFFFF !important;
+html.light .text-\[\#9B98A0\],
+html.light .text-\[\#67646C\] {
+  color: #86868B !important;
 }
 
-/* Neutral background surfaces */
+/* Dark mode surfaces remap in light mode */
 html.light .bg-\[\#0A090A\],
 html.light .bg-\[\#0A090A\]\/95 {
-  background-color: #F7F9FF !important;
+  background-color: #F5F5F7 !important;
 }
 
 html.light .bg-\[\#141213\],
 html.light .bg-\[\#131214\] {
-  background-color: #FFFFFF !important;
+  background-color: rgba(255, 255, 255, 0.8) !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
@@ -360,124 +400,26 @@ html.light .bg-\[\#1E1A1B\],
 html.light .bg-\[\#241416\],
 html.light .bg-\[\#2A1215\],
 html.light .bg-\[\#3D1E22\] {
-  background-color: #EEF4FF !important;
+  background-color: rgba(0, 0, 0, 0.04) !important;
 }
 
-/* Calendar-specific: opacity-modified dark backgrounds need separate selectors
-   because Tailwind generates distinct classes for bg-[#X]/N vs bg-[#X] */
-html.light .bg-\[\#141213\]\/40 {
-  background-color: rgba(255, 255, 255, 0.5) !important;
-}
-
-html.light .bg-\[\#241416\]\/50 {
-  background-color: rgba(37, 99, 235, 0.06) !important;
-}
-
-html.light .bg-black\/60,
-html.light .bg-black\/75,
-html.light .bg-black\/80 {
-  background-color: rgba(255, 255, 255, 0.8) !important;
-}
-
-/* Calendar accent rings & glows: crimson ring → blue ring in light mode */
-html.light .ring-\[\#E0A3AA\] {
-  --tw-ring-color: rgba(37, 99, 235, 0.6) !important;
-}
-html.light .ring-\[\#E0A3AA\]\/60 {
-  --tw-ring-color: rgba(37, 99, 235, 0.4) !important;
-}
-
-/* Calendar search highlight badge */
-html.light .bg-\[\#E0A3AA\] {
-  background-color: #2563EB !important;
-  color: #FFFFFF !important;
-}
-
-/* Calendar dot accent */
-html.light .bg-\[\#E0A3AA\] {
-  background-color: #2563EB !important;
-}
-
-/* Calendar shadow glows: neutralize crimson box-shadow in light mode */
-html.light [style*="box-shadow"] {
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06) !important;
-}
-
-/* ALL outlines / borders in light mode are blue */
-html.light [class*="border"],
-html.light .border,
-html.light .border-t,
-html.light .border-b,
-html.light .border-l,
-html.light .border-r,
-html.light [class*="border-\[\#"] {
-  border-color: rgba(37, 99, 235, 0.35) !important;
-}
-
-html.light .perimeter-line {
-  background: linear-gradient(to right, transparent, rgba(37, 99, 235, 0.35), transparent) !important;
-}
-
-/* Subtle, gentle hover tints in light mode with blue border accent */
+/* Light mode hover */
 html.light [class*="hover:bg-"]:hover,
 html.light button:hover,
 html.light a:hover {
-  background-color: #E8E8EC !important;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
-html.light [class*="hover:border-"]:hover,
-html.light [class*="hover:border"]:hover {
-  border-color: rgba(37, 99, 235, 0.8) !important;
-}
-
-html.light [class*="hover:text-"]:hover {
-  color: #000000 !important;
-}
-
-/* Typing cursor dot: rose in dark mode, blue in light mode */
-html.light .typing-cursor {
-  background-color: #2563EB !important;
-}
-
-/* 3 thinking dots (AI processing): rose in dark mode, blue in light mode */
-html.light .thinking-dot {
-  background-color: #2563EB !important;
-}
-
-/* Clean, subtle title glow in light mode across all titles (Home, News, Calendar) */
-html.light h1,
-html.light h2,
-html.light h3,
-html.light .font-display {
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.95), 0 0 24px rgba(59, 130, 246, 0.22), 0 0 44px rgba(37, 99, 235, 0.1) !important;
-}
-
-/* Keep small navbar brand text perfectly crisp without shadow */
-html.light header a .font-display {
-  text-shadow: none !important;
-}
-
-/* =========================================================
+/* ==========================================================================
    FLUID RESPONSIVE SCALING SYSTEM (clamp)
-   - Every element scales with the viewport via clamp(min, fluid, max)
-   - Nothing can shrink below its minimum or grow past its maximum
-   - html font-size is fluid, so all rem-based Tailwind spacing
-     (p-6, gap-6, m-4, etc.) scales automatically site-wide
-   ========================================================= */
+   Preserved layout tokens for responsive scaling
+   ========================================================================== */
 
-/* 1. Fluid root: 14px @ 320px -> 18px @ ~1600px, clamped both ends.
-   Uses rem so it still respects the user's browser font-size setting. */
 html {
   font-size: clamp(0.875rem, 0.8125rem + 0.3125vw, 1.125rem);
 }
 
 @theme {
-  /* MAIN-SITE fluid type scale — softened mobile curve.
-     Inverted (Base - Xvw) so phones render a touch ABOVE desktop, but the
-     ceilings now sit just ~8-15% over the desktop floor (was ~30-65% over),
-     so mobile text reads comfortably instead of shouting.
-     Hero keeps its classic +vw display curve; chatbot tokens untouched. */
   --text-fluid-hero: clamp(3.25rem, 1.5rem + 10vw, 8.5rem);
   --text-fluid-h1: clamp(2.25rem, 3.375rem - 2vw, 2.75rem);
   --text-fluid-h2: clamp(1.5rem, 2.25rem - 1.3vw, 1.875rem);
@@ -488,14 +430,6 @@ html {
 }
 
 :root {
-  /* MAIN-SITE layout — Desktop_Min floor, fluid middle, Mobile_Max ceiling.
-     - --fluid-stack / section-y / gaps / card-pad GROW with the viewport
-       (+vw curves, like the old space-y-16/py-12 rhythm), so desktop gets
-       the tall airy spread of the previous commits.
-     - --fluid-pad-x SHRINKS on mobile (0.75rem) and widens on desktop
-       (2rem), so phone content spreads edge-to-edge instead of sitting
-       in a narrow centered column.
-     --fluid-chat-* tokens (chatbot only) are deliberately NOT touched. */
   --fluid-container-max: clamp(20rem, 90vw, 60rem);
   --fluid-container-narrow: clamp(18rem, 88vw, 45rem);
   --fluid-pad-x: clamp(0.75rem, 0.375rem + 2vw, 2rem);
@@ -503,34 +437,18 @@ html {
   --fluid-stack: clamp(1.5rem, 1rem + 5vw, 4rem);
   --fluid-gap: clamp(0.75rem, 0.5rem + 2.5vw, 1.875rem);
   --fluid-gap-sm: clamp(0.5rem, 0.375rem + 1.5vw, 1rem);
-  /* Surfaces */
   --fluid-card-pad: clamp(1rem, 0.75rem + 3vw, 2.375rem);
   --fluid-radius: clamp(0.75rem, 2.1875rem - 2.5vw, 1.5rem);
   --fluid-radius-lg: clamp(1rem, 2.8125rem - 3.2vw, 1.875rem);
   --fluid-radius-pill: 9999px;
-  /* MAIN-SITE controls — inverted clamp(Desktop_Min, Base - Xvw, Mobile_Max).
-     Buttons / inputs / icon boxes grow on mobile for fat-finger-proof
-     touch targets and settle to today's desktop size on wide screens.
-     NOTE: --fluid-chat-* is chatbot-only and untouched; ChatWidget.tsx keeps
-     its own fixed clamp()s, and the shared close/input icons inside the chat
-     are sized by those fixed chat classes, not these tokens. */
   --fluid-control-h: clamp(2.75rem, 4.875rem - 3.75vw, 4rem);
   --fluid-control-h-sm: clamp(2.25rem, 3.75rem - 2.6vw, 3rem);
   --fluid-icon-box: clamp(2.5rem, 4.0625rem - 2.75vw, 3.25rem);
-  /* Chat widget: max width trimmed slightly so the panel and its
-     floating button keep clear of neighbouring content */
   --fluid-chat-w: clamp(20rem, calc(100vw - 3rem), 23.5rem);
   --fluid-chat-h: clamp(28rem, 70vh, 32.5rem);
 }
 
-/* 2. Fluid base typography: all unstyled headings / body copy scale.
-   NOTE: wrapped in @layer base so Tailwind utilities (e.g. text-fluid-hero,
-   which live in @layer utilities) can override these element defaults.
-   Unlayered CSS would beat ALL layered CSS and pin every h1 to h1 size. */
 @layer base {
-  /* MAIN-SITE base typography — softened inverted curve (mirrors @theme).
-     Phones render slightly above desktop, not far above it.
-     Chatbot classes untouched (see ChatWidget.tsx / --fluid-chat-*). */
   body {
     font-size: clamp(0.875rem, 1.125rem - 0.45vw, 1rem);
     line-height: 1.6;
@@ -561,7 +479,6 @@ html {
     font-size: clamp(0.625rem, 0.75rem - 0.25vw, 0.6875rem);
   }
 
-  /* 3. Media always scales down, never overflows or exceeds its cap */
   img,
   svg,
   video,
@@ -575,7 +492,6 @@ html {
   }
 }
 
-/* 4. Reusable fluid layout / surface / control helpers */
 @utility text-fluid-hero {
   font-size: var(--text-fluid-hero);
 }
@@ -644,19 +560,12 @@ html {
   height: var(--fluid-icon-box);
 }
 
-/* 5. Mobile navbar: enlarge logo pill + theme toggle + nav pills to match
-   (44px touch targets), desktop stays at its current sizes */
 @media (max-width: 639px) {
   :root {
-    --fluid-icon-box: 2.75rem; /* logo pill & theme toggle grow on mobile */
+    --fluid-icon-box: 2.75rem;
   }
 }
 
-/* 5b. Small-desktop fit (1024-1440px wide OR short desktop heights): keep the
-   clamp() system for large screens untouched, but compress vertical rhythm so
-   Home + Calendar land above the fold with no page scroll.
-   - Hero / gaps / section + card padding pull toward their floors
-   - Month day cells drop from 96px to ~64px so 6 rows + toolbar fit 720-800px */
 @media (min-width: 1024px) and (max-width: 1440px), (min-width: 1024px) and (max-height: 860px) {
   :root {
     --text-fluid-hero: clamp(2.5rem, 1.25rem + 4vw, 3.75rem);
@@ -666,26 +575,20 @@ html {
     --fluid-stack: clamp(0.75rem, 0.5rem + 2vw, 1.5rem);
     --fluid-card-pad: clamp(0.75rem, 0.5rem + 1.5vw, 1.25rem);
   }
-  /* Calendar month grid: shrink day-cell floors so rows + toolbar fit */
   [data-page="calendar"] .grid.grid-cols-7 > div[class*="min-h-"] {
     min-height: 64px !important;
   }
 }
 
-/* 6. Respect users who ask for reduced motion / very small screens */
 @media (max-width: 320px) {
   html {
     font-size: 0.875rem;
   }
 }
 
-/* =========================================================
-   CALENDAR PAGE: INSTANT THEME SWITCHING
-   Kill ALL color/bg/border CSS transitions inside [data-page="calendar"]
-   so switching dark ↔ light is paint-instant with zero transition lag.
-   Transform transitions (Framer Motion animations) are unaffected because
-   they are applied as inline styles, not via the transition-property here.
-   ========================================================= */
+/* ==========================================================================
+   CALENDAR PAGE: Paint-instant Theme Switching
+   ========================================================================== */
 [data-page="calendar"],
 [data-page="calendar"] *,
 [data-page="calendar"] *::before,
@@ -694,24 +597,12 @@ html {
   transition-duration: 0ms !important;
 }
 
-/* Allow transform-only transitions for Framer Motion chevron hover effects */
 [data-page="calendar"] .group-hover\:-translate-x-0\.5,
 [data-page="calendar"] .group-hover\:translate-x-0\.5 {
   transition-property: transform !important;
   transition-duration: 150ms !important;
 }
 
-/* MOBILE LIST CARD — live-while-scrolling, compositor-only.
-   The top card is bigger/brighter; the change animates via `transform`
-   ONLY (opacity/transform are the two properties the compositor can
-   animate without reflow or repaint). Border/shadow/color swaps apply
-   instantly on promotion (one paint per index change, not per frame),
-   while the scale glides — so the highlight visibly renders DURING the
-   scroll instead of snapping after it settles, at ~zero main-thread cost.
-   `will-change` pre-promotes the card to its own layer so the scale never
-   invalidates layout of the cards below it. This scoped exception
-   intentionally re-enables transform transitions that the global
-   "[data-page=calendar] *" kill above disables. */
 [data-page="calendar"] .cal-list-card {
   transition-property: transform !important;
   transition-duration: 180ms !important;
@@ -719,91 +610,69 @@ html {
   will-change: transform;
   contain: layout style;
 }
+
 [data-page="calendar"] .cal-list-card--top {
-  transform: scale(1.04);
+  transform: scale(1.03);
   z-index: 1;
 }
 
-/* =========================================================
-   CALENDAR NAV ARROW BUTTONS — THEME-AWARE
-   Dark mode: near-black bg with red-tinted border and hover
-   Light mode: white bg with blue-tinted border and hover
-   ========================================================= */
+/* Calendar Navigation Arrows (Apple Liquid Glass round buttons) */
 .cal-nav-arrow {
-  background-color: rgba(20, 18, 19, 0.9);
-  border: 1px solid #242021;
-  color: #9B98A0;
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-top-color: rgba(255, 255, 255, 0.35);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.25),
+    0 4px 16px 0 rgba(0, 0, 0, 0.3);
+  color: #FFFFFF;
 }
+
 .cal-nav-arrow:hover {
-  background-color: #241416;
-  border-color: #5E2C32;
-  color: #E5E5E7;
+  background-color: rgba(255, 255, 255, 0.18);
+  border-top-color: rgba(255, 255, 255, 0.5);
+  color: #FFFFFF;
 }
+
 .cal-nav-arrow svg {
   color: inherit;
 }
 
 html.light .cal-nav-arrow {
-  background-color: rgba(255, 255, 255, 0.95) !important;
-  border: 1px solid rgba(37, 99, 235, 0.35) !important;
-  color: #4B5563 !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-top-color: rgba(255, 255, 255, 0.95) !important;
+  color: #1D1D1F !important;
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.85),
+    0 4px 16px 0 rgba(0, 0, 0, 0.06) !important;
 }
+
 html.light .cal-nav-arrow:hover {
-  background-color: #EEF2FF !important;
-  border-color: rgba(37, 99, 235, 0.7) !important;
-  color: #1D4ED8 !important;
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  color: #000000 !important;
 }
+
 html.light .cal-nav-arrow svg {
   color: inherit !important;
 }
 
-/* =========================================================
-   CALENDAR PERIOD-PAGING MAIN VEIL (transition-only)
-   While a month/week change is in flight the centre slide gets this
-   translucent veil behind its content, so the main period reads as solidly
-   "the main page" instead of one more sheet of glass.
-   Why it is needed: the day cells are frosted glass at only ~6% white (see
-   .glass-cell), so without it the outgoing month's grid shows straight
-   through the incoming one and it is ambiguous which period is the main one
-   until the animation has finished.
-   Deliberately only ~45% opaque — NOT the 74% of the earlier opaque panel.
-   The neighbouring slides still read clearly as they arc past, because that
-   3D depth IS the animation and must stay visible.
-   The component animates this element's opacity 0 -> 1 while paging and back
-   to 0 the moment the arc settles, so at rest nothing is veiled and the
-   original translucent glass look is exactly as it was.
-   ========================================================= */
+/* Calendar Slide Veil */
 .cal-slide-veil {
-  /* z-index:-1 keeps it behind every in-flow child of the slide (the calendar
-     content root is not a positioned element, so a plain z-index:auto overlay
-     would paint ON TOP of the weekday labels). The centre slide is itself a
-     stacking context (will-change: transform + the animated transform), so the
-     negative level is contained: relative to the side slides at z-index:20 the
-     whole centre subtree still paints at z-index:30, i.e. the veil still sits
-     over the neighbours as they arc past. The slide has no background of its
-     own, so nothing occludes it. */
   z-index: -1;
-  background: rgba(11, 10, 11, 0.45);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
-/* Light mode: white veil, slightly lighter since light-mode glass cells are
-   already ~70% opaque (see :root.light .glass-cell) */
 html.light .cal-slide-veil {
-  background: rgba(255, 255, 255, 0.42);
-  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.05);
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
-/* =========================================================
-   CALENDAR "TODAY" GLOW
-   Applied to today's cell in Month view, today's column in the desktop Week
-   view and today's chip in the mobile Week strip. The glow is painted on an
-   ::after with z-index:-1, so it lands above the cell's own frosted glass
-   background but behind its content — the surface, borders and text stay
-   perfectly crisp and no existing ring/shadow utility gets overridden.
-   It breathes with opacity only (composited: no per-frame box-shadow repaint).
-   ========================================================= */
+/* ==========================================================================
+   Apple Style "Today" Specular Indicator (clean specular halo, no neon red)
+   ========================================================================== */
 .cal-today {
   position: relative;
 }
@@ -817,15 +686,14 @@ html.light .cal-slide-veil {
   pointer-events: none;
   background: radial-gradient(
     120% 90% at 50% 0%,
-    rgba(224, 163, 170, 0.32) 0%,
-    rgba(224, 163, 170, 0.07) 55%,
+    rgba(10, 132, 255, 0.22) 0%,
+    rgba(10, 132, 255, 0.04) 55%,
     transparent 100%
   );
   box-shadow:
-    0 0 0 1.5px rgba(224, 163, 170, 0.7),
-    0 0 16px rgba(224, 163, 170, 0.42),
-    inset 0 0 20px rgba(224, 163, 170, 0.16);
-  animation: cal-today-glow 3.2s ease-in-out infinite;
+    0 0 0 1px rgba(10, 132, 255, 0.5),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.35);
+  animation: cal-today-glow 3.6s ease-in-out infinite;
 }
 
 @keyframes cal-today-glow {
@@ -838,21 +706,63 @@ html.light .cal-slide-veil {
   }
 }
 
-/* Static halo for users who ask for reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .cal-today::after {
     animation: none;
   }
 }
 
-/* =========================================================
-   PAGE ENTRANCE — subtle fade + rise for the home route.
-   Runs once per mount (route entry). Respects reduced motion.
-   ========================================================= */
+html.light .cal-today::after {
+  background: radial-gradient(
+    120% 90% at 50% 0%,
+    rgba(0, 113, 227, 0.18) 0%,
+    rgba(0, 113, 227, 0.04) 55%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(0, 113, 227, 0.45),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+}
+
+/* Search matches */
+.cal-search-match {
+  background: rgba(10, 132, 255, 0.15) !important;
+  border-color: rgba(10, 132, 255, 0.5) !important;
+  box-shadow: 0 0 0 1px rgba(10, 132, 255, 0.4) !important;
+}
+
+html.light .cal-search-match {
+  background: rgba(0, 113, 227, 0.12) !important;
+  border-color: rgba(0, 113, 227, 0.45) !important;
+  box-shadow: 0 0 0 1px rgba(0, 113, 227, 0.35) !important;
+}
+
+/* Mobile List Cards */
+html.light [data-page="calendar"] .cal-list-card {
+  background: rgba(255, 255, 255, 0.75) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+html.light [data-page="calendar"] .cal-list-card--top {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(0, 113, 227, 0.35) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+}
+
+html.light [data-page="calendar"] .cal-list-card .text-\[\#EDEDEF\],
+html.light [data-page="calendar"] .cal-list-card .text-\[\#C9C7CE\],
+html.light [data-page="calendar"] .cal-list-card .text-\[\#8A8790\] {
+  color: #1D1D1F !important;
+}
+
+/* ==========================================================================
+   PAGE ENTRANCE
+   ========================================================================== */
 @keyframes page-enter {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -861,7 +771,7 @@ html.light .cal-slide-veil {
 }
 
 .page-enter {
-  animation: page-enter 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: page-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -870,80 +780,17 @@ html.light .cal-slide-veil {
   }
 }
 
-/* Light mode: accent glow turns sapphire blue to match the theme remap */
-html.light .cal-today::after {
-  background: radial-gradient(
-    120% 90% at 50% 0%,
-    rgba(37, 99, 235, 0.24) 0%,
-    rgba(37, 99, 235, 0.06) 55%,
-    transparent 100%
-  );
-  box-shadow:
-    0 0 0 1.5px rgba(37, 99, 235, 0.6),
-    0 0 16px rgba(37, 99, 235, 0.3),
-    inset 0 0 20px rgba(37, 99, 235, 0.12);
-}
-
-/* Search matches stay visible on the solid white light theme. */
-html.light .cal-search-match {
-  background: linear-gradient(145deg, #FFFFFF 0%, #EEF4FF 100%) !important;
-  border-color: #2563EB !important;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.48), 0 0 22px rgba(37, 99, 235, 0.42) !important;
-}
-
-/* =========================================================
-   MOBILE LIST CARDS — LIGHT MODE
-   The mobile list uses hardcoded dark surfaces
-   (bg-[#121215]/80, from-[#1A1A1E] → to-[#121215]) that no
-   generic override catches — gradients bypass background-color
-   rules. Repaint them explicitly so light mode is light.
-   ========================================================= */
-html.light [data-page="calendar"] .cal-list-card {
-  background: linear-gradient(145deg, #FFFFFF 0%, #EEF4FF 100%) !important;
-  background-image: linear-gradient(145deg, #FFFFFF 0%, #EEF4FF 100%) !important;
-  --tw-gradient-from: #FFFFFF !important;
-  --tw-gradient-to: #EEF4FF !important;
-  --tw-gradient-stops: #FFFFFF, #EEF4FF !important;
-  border-color: rgba(15, 23, 42, 0.1) !important;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06) !important;
-}
-html.light [data-page="calendar"] .cal-list-card--top {
-  background: linear-gradient(145deg, #FFFFFF 0%, #E4EDFF 100%) !important;
-  background-image: linear-gradient(145deg, #FFFFFF 0%, #E4EDFF 100%) !important;
-  --tw-gradient-from: #FFFFFF !important;
-  --tw-gradient-to: #E4EDFF !important;
-  --tw-gradient-stops: #FFFFFF, #E4EDFF !important;
-  border-color: rgba(37, 99, 235, 0.55) !important;
-  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.18), 0 8px 24px rgba(37, 99, 235, 0.16) !important;
-}
-/* Inner text greys used ONLY by the mobile list have no generic
-   light-mode mapping — force them dark for contrast. */
-html.light [data-page="calendar"] .cal-list-card .text-\[\#EDEDEF\],
-html.light [data-page="calendar"] .cal-list-card .text-\[\#C9C7CE\],
-html.light [data-page="calendar"] .cal-list-card .text-\[\#8A8790\] {
-  color: #0F172A !important;
-}
-/* Top-card rose accent → sapphire blue in light mode */
-html.light [data-page="calendar"] .cal-list-card .text-\[\#E8959C\] {
-  color: #1D4ED8 !important;
-}
-html.light [data-page="calendar"] .cal-list-card .from-\[\#E0A3AA\]\/30 {
-  --tw-gradient-from: rgba(37, 99, 235, 0.35) !important;
-}
-
-/* =========================================================
-   SKELETON SCREENS — layout-accurate loading placeholders
-   Light-gray geometric shapes that mimic incoming SQL rows/cards.
-   Pulse (opacity) + shimmer (sweep) so the brain reads structure
-   instantly and perceives the load as faster.
-   ========================================================= */
+/* ==========================================================================
+   SKELETON SCREENS (Apple Neutral Frosted Shimmer)
+   ========================================================================== */
 .skeleton-shimmer {
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  /* Dark mode: light-gray geometric base tuned for the dark canvas */
-  background-color: #26262b !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  border-radius: var(--fluid-radius);
 }
+
 .skeleton-shimmer::after {
   content: "";
   position: absolute;
@@ -954,14 +801,15 @@ html.light [data-page="calendar"] .cal-list-card .from-\[\#E0A3AA\]\/30 {
   background: linear-gradient(
     100deg,
     transparent 20%,
-    rgba(255, 255, 255, 0.14) 45%,
-    rgba(255, 255, 255, 0.22) 50%,
-    rgba(255, 255, 255, 0.14) 55%,
+    rgba(255, 255, 255, 0.08) 45%,
+    rgba(255, 255, 255, 0.16) 50%,
+    rgba(255, 255, 255, 0.08) 55%,
     transparent 80%
   );
   transform: translateX(-100%);
-  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+  animation: skeleton-shimmer 1.8s ease-in-out infinite;
 }
+
 @keyframes skeleton-shimmer {
   0% {
     transform: translateX(-100%);
@@ -971,20 +819,22 @@ html.light [data-page="calendar"] .cal-list-card .from-\[\#E0A3AA\]\/30 {
     transform: translateX(100%);
   }
 }
-/* Light mode: true light-gray shapes on the white canvas */
+
 html.light .skeleton-shimmer {
-  background-color: #e5e7eb !important;
+  background-color: rgba(0, 0, 0, 0.06) !important;
 }
+
 html.light .skeleton-shimmer::after {
   background: linear-gradient(
     100deg,
     transparent 20%,
-    rgba(255, 255, 255, 0.75) 45%,
-    rgba(255, 255, 255, 0.95) 50%,
-    rgba(255, 255, 255, 0.75) 55%,
+    rgba(255, 255, 255, 0.6) 45%,
+    rgba(255, 255, 255, 0.9) 50%,
+    rgba(255, 255, 255, 0.6) 55%,
     transparent 80%
   );
 }
+
 @media (prefers-reduced-motion: reduce) {
   .skeleton-shimmer::after {
     animation: none;

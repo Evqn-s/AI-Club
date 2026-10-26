@@ -7,7 +7,7 @@ function NewsCardSkeleton() {
   return (
     <div
       aria-hidden="true"
-      className="rounded-[var(--fluid-radius-lg)] border border-[#242021] p-[var(--fluid-card-pad)] space-y-3"
+      className="glass-panel p-[var(--fluid-card-pad)] space-y-3"
     >
       <div className="flex flex-wrap items-center justify-between gap-2 pb-[clamp(0.5rem,2vw,0.75rem)]">
         <Skeleton className="h-6 w-24 rounded-full" />

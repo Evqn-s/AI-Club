@@ -4,16 +4,22 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-[clamp(0.6875rem,0.65rem_+_0.4vw,0.75rem)] font-medium uppercase tracking-[0.06em] transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 min-h-[var(--fluid-control-h)] px-[clamp(1rem,3vw,1.5rem)] py-[clamp(0.5rem,2vw,0.625rem)]",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-[clamp(0.6875rem,0.65rem_+_0.4vw,0.75rem)] font-medium uppercase tracking-[0.05em] transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 min-h-[var(--fluid-control-h)] px-[clamp(1rem,3vw,1.5rem)] py-[clamp(0.5rem,2vw,0.625rem)] select-none",
   {
     variants: {
       variant: {
-        default: "bg-[#241416] text-[#FFFFFF] border border-[#5E2C32] hover:bg-[#33181C] hover:border-[#BD6B75] shadow-sm",
-        outline: "border border-[#382D30] bg-[#141213] text-[#E5E5E7] hover:border-[#5E2C32] hover:text-[#FFFFFF] hover:bg-[#1E1A1B]",
-        secondary: "bg-[#1E1A1B] text-[#9B98A0] border border-[#382D30] hover:text-[#FFFFFF] hover:border-[#5E2C32]",
-        ghost: "hover:bg-[#1E1A1B] text-[#9B98A0] hover:text-[#FFFFFF]",
-        link: "text-[#E0A3AA] hover:text-[#FFFFFF] underline-offset-4 hover:underline p-0 min-h-0 normal-case tracking-normal",
-        glass: "glass-button hover:scale-[1.02] active:scale-[0.98]",
+        default:
+          "bg-white text-black hover:bg-white/90 active:scale-[0.98] shadow-sm transition-all cursor-pointer font-semibold",
+        outline:
+          "border border-white/20 bg-white/[0.06] text-white hover:bg-white/[0.12] hover:border-white/30 active:scale-[0.98] transition-all cursor-pointer backdrop-blur-md",
+        secondary:
+          "bg-white/10 text-white/90 hover:bg-white/15 active:scale-[0.98] border border-white/10 transition-all cursor-pointer",
+        ghost:
+          "hover:bg-white/10 text-white/70 hover:text-white transition-all cursor-pointer",
+        link:
+          "text-[#0A84FF] hover:text-[#64D2FF] underline-offset-4 hover:underline p-0 min-h-0 normal-case tracking-normal cursor-pointer",
+        glass:
+          "glass-button hover:scale-[1.02] active:scale-[0.98] cursor-pointer",
       },
       size: {
         default: "h-[var(--fluid-control-h)] px-[clamp(1rem,3vw,1.5rem)]",

@@ -10,8 +10,7 @@ import { ArrowRight, MessageSquare } from "lucide-react";
 // skeleton has identical geometry; only SQL-backed values shimmer.
 // The hero title ("AI Club") and both CTAs are static values — they render
 // as real, fully functional content so the page is interactive while the
-// Supabase record loads (View Schedule prefetches /calendar; Ask AI opens
-// the globally-mounted chat widget via the aiclub:open-chat event).
+// Supabase record loads.
 export function HomeSkeleton() {
   return (
     <div
@@ -21,7 +20,7 @@ export function HomeSkeleton() {
     >
       {/* Hero — real title + functional CTAs (identical markup to HomePage) */}
       <section className="text-center max-w-[var(--fluid-container-max)] mx-auto w-full space-y-[var(--fluid-gap)] pt-[clamp(0.5rem,1vw,1rem)] pb-[clamp(0.25rem,1vw,0.75rem)]">
-        <h1 className="text-fluid-hero font-black tracking-[-0.04em] font-display text-[#E5E5E7] leading-[0.95] select-none">
+        <h1 className="text-fluid-hero font-bold tracking-[-0.02em] text-white leading-[0.98] select-none">
           AI Club
         </h1>
         <div className="flex flex-wrap items-center justify-center gap-[clamp(0.5rem,2vw,0.75rem)] pt-[clamp(0.25rem,1.5vw,0.5rem)]">
@@ -41,9 +40,9 @@ export function HomeSkeleton() {
             size="lg"
             type="button"
             onClick={() => window.dispatchEvent(new CustomEvent("aiclub:open-chat"))}
-            className="text-[#E5E5E7] hover:text-[#FFFFFF]"
+            className="text-white hover:text-white"
           >
-            <MessageSquare className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)]" />
+            <MessageSquare className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#0A84FF]" />
             <span>Ask AI</span>
           </Button>
         </div>
@@ -54,11 +53,11 @@ export function HomeSkeleton() {
         <div className="flex flex-col gap-[var(--fluid-gap)]">
           <Card className="glass-panel flex-1">
             <CardHeader>
-              <div className="flex items-center gap-2 text-[#E0A3AA] mb-1">
+              <div className="flex items-center gap-2 mb-1">
                 <Skeleton className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] rounded-full shrink-0" />
-                <span className="text-fluid-label font-medium tracking-[0.08em] uppercase text-[#9B98A0]">Schedule</span>
+                <span className="text-fluid-label font-medium tracking-[0.05em] uppercase text-[#8E8E93]">Schedule</span>
               </div>
-              <CardTitle className="text-[#E5E5E7]">Regular Meetings</CardTitle>
+              <CardTitle className="text-white font-semibold">Regular Meetings</CardTitle>
             </CardHeader>
             <CardContent className="flex-1 flex items-center">
               <Skeleton className="h-[clamp(1.25rem,4vw,1.5rem)] w-3/4 rounded-[var(--fluid-radius)]" />
@@ -67,14 +66,14 @@ export function HomeSkeleton() {
 
           <Card className="glass-panel flex-1">
             <CardHeader>
-              <div className="flex items-center gap-2 text-[#E0A3AA] mb-1">
+              <div className="flex items-center gap-2 mb-1">
                 <Skeleton className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] rounded-full shrink-0" />
-                <span className="text-fluid-label font-medium tracking-[0.08em] uppercase text-[#9B98A0]">Discord Server</span>
+                <span className="text-fluid-label font-medium tracking-[0.05em] uppercase text-[#8E8E93]">Discord Server</span>
               </div>
-              <CardTitle className="text-[#E5E5E7]">Join Our Community</CardTitle>
+              <CardTitle className="text-white font-semibold">Join Our Community</CardTitle>
             </CardHeader>
             <CardContent className="flex-1 flex items-center">
-              <div className="w-full flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021] glass-cell text-fluid-small">
+              <div className="w-full flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] glass-cell text-fluid-small">
                 <div className="flex items-center gap-2.5">
                   <Skeleton className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] rounded-full shrink-0" />
                   <Skeleton className="h-4 w-20 rounded-full" />
@@ -87,29 +86,29 @@ export function HomeSkeleton() {
         {/* Connect — static header, 3 outlined rows */}
         <Card className="glass-panel">
           <CardHeader>
-            <div className="flex items-center gap-2 text-[#E0A3AA] mb-1">
+            <div className="flex items-center gap-2 mb-1">
               <Skeleton className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] rounded-full shrink-0" />
-              <span className="text-fluid-label font-medium tracking-[0.08em] uppercase text-[#9B98A0]">Connect</span>
+              <span className="text-fluid-label font-medium tracking-[0.05em] uppercase text-[#8E8E93]">Connect</span>
             </div>
-            <CardTitle className="text-[#E5E5E7]">Get in Touch</CardTitle>
+            <CardTitle className="text-white font-semibold">Get in Touch</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-[clamp(0.5rem,2vw,0.625rem)]">
-              <div className="flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021] glass-cell text-fluid-small">
+              <div className="flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] glass-cell text-fluid-small">
                 <div className="flex items-center gap-2.5">
                   <Skeleton className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] rounded-full shrink-0" />
                   <Skeleton className="h-4 w-16 rounded-full" />
                 </div>
                 <Skeleton className="h-4 w-44 max-w-full rounded-md" />
               </div>
-              <div className="flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021] glass-cell text-fluid-small">
+              <div className="flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] glass-cell text-fluid-small">
                 <div className="flex items-center gap-2.5">
                   <Skeleton className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] rounded-full shrink-0" />
                   <Skeleton className="h-4 w-24 rounded-full" />
                 </div>
                 <Skeleton className="h-4 w-28 rounded-md" />
               </div>
-              <div className="flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] border border-[#242021] glass-cell text-fluid-small">
+              <div className="flex flex-wrap items-center justify-between gap-[clamp(0.5rem,2vw,0.75rem)] p-[var(--fluid-gap-sm)] rounded-[var(--fluid-radius)] glass-cell text-fluid-small">
                 <div className="flex items-center gap-2.5">
                   <Skeleton className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] rounded-full shrink-0" />
                   <Skeleton className="h-4 w-24 rounded-full" />
