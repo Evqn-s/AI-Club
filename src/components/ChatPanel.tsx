@@ -191,7 +191,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
         role="dialog"
         aria-modal="true"
         aria-label="Club AI Assistant Chat Window"
-        className="flex flex-col w-[var(--fluid-chat-w)] max-w-[calc(100vw-2rem)] h-[var(--fluid-chat-h)] max-h-[85vh] glass-panel rounded-[var(--fluid-radius-lg)] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150"
+        className="flex flex-col w-[var(--fluid-chat-w)] max-w-[calc(100vw-2rem)] h-[var(--fluid-chat-h)] max-h-[85vh] glass-panel backdrop-blur-xl rounded-[var(--fluid-radius-lg)] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-[clamp(1rem,3vw,1.25rem)] py-[clamp(0.75rem,2.5vw,0.875rem)] bg-white/[0.04] border-b border-white/10 backdrop-blur-md">
@@ -281,7 +281,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
           )}
 
           {error && (
-            <div className="rounded-[var(--fluid-radius)] bg-white/10 border border-[#FF453A]/40 p-[var(--fluid-gap-sm)] text-fluid-small text-[#FF453A]">
+            <div role="alert" className="status-error rounded-[var(--fluid-radius)] border p-[var(--fluid-gap-sm)] text-fluid-small">
               Failed to receive answer. Please verify your connection or try again.
             </div>
           )}

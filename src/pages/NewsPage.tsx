@@ -103,7 +103,7 @@ export function NewsPage() {
         <button
           onClick={() => setSortNewest((v) => !v)}
           aria-label={`Sort announcements: currently ${sortNewest ? "newest first" : "oldest first"}`}
-          className="self-start sm:self-auto flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium uppercase tracking-[0.05em] rounded-full transition-all text-white glass-button active:scale-95 cursor-pointer"
+          className="self-start sm:self-auto flex items-center gap-1.5 min-h-[44px] px-3.5 py-1.5 text-xs font-medium uppercase tracking-[0.05em] rounded-full transition-all text-white glass-button active:scale-95 cursor-pointer"
         >
           <ArrowUpDown className="h-3.5 w-3.5 text-[#FF3B30]" />
           <span>{sortNewest ? "Newest first" : "Oldest first"}</span>
@@ -112,9 +112,9 @@ export function NewsPage() {
 
       {/* Explicit Error State Alert if Network Failed */}
       {error && (
-        <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-[var(--fluid-radius-lg)] border border-[#FF453A]/30 bg-[#FF453A]/10 text-fluid-small text-[#FF453A] animate-in fade-in duration-150">
+        <div role="alert" className="status-error flex flex-wrap items-center justify-between gap-2 p-3 rounded-[var(--fluid-radius-lg)] border text-fluid-small animate-in fade-in duration-150">
           <div className="flex items-center gap-2.5">
-            <AlertCircle className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#FF453A] shrink-0" />
+            <AlertCircle className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] status-error-icon shrink-0" />
             <span>{error}</span>
           </div>
           <Button variant="outline" size="sm" onClick={() => fetchNews(true)} className="shrink-0">

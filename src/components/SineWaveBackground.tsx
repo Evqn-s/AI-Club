@@ -54,10 +54,10 @@ export function SineWaveBackground() {
 
         let r: number, g: number, b: number;
         if (isLight) {
-          // Light mode: faint slate/red tint — rgba(180,80,80,0.2)
-          r = Math.round(160 + d * 40);
-          g = Math.round(60 + d * 30);
-          b = Math.round(60 + d * 20);
+          // Light mode: Apple system blue, with slight variation by strand depth.
+          r = Math.round(d * 10);
+          g = Math.round(113 + d * 19);
+          b = Math.round(227 + d * 28);
         } else {
           // Dark mode: desaturated crimson tint — rgba(255,59,48,0.25)
           r = Math.round(200 + d * 55);
