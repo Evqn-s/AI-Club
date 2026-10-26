@@ -40,7 +40,7 @@ export function Navbar() {
           onTouchStart={() => prefetchData("/")}
           className="order-1 flex items-center gap-2 sm:gap-2.5 shrink-0 group"
         >
-          <span className="flex h-[var(--fluid-icon-box)] w-[var(--fluid-icon-box)] items-center justify-center rounded-full glass-chip text-fluid-small font-semibold text-white shadow-sm">
+          <span className="dark-brand-mark flex h-[var(--fluid-icon-box)] w-[var(--fluid-icon-box)] items-center justify-center rounded-full glass-chip text-fluid-small font-semibold text-white shadow-sm">
             AI
           </span>
           <span className="text-fluid-body sm:text-fluid-small font-bold tracking-tight text-white group-hover:text-white/80 transition-colors whitespace-nowrap">
@@ -53,7 +53,7 @@ export function Navbar() {
 
         {/* Navigation Pills — full-width centered row on mobile (below logo/theme),
             inline right-aligned group on desktop */}
-        <nav className="order-3 sm:order-2 flex items-center justify-center w-full sm:w-auto sm:justify-start p-[clamp(0.25rem,1vw,0.375rem)] sm:ml-auto gap-[clamp(0.25rem,1vw,0.375rem)] rounded-full glass-button">
+        <nav className="site-nav-shell order-3 sm:order-2 flex items-center justify-center w-full sm:w-auto sm:justify-start p-[clamp(0.25rem,1vw,0.375rem)] sm:ml-auto gap-[clamp(0.25rem,1vw,0.375rem)] rounded-full glass-button">
           {links.map((link) => {
             const isActive = location === link.href;
             return (
@@ -83,7 +83,7 @@ export function Navbar() {
                 }}
                 className={`flex items-center justify-center rounded-full font-medium tracking-[0.05em] transition-all whitespace-nowrap px-[clamp(0.875rem,2.5vw,1.25rem)] py-[clamp(0.5rem,1.5vw,0.625rem)] min-h-[clamp(2.5rem,2.25rem_+_2vw,2.75rem)] text-fluid-body sm:px-[clamp(0.625rem,2vw,1rem)] sm:py-[clamp(0.25rem,1vw,0.375rem)] sm:min-h-0 sm:text-fluid-small cursor-pointer ${
                   isActive
-                    ? "bg-white/20 text-white border border-white/25 shadow-sm font-semibold"
+                    ? "dark-active-nav bg-white/20 text-white border border-white/25 shadow-sm font-semibold"
                     : "text-[#8E8E93] hover:text-white hover:bg-white/10"
                 }`}
               >

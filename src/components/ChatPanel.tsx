@@ -240,7 +240,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
                 <div
                   className={`rounded-[var(--fluid-radius)] px-[clamp(0.75rem,2.5vw,1rem)] py-[clamp(0.5rem,2vw,0.625rem)] max-w-[82%] text-fluid-small leading-relaxed ${
                     isUser
-                      ? "bg-[#0A84FF] text-white shadow-sm font-normal"
+                      ? "chat-user-bubble bg-[#0A84FF] text-white shadow-sm font-normal"
                       : "chat-assistant-bubble glass-cell text-white"
                   }`}
                 >
@@ -306,7 +306,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
             disabled={isSubmitDisabled}
             size="icon"
             aria-label={cooldown > 0 ? `Cooldown: ${cooldownDisplay}s remaining` : isTyping ? "AI is typing" : "Send message"}
-            className="shrink-0 bg-[#0A84FF] hover:bg-[#0071E3] text-white transition-all active:scale-95 cursor-pointer rounded-full"
+            className="chat-send-button shrink-0 bg-[#0A84FF] hover:bg-[#0071E3] text-white transition-all active:scale-95 cursor-pointer rounded-full"
           >
             {cooldown > 0 ? (
               <span className="text-fluid-label font-mono font-bold text-white">{cooldownDisplay}s</span>

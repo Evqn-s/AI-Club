@@ -50,7 +50,7 @@ export function SineWaveBackground() {
       const width = window.innerWidth;
       cachedGrads = Array.from({ length: NUM_STRANDS }, (_, s) => {
         const d = s / (NUM_STRANDS - 1);
-        const maxAlpha = 0.12 + d * 0.36;
+        const maxAlpha = isLight ? 0.12 + d * 0.36 : 0.008 + d * 0.012;
 
         let r: number, g: number, b: number;
         if (isLight) {
@@ -58,9 +58,9 @@ export function SineWaveBackground() {
           g = Math.round(64 + d * 86);
           b = Math.round(175 + d * 60);
         } else {
-          r = Math.round(40 + d * 60);
-          g = Math.round(120 + d * 80);
-          b = Math.round(230 + d * 25);
+          r = Math.round(92 + d * 54);
+          g = Math.round(8 + d * 12);
+          b = Math.round(18 + d * 20);
         }
 
         const grad = ctx.createLinearGradient(0, 0, width, 0);

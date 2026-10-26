@@ -89,7 +89,7 @@ export function NewsPage() {
   }, [news, sortNewest]);
 
   return (
-    <div className="w-full max-w-[var(--fluid-container-narrow)] mx-auto px-[var(--fluid-pad-x)] py-4 sm:py-6 space-y-[var(--fluid-gap)]">
+    <div className="news-page w-full max-w-[var(--fluid-container-narrow)] mx-auto px-[var(--fluid-pad-x)] py-4 sm:py-6 space-y-[var(--fluid-gap)]">
       {/* Header */}
       <div className="border-b border-white/10 pb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
@@ -112,9 +112,9 @@ export function NewsPage() {
 
       {/* Explicit Error State Alert if Network Failed */}
       {error && (
-        <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-[var(--fluid-radius-lg)] border border-[#FF453A]/30 bg-[#FF453A]/10 text-fluid-small text-[#FF453A] animate-in fade-in duration-150">
+        <div className="news-error flex flex-wrap items-center justify-between gap-2 p-3 rounded-[var(--fluid-radius-lg)] border border-[#FF453A]/30 bg-[#FF453A]/10 text-fluid-small text-[#FF453A] animate-in fade-in duration-150">
           <div className="flex items-center gap-2.5">
-            <AlertCircle className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#FF453A] shrink-0" />
+            <AlertCircle className="news-error-icon h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#FF453A] shrink-0" />
             <span>{error}</span>
           </div>
           <Button variant="outline" size="sm" onClick={() => fetchNews(true)} className="shrink-0">
@@ -148,10 +148,10 @@ export function NewsPage() {
                   opacity: { duration: 0.2 },
                 }}
               >
-                <Card className="glass-panel glass-panel-hover transition-all">
+                <Card className="news-card glass-panel glass-panel-hover transition-all">
                   <CardHeader className="pb-[clamp(0.5rem,2vw,0.75rem)]">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <Badge variant="default">{item.author}</Badge>
+                      <Badge className="news-author-badge" variant="default">{item.author}</Badge>
                       <time dateTime={item.timestamp} className="text-fluid-small font-medium text-[#8E8E93]">
                         {new Date(item.timestamp).toLocaleDateString("en-US", {
                           month: "short",
