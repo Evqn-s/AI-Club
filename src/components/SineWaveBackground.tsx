@@ -50,7 +50,7 @@ export function SineWaveBackground() {
       const width = window.innerWidth;
       cachedGrads = Array.from({ length: NUM_STRANDS }, (_, s) => {
         const d = s / (NUM_STRANDS - 1);
-        const maxAlpha = isLight ? 0.12 + d * 0.36 : 0.008 + d * 0.012;
+        const maxAlpha = isLight ? 0.12 + d * 0.36 : 0.28 + d * 0.26;
 
         let r: number, g: number, b: number;
         if (isLight) {
@@ -58,9 +58,9 @@ export function SineWaveBackground() {
           g = Math.round(64 + d * 86);
           b = Math.round(175 + d * 60);
         } else {
-          r = Math.round(92 + d * 54);
-          g = Math.round(8 + d * 12);
-          b = Math.round(18 + d * 20);
+          r = Math.round(190 + d * 55);
+          g = Math.round(16 + d * 20);
+          b = Math.round(28 + d * 26);
         }
 
         const grad = ctx.createLinearGradient(0, 0, width, 0);
@@ -154,8 +154,8 @@ export function SineWaveBackground() {
         // Double-stroke glow for front strands without expensive shadowBlur
         if (s >= NUM_STRANDS - 3) {
           ctx.save();
-          ctx.lineWidth = (0.9 + d * 0.8) * 2.5;
-          ctx.globalAlpha = 0.25;
+          ctx.lineWidth = (0.9 + d * 0.8) * 3;
+          ctx.globalAlpha = isLight ? 0.25 : 0.4;
           ctx.stroke();
           ctx.restore();
         }
