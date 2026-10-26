@@ -191,10 +191,10 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
         role="dialog"
         aria-modal="true"
         aria-label="Club AI Assistant Chat Window"
-        className="flex flex-col w-[var(--fluid-chat-w)] max-w-[calc(100vw-2rem)] h-[var(--fluid-chat-h)] max-h-[85vh] glass-panel backdrop-blur-xl rounded-[var(--fluid-radius-lg)] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150"
+        className="chat-panel-glass flex flex-col w-[var(--fluid-chat-w)] max-w-[calc(100vw-2rem)] h-[var(--fluid-chat-h)] max-h-[85vh] glass-panel backdrop-blur-xl rounded-[var(--fluid-radius-lg)] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-[clamp(1rem,3vw,1.25rem)] py-[clamp(0.75rem,2.5vw,0.875rem)] bg-white/[0.04] border-b border-white/10 backdrop-blur-md">
+        <div className="chat-panel-chrome flex items-center justify-between px-[clamp(1rem,3vw,1.25rem)] py-[clamp(0.75rem,2.5vw,0.875rem)] border-b border-white/10">
           <div className="flex items-center gap-[clamp(0.5rem,2vw,0.75rem)]">
             <div className="p-[clamp(0.25rem,1.5vw,0.375rem)] rounded-full glass-chip text-[#FF3B30]">
               <Bot className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)]" />
@@ -238,10 +238,10 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
                   </div>
                 )}
                 <div
-                  className={`rounded-[var(--fluid-radius)] px-[clamp(0.75rem,2.5vw,1rem)] py-[clamp(0.5rem,2vw,0.625rem)] max-w-[82%] text-fluid-small leading-relaxed ${
+                  className={`chat-message-bubble rounded-[var(--fluid-radius)] px-[clamp(0.75rem,2.5vw,1rem)] py-[clamp(0.5rem,2vw,0.625rem)] max-w-[82%] text-fluid-small leading-relaxed ${
                     isUser
-                      ? "bg-[#FF3B30] text-white shadow-sm font-normal"
-                      : "glass-cell text-white"
+                      ? "chat-message-user font-normal"
+                      : "chat-message-assistant glass-cell"
                   }`}
                 >
                   {isUser ? (
@@ -271,7 +271,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
               <div className="h-[clamp(1.25rem,4vw,1.5rem)] w-[clamp(1.25rem,4vw,1.5rem)] rounded-full glass-chip text-[#FF3B30] flex items-center justify-center shrink-0 mt-0.5">
                 <Bot className="h-[clamp(0.625rem,2vw,0.75rem)] w-[clamp(0.625rem,2vw,0.75rem)]" />
               </div>
-              <div className="rounded-[var(--fluid-radius)] px-[clamp(0.75rem,2.5vw,1rem)] py-[clamp(0.5rem,2vw,0.625rem)] glass-cell text-[#8E8E93] text-fluid-small flex items-center gap-1.5">
+              <div className="chat-message-bubble chat-message-assistant rounded-[var(--fluid-radius)] px-[clamp(0.75rem,2.5vw,1rem)] py-[clamp(0.5rem,2vw,0.625rem)] glass-cell text-[#8E8E93] text-fluid-small flex items-center gap-1.5">
                 <span className="thinking-dot inline-block h-[clamp(0.25rem,1vw,0.375rem)] w-[clamp(0.25rem,1vw,0.375rem)] rounded-full bg-[#FF3B30] animate-bounce"></span>
                 <span className="thinking-dot inline-block h-[clamp(0.25rem,1vw,0.375rem)] w-[clamp(0.25rem,1vw,0.375rem)] rounded-full bg-[#FF3B30] animate-bounce [animation-delay:0.2s]"></span>
                 <span className="thinking-dot inline-block h-[clamp(0.25rem,1vw,0.375rem)] w-[clamp(0.25rem,1vw,0.375rem)] rounded-full bg-[#FF3B30] animate-bounce [animation-delay:0.4s]"></span>
@@ -290,7 +290,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Chat Input with 5-second cooldown after typing completes */}
-        <form ref={formRef} onSubmit={handleFormSubmit} className="p-[var(--fluid-gap-sm)] bg-white/[0.04] border-t border-white/10 backdrop-blur-md flex gap-[clamp(0.375rem,1.5vw,0.5rem)]">
+        <form ref={formRef} onSubmit={handleFormSubmit} className="chat-panel-chrome p-[var(--fluid-gap-sm)] border-t border-white/10 flex gap-[clamp(0.375rem,1.5vw,0.5rem)]">
           <Input
             ref={inputRef}
             value={input}

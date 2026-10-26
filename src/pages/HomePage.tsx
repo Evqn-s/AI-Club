@@ -87,6 +87,7 @@ export function HomePage() {
             asChild
             variant="glass"
             size="lg"
+            className="home-cta"
           >
             <Link
               href="/calendar"
@@ -102,9 +103,10 @@ export function HomePage() {
              variant="ask-ai"
             size="lg"
             type="button"
+            className="home-cta"
             onClick={() => window.dispatchEvent(new CustomEvent("aiclub:open-chat"))}
           >
-            <MessageSquare className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-white" />
+            <MessageSquare className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#FF3B30]" />
             <span>Ask AI</span>
           </Button>
         </div>

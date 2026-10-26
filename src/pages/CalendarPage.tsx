@@ -576,7 +576,7 @@ const MonthDayCell = memo(function MonthDayCell({
         if (!isInteractive || !hasEvents) return;
         onSelectEvent(dayEvents[0]);
       }}
-      className={`min-h-[140px] sm:min-h-[160px] md:min-h-[220px] lg:min-h-[260px] xl:min-h-[300px] rounded-lg md:rounded-xl border p-1 md:p-1.5 flex flex-col justify-between transition-all ${
+      className={`calendar-month-cell min-h-[140px] sm:min-h-[160px] md:min-h-[220px] lg:min-h-[260px] xl:min-h-[300px] rounded-lg md:rounded-xl border p-1 md:p-1.5 flex flex-col justify-between transition-all ${
         hasEvents ? "cursor-pointer md:cursor-default" : ""
       } ${
         dayObj.isCurrentMonth
@@ -722,7 +722,7 @@ const MobileWeekView = memo(function MobileWeekView({
               }}
               className={`flex-1 min-w-[44px] min-h-[44px] py-1.5 px-1 rounded-xl border flex flex-col items-center gap-0.5 transition-all shadow-md ${
                 isSelected
-                  ? "glass-panel ring-1 ring-[#FF3B30] border-[#FF3B30] border-t-white/60 text-[#FF3B30] shadow-sm"
+                  ? "calendar-week-selected glass-panel text-[#FF3B30] shadow-sm"
                   : "glass-cell glass-cell-hover text-white/60"
               } ${d.isToday ? "cal-today" : ""}`}
             >
@@ -878,7 +878,7 @@ const DesktopWeekView = memo(function DesktopWeekView({
               isDateSearched
                 ? "glass-panel ring-2 ring-[#FF3B30] border-[#FF3B30] border-t-white/60 shadow-lg"
                 : dayObj.isToday
-                ? "glass-panel ring-1 ring-[#FF3B30]/60 border-white/20 border-t-white/50 shadow-sm cal-today"
+                  ? "glass-panel border-white/20 border-t-white/50 shadow-sm cal-today"
                 : "glass-cell glass-cell-hover"
               } ${isDateSearched ? "cal-search-match" : ""}`}
           >
