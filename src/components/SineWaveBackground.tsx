@@ -9,8 +9,9 @@ const MAX_GRID_CELLS = 180_000;
 // the original displacement while returning more slowly.
 const RIPPLE_ELASTICITY = 0.5;
 const STRAND_RIPPLE_SCALE = 4 * RIPPLE_ELASTICITY ** 2;
-const MAX_STRAND_SPEED_BOOST = 4;
-const STRAND_SPEED_REFERENCE = 0.5;
+const BASE_INTERACTION_SPEED = 1.4;
+const SPEED_BOOST_THRESHOLD = 1.0;
+const MAX_SPEED_BOOST = 2.5;
 const STRAND_SPEED_DECAY_MS = 180;
 const MOUSE_SMOOTHING = 0.18;
 const SINE_GRAB_THRESHOLD = 28;
@@ -310,12 +311,21 @@ export function SineWaveBackground() {
       }
 
       const centerY = Math.max(height * 0.34, 230);
-      const speedBoost =
-        Math.min(mouse.speed / STRAND_SPEED_REFERENCE, MAX_STRAND_SPEED_BOOST) *
-        Math.exp(
-          -(performance.now() - mouse.lastMoveTime) / STRAND_SPEED_DECAY_MS,
-        );
-      const speedScale = 1 + speedBoost;
+      let speedScale = 1;
+      if (mouse.isHovered) {
+        // Once interacting, the wave moves at one constant speed regardless of
+        // mid cursor speed. Only a significant increase boosts it further.
+        speedScale = BASE_INTERACTION_SPEED;
+        if (mouse.speed > SPEED_BOOST_THRESHOLD) {
+          const boost =
+            Math.min(mouse.speed / SPEED_BOOST_THRESHOLD, MAX_SPEED_BOOST) *
+            Math.exp(
+              -(performance.now() - mouse.lastMoveTime) /
+                STRAND_SPEED_DECAY_MS,
+            );
+          speedScale *= 1 + boost;
+        }
+      }
       const heldStretch = mouse.isDragging
         ? mouse.y -
           mouse.grabStartY +
