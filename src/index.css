@@ -1218,17 +1218,19 @@ html.light .cal-today::after {
     inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
 }
 
-/* Search matches */
+/* Search matches — keep the match indicated, but never a dark filled square
+   on a calendar cell in either dark or light mode (was a near-black square
+   that followed the highlighted date when changing months/weeks). */
 .cal-search-match {
-  background: rgba(53, 25, 30, 0.9) !important;
-  border-color: rgba(143, 38, 52, 0.72) !important;
-  box-shadow: 0 0 0 1px rgba(143, 38, 52, 0.46) !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-color: rgba(143, 38, 52, 0.35) !important;
+  box-shadow: 0 0 0 1px rgba(143, 38, 52, 0.18) !important;
 }
 
 html.light .cal-search-match {
-  background: rgba(0, 113, 227, 0.12) !important;
-  border-color: rgba(0, 113, 227, 0.45) !important;
-  box-shadow: 0 0 0 1px rgba(0, 113, 227, 0.35) !important;
+  background: rgba(0, 113, 227, 0.05) !important;
+  border-color: rgba(0, 113, 227, 0.25) !important;
+  box-shadow: 0 0 0 1px rgba(0, 113, 227, 0.18) !important;
 }
 
 /* Mobile List Cards */

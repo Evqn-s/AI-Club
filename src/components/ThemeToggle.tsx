@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useLayoutEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 
 type Theme = "dark" | "light";
@@ -25,12 +25,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       const saved = localStorage.getItem("aiclub-theme");
       if (saved === "light" || saved === "dark") return saved;
     }
+    // Default to dark mode when the site first loads (no saved preference yet).
     return "dark";
   });
 
-  useEffect(() => {
-    // Persist after every state change and apply it again for non-click changes
-    // such as restoring the saved preference during the first render.
+  // Apply before the first paint so the default dark theme is present on load
+  // with no flash of the wrong appearance. Re-applies on every theme change.
+  useLayoutEffect(() => {
     applyTheme(theme);
     localStorage.setItem("aiclub-theme", theme);
   }, [theme]);
