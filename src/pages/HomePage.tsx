@@ -72,6 +72,80 @@ export function HomePage() {
 
   return (
     <div className="flex-1 flex flex-col justify-between gap-[clamp(1rem,2vw,1.75rem)] py-[clamp(0.75rem,2vw,1.25rem)] page-enter">
+      <svg className="schedule-glass-filters" aria-hidden="true" focusable="false">
+        <defs>
+          <filter
+            id="schedule-glass-warp"
+            x="-10%"
+            y="-10%"
+            width="120%"
+            height="120%"
+            colorInterpolationFilters="sRGB"
+          >
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.015 0.03"
+              numOctaves="1"
+              seed="8"
+              result="glassNoise"
+            />
+            <feDisplacementMap
+              in="SourceGraphic"
+              in2="glassNoise"
+              scale="5"
+              xChannelSelector="R"
+              yChannelSelector="G"
+            />
+          </filter>
+          <filter
+            id="schedule-glass-edge"
+            x="-10%"
+            y="-10%"
+            width="120%"
+            height="120%"
+            colorInterpolationFilters="sRGB"
+          >
+            <feMorphology
+              in="SourceAlpha"
+              operator="erode"
+              radius="1"
+              result="glassCore"
+            />
+            <feGaussianBlur in="glassCore" stdDeviation="1.5" result="softEdge" />
+            <feColorMatrix
+              in="softEdge"
+              type="matrix"
+              values="0 0 0 0 0
+                      0 0 0 0 0
+                      0 0 0 0 0
+                      0 0 0 18 -7"
+              result="tightCore"
+            />
+            <feComposite
+              in="SourceAlpha"
+              in2="tightCore"
+              operator="out"
+              result="fluidOutline"
+            />
+            <feFlood
+              floodColor="#D9D5D7"
+              floodOpacity="0.28"
+              result="outlineColor"
+            />
+            <feComposite
+              in="outlineColor"
+              in2="fluidOutline"
+              operator="in"
+              result="outlineTint"
+            />
+            <feComposite
+              in="SourceGraphic"
+              in2="outlineTint"
+              operator="over"
+            />
+          </filter>
+        </defs>
+      </svg>
       {/* Editorial Centered Hero with Bold Scale & Negative Space */}
       <section className="text-center max-w-[var(--fluid-container-max)] mx-auto w-full space-y-[var(--fluid-gap)] pt-[clamp(0.5rem,1vw,1rem)] pb-[clamp(0.25rem,1vw,0.75rem)]">
         {info?.club_name ? (
@@ -90,6 +164,7 @@ export function HomePage() {
           >
             <Link
               href="/calendar"
+              className="schedule-glass-cta"
               onMouseEnter={() => import("@/lib/data").then(({ prefetchRoute }) => prefetchRoute("/calendar"))}
               onFocus={() => import("@/lib/data").then(({ prefetchRoute }) => prefetchRoute("/calendar"))}
               onTouchStart={() => import("@/lib/data").then(({ prefetchRoute }) => prefetchRoute("/calendar"))}
@@ -103,7 +178,7 @@ export function HomePage() {
             size="lg"
             type="button"
             onClick={() => window.dispatchEvent(new CustomEvent("aiclub:open-chat"))}
-            className="text-white hover:text-white"
+            className="ask-ai-glass-cta text-white hover:text-white"
           >
             <MessageSquare className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#0A84FF]" />
             <span>Ask AI</span>
