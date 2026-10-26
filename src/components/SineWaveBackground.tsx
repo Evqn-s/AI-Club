@@ -3,6 +3,13 @@ import { useEffect, useRef, useState } from "react";
 const NUM_STRANDS = 10;
 const X_STEP = 6;
 const MAX_GRID_CELLS = 180_000;
+const MOBILE_MAX_GRID_CELLS = 90_000;
+const MOBILE_MIN_GRID_STEP = 6;
+const MOBILE_MAX_DPR = 1.5;
+const MOBILE_OPACITY = 0.7;
+const MOBILE_PHASE_SPEED = 0.0055;
+const STRAND_RIPPLE_DEAD_ZONE = 3;
+const STRAND_RIPPLE_RESPONSE_MS = 100;
 
 // Controls only how strongly ripples deform the sine strands: 0 disables
 // their response, 1 preserves the original effect, and 2 produces four times
@@ -55,6 +62,11 @@ export function SineWaveBackground() {
     let smoothedDisplacements = new Float32Array();
     let isPaused = false;
     let isLight = document.documentElement.classList.contains("light");
+    const isMobile = window.matchMedia(
+      "(max-width: 767px), (pointer: coarse)",
+    ).matches;
+    const maxGridCells = isMobile ? MOBILE_MAX_GRID_CELLS : MAX_GRID_CELLS;
+    const maxDpr = isMobile ? MOBILE_MAX_DPR : 2;
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
@@ -92,7 +104,9 @@ export function SineWaveBackground() {
     function buildGradients() {
       cachedGrads = Array.from({ length: NUM_STRANDS }, (_, s) => {
         const depth = s / (NUM_STRANDS - 1);
-        const maxAlpha = isLight ? 0.12 + depth * 0.36 : 0.32 + depth * 0.3;
+        const opacityScale = isMobile ? MOBILE_OPACITY : 1;
+        const maxAlpha =
+          (isLight ? 0.12 + depth * 0.36 : 0.32 + depth * 0.3) * opacityScale;
         const r = isLight
           ? Math.round(30 + depth * 37)
           : Math.round(218 + depth * 32);
@@ -125,13 +139,13 @@ export function SineWaveBackground() {
       width = window.innerWidth || 1;
       height = window.innerHeight || 1;
       scaleFactor = Math.max(
-        4,
-        Math.ceil(Math.sqrt((width * height) / MAX_GRID_CELLS)),
+        isMobile ? MOBILE_MIN_GRID_STEP : 4,
+        Math.ceil(Math.sqrt((width * height) / maxGridCells)),
       );
       cols = Math.max(3, Math.floor(width / scaleFactor));
       rows = Math.max(3, Math.floor(height / scaleFactor));
 
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, maxDpr);
       targetCanvas.width = width * dpr;
       targetCanvas.height = height * dpr;
       context.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -284,7 +298,11 @@ export function SineWaveBackground() {
           if (intensity < 0.8) {
             pixels32[pixelIndex++] = 0;
           } else {
-            const alpha = Math.floor(255 * Math.min(intensity / 255, 0.85));
+            const alpha = Math.floor(
+              255 *
+                Math.min(intensity / 255, 0.85) *
+                (isMobile ? MOBILE_OPACITY : 1),
+            );
             const red = isLight ? 10 : 235;
             const green = isLight ? 132 : 30;
             const blue = isLight ? 255 : 45;
@@ -296,10 +314,10 @@ export function SineWaveBackground() {
       tempCtx?.putImageData(imgData, 0, 0);
       context.save();
       context.setTransform(
-        Math.min(window.devicePixelRatio || 1, 2),
+        Math.min(window.devicePixelRatio || 1, maxDpr),
         0,
         0,
-        Math.min(window.devicePixelRatio || 1, 2),
+        Math.min(window.devicePixelRatio || 1, maxDpr),
         0,
         0,
       );
@@ -320,8 +338,7 @@ export function SineWaveBackground() {
           const boost =
             Math.min(mouse.speed / SPEED_BOOST_THRESHOLD, MAX_SPEED_BOOST) *
             Math.exp(
-              -(performance.now() - mouse.lastMoveTime) /
-                STRAND_SPEED_DECAY_MS,
+              -(performance.now() - mouse.lastMoveTime) / STRAND_SPEED_DECAY_MS,
             );
           speedScale *= 1 + boost;
         }
@@ -333,6 +350,9 @@ export function SineWaveBackground() {
             ((performance.now() - mouse.grabStartTime) / 1000) *
             DRAG_HOLD_STRETCH_RATE
         : 0;
+      const rippleResponseActive =
+        mouse.isHovered &&
+        performance.now() - mouse.lastMoveTime < STRAND_RIPPLE_RESPONSE_MS;
       const centerStrand = (NUM_STRANDS - 1) / 2;
       let pointIndex = 0;
       for (let x = 0; x <= width; x += X_STEP) {
@@ -340,8 +360,15 @@ export function SineWaveBackground() {
         const gridCol = Math.floor(x / scaleFactor);
         const gridRow = Math.floor(sampleY / scaleFactor);
         let targetDisplacement = 0;
-        if (gridCol > 0 && gridCol < cols && gridRow > 0 && gridRow < rows) {
-          const rippleMagnitude = Math.abs(buffer1[gridRow * cols + gridCol]);
+        if (
+          rippleResponseActive &&
+          gridCol > 0 &&
+          gridCol < cols &&
+          gridRow > 0 &&
+          gridRow < rows
+        ) {
+          const sample = Math.abs(buffer1[gridRow * cols + gridCol]);
+          const rippleMagnitude = Math.max(0, sample - STRAND_RIPPLE_DEAD_ZONE);
           const direction = mouse.radial
             ? Math.sign(sampleY - mouse.y)
             : mouse.directionY;
@@ -410,7 +437,7 @@ export function SineWaveBackground() {
       mouse.prevX = mouse.x;
       mouse.prevY = mouse.y;
       if (!prefersReducedMotion) {
-        phase += 0.0035;
+        phase += isMobile ? MOBILE_PHASE_SPEED : 0.0035;
         animationFrameId = requestAnimationFrame(drawFrame);
       }
     }
@@ -459,6 +486,7 @@ export function SineWaveBackground() {
     }
 
     function handleMouseDown(event: MouseEvent) {
+      const now = performance.now();
       mouse.x = event.clientX;
       mouse.y = event.clientY;
       mouse.targetX = event.clientX;
@@ -467,6 +495,7 @@ export function SineWaveBackground() {
       mouse.rawY = event.clientY;
       mouse.isHovered = true;
       mouse.radial = true;
+      mouse.lastMoveTime = now;
       tryGrabSine(event.clientX, event.clientY);
       triggerClickRipple(event.clientX, event.clientY);
     }
@@ -483,6 +512,7 @@ export function SineWaveBackground() {
     function handleTouchStart(event: TouchEvent) {
       const touch = event.touches[0];
       if (touch) {
+        const now = performance.now();
         mouse.x = touch.clientX;
         mouse.y = touch.clientY;
         mouse.targetX = touch.clientX;
@@ -491,6 +521,7 @@ export function SineWaveBackground() {
         mouse.rawY = touch.clientY;
         mouse.isHovered = true;
         mouse.radial = true;
+        mouse.lastMoveTime = now;
         triggerClickRipple(touch.clientX, touch.clientY);
       }
     }
