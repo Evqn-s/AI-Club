@@ -231,7 +231,7 @@ html:not(.light) .ask-ai-fab:hover {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background: rgba(116, 120, 130, 0.08) !important;
+  background: rgba(116, 120, 130, 0.03) !important;
   border: 1px solid rgba(205, 105, 116, 0.24) !important;
   border-top-color: rgba(236, 145, 154, 0.42) !important;
   backdrop-filter: blur(18px) saturate(155%);
@@ -256,9 +256,8 @@ html:not(.light) .ask-ai-fab:hover {
   filter: url("#schedule-glass-edge");
   background: linear-gradient(
     145deg,
-    rgba(255, 255, 255, 0.12),
-    rgba(140, 140, 150, 0.025) 52%,
-    rgba(120, 35, 48, 0.055)
+    rgba(178, 136, 142, 0.045),
+    rgba(120, 35, 48, 0.025)
   );
 }
 
@@ -268,7 +267,7 @@ html:not(.light) .ask-ai-fab:hover {
 }
 
 .schedule-glass-cta:hover {
-  background: rgba(132, 135, 145, 0.14) !important;
+  background: rgba(132, 135, 145, 0.06) !important;
   border-color: rgba(215, 119, 129, 0.36) !important;
   border-top-color: rgba(245, 168, 176, 0.52) !important;
 }
@@ -277,7 +276,7 @@ html:not(.light) .ask-ai-fab:hover {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background: rgba(116, 120, 130, 0.08) !important;
+  background: rgba(116, 120, 130, 0.03) !important;
   border: 1px solid rgba(205, 105, 116, 0.24) !important;
   border-top-color: rgba(236, 145, 154, 0.42) !important;
   backdrop-filter: blur(18px) saturate(155%);
@@ -300,9 +299,8 @@ html:not(.light) .ask-ai-fab:hover {
   filter: url("#schedule-glass-edge");
   background: linear-gradient(
     145deg,
-    rgba(255, 255, 255, 0.12),
-    rgba(140, 140, 150, 0.025) 52%,
-    rgba(120, 35, 48, 0.055)
+    rgba(178, 136, 142, 0.045),
+    rgba(120, 35, 48, 0.025)
   );
 }
 
@@ -312,7 +310,7 @@ html:not(.light) .ask-ai-fab:hover {
 }
 
 .ask-ai-glass-cta:hover {
-  background: rgba(132, 135, 145, 0.14) !important;
+  background: rgba(132, 135, 145, 0.06) !important;
   border-color: rgba(215, 119, 129, 0.36) !important;
   border-top-color: rgba(245, 168, 176, 0.52) !important;
 }
@@ -326,7 +324,7 @@ html:not(.light) .ask-ai-fab:hover {
 }
 
 html.light .schedule-glass-cta {
-  background: rgba(105, 112, 126, 0.055) !important;
+  background: rgba(105, 112, 126, 0.025) !important;
   border-color: rgba(160, 75, 86, 0.18) !important;
   border-top-color: rgba(194, 100, 110, 0.3) !important;
   box-shadow:
@@ -338,18 +336,17 @@ html.light .schedule-glass-cta {
 html.light .schedule-glass-cta::before {
   background: linear-gradient(
     145deg,
-    rgba(255, 255, 255, 0.26),
-    rgba(120, 125, 138, 0.02) 58%,
-    rgba(130, 48, 58, 0.025)
+    rgba(178, 136, 142, 0.035),
+    rgba(130, 48, 58, 0.018)
   );
 }
 
 html.light .schedule-glass-cta:hover {
-  background: rgba(105, 112, 126, 0.09) !important;
+  background: rgba(105, 112, 126, 0.05) !important;
 }
 
 html.light .ask-ai-glass-cta {
-  background: rgba(105, 112, 126, 0.055) !important;
+  background: rgba(105, 112, 126, 0.025) !important;
   border-color: rgba(160, 75, 86, 0.18) !important;
   border-top-color: rgba(194, 100, 110, 0.3) !important;
   box-shadow:
@@ -361,14 +358,13 @@ html.light .ask-ai-glass-cta {
 html.light .ask-ai-glass-cta::before {
   background: linear-gradient(
     145deg,
-    rgba(255, 255, 255, 0.26),
-    rgba(120, 125, 138, 0.02) 58%,
-    rgba(130, 48, 58, 0.025)
+    rgba(178, 136, 142, 0.035),
+    rgba(130, 48, 58, 0.018)
   );
 }
 
 html.light .ask-ai-glass-cta:hover {
-  background: rgba(105, 112, 126, 0.09) !important;
+  background: rgba(105, 112, 126, 0.05) !important;
 }
 
 html:not(.light) [class*="text-[#0A84FF]"],
