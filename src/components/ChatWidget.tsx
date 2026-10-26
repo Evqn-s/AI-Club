@@ -32,7 +32,7 @@ export function ChatWidget() {
             className="ask-ai-fab rounded-full gap-2.5 hover:scale-[1.03] active:scale-[0.97] transition-all cursor-pointer px-[clamp(1.25rem,3.5vw,1.75rem)]"
             aria-label="Open club AI chat assistant"
           >
-            <MessageSquare className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-[#0A84FF]" />
+            <MessageSquare className="h-[clamp(0.875rem,2vw,1rem)] w-[clamp(0.875rem,2vw,1rem)] text-white" />
             <span className="text-fluid-small uppercase tracking-[0.05em] font-semibold">Ask AI</span>
           </Button>
         </aside>

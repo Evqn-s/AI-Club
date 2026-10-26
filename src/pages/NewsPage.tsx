@@ -105,7 +105,7 @@ export function NewsPage() {
           aria-label={`Sort announcements: currently ${sortNewest ? "newest first" : "oldest first"}`}
           className="self-start sm:self-auto flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium uppercase tracking-[0.05em] rounded-full transition-all text-white glass-button active:scale-95 cursor-pointer"
         >
-          <ArrowUpDown className="h-3.5 w-3.5 text-[#0A84FF]" />
+          <ArrowUpDown className="h-3.5 w-3.5 text-[#FF3B30]" />
           <span>{sortNewest ? "Newest first" : "Oldest first"}</span>
         </button>
       </div>
@@ -191,7 +191,7 @@ export function NewsPage() {
                             <ol className="list-decimal pl-5 mb-3 space-y-1" {...props} />
                           ),
                           a: ({ node, ...props }) => (
-                            <a className="text-[#0A84FF] hover:text-[#64D2FF] hover:underline transition-colors" target="_blank" rel="noopener noreferrer" {...props} />
+                            <a className="text-[#FF3B30] hover:text-[#FF6961] hover:underline transition-colors" target="_blank" rel="noopener noreferrer" {...props} />
                           ),
                         }}
                       >

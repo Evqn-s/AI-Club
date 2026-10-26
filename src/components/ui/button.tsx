@@ -17,9 +17,11 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-white/10 text-white/70 hover:text-white transition-all cursor-pointer",
         link:
-          "text-[#0A84FF] hover:text-[#64D2FF] underline-offset-4 hover:underline p-0 min-h-0 normal-case tracking-normal cursor-pointer",
+          "text-[#FF3B30] hover:text-[#FF6961] underline-offset-4 hover:underline p-0 min-h-0 normal-case tracking-normal cursor-pointer",
         glass:
           "glass-button hover:scale-[1.02] active:scale-[0.98] cursor-pointer",
+        "ask-ai":
+          "btn-ask-ai bg-gradient-to-br from-[#FF3B30] to-[#C0392B] text-white font-semibold border border-white/20 border-t-white/35 shadow-[0_4px_16px_rgba(192,57,43,0.4)] hover:from-[#FF453A] hover:to-[#D32F2F] hover:shadow-[0_6px_22px_rgba(192,57,43,0.5)] active:scale-[0.98] cursor-pointer",
       },
       size: {
         default: "h-[var(--fluid-control-h)] px-[clamp(1rem,3vw,1.5rem)]",

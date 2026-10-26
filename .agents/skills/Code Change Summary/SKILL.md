@@ -1,20 +1,21 @@
 ---
 name: comprehensive-code-summary
-description: Generate a structured, comprehensive summary of changes, file manifests, architectural choices, edge cases, and verification steps after writing or modifying code. Use when the user asks for a detailed explanation of code changes, code summaries, or implementation reviews.
+description: Enforces an exhaustive, natural-language narrative explanation of all code changes, file modifications, architectural logic, edge cases, and verification steps after writing or refactoring code. Use when detailed step-by-step code change walkthroughs are required.
 ---
 
-# Comprehensive Code Summary Skill
+# Detailed Code Walkthrough & Change Summary Skill
 
 ## Purpose
-This skill ensures that whenever code is written, modified, or refactored, the response does not just dump raw code blocks and stop. Instead, it forces a rigorous, multi-point breakdown of what was changed, why it was changed, potential risks, and how to verify it.
+This skill ensures that whenever code is written, modified, or refactored, the response does not just dump raw code blocks or brief bullet points. Instead, it forces a deep, natural-language explanation of **exactly what happened** inside each file, covering data flows, control structures, and functional changes.
 
 ## Execution Rules
 
-1. **Mandatory Conclusion:** Every time code generation or file modification is completed, you MUST conclude your response with the **Change Summary Report**. Never omit this section, even for small changes.
-2. **Exhaustive File Manifest:** List every single file created, modified, or deleted. Do not group unrelated changes under a vague description; break them down per file.
-3. **Transparent Reasoning:** Under architectural choices, explicitly state the rationale behind patterns used (e.g., why a specific data structure, library, or error-handling pattern was chosen) and any assumptions made.
-4. **Proactive Risk Analysis:** Always think critically about edge cases (e.g., null pointers, race conditions, type mismatches, missing environment variables) and side effects on other components.
-5. **Actionable Verification:** Provide exact, copy-pasteable terminal commands required to test or lint the code (e.g., `pytest tests/test_foo.py`, `npm run build`).
+1. **Mandatory Natural-Language Narrative:** For every file created or modified, explain the *how* and *why* in detailed, readable paragraphs. Describe data flows, state changes, input/output behaviors, and internal logic step-by-step.
+2. **Prohibit Surface-Level Summaries:** Never use vague bullet points such as *"Updated logic"*, *"Added validation"*, or *"Refactored code"*. You must state *what* validation was added, *which* fields it inspects, and *how* errors or responses are handled.
+3. **Exhaustive File Manifest:** List every single file created, modified, or deleted. Grouping multiple files under a single generic description is strictly forbidden.
+4. **Transparent Reasoning:** Explicitly state the rationale behind patterns used (e.g., why a specific data structure, library, or algorithm was chosen) and any assumptions or trade-offs made.
+5. **Proactive Risk Analysis:** Detail edge cases handled (e.g., null values, network failures, race conditions, type conversions) and explicitly flag potential side effects on existing code.
+6. **Actionable Verification:** Provide exact, copy-pasteable terminal commands required to test, build, or verify the updates.
 
 ---
 
@@ -22,26 +23,27 @@ This skill ensures that whenever code is written, modified, or refactored, the r
 
 Conclude your code response with the following exact layout:
 
-### 📋 Change Summary Report
+### 📋 Detailed Code Change Walkthrough
 
-1. **High-Level Overview:**
-   - 1–2 sentences summarizing the primary goal accomplished in this implementation.
+1. **High-Level Implementation Overview:**
+   - 2–3 sentences summarizing the primary goal accomplished and how the solution integrates into the overall architecture.
 
-2. **File Manifest & Changes:**
+2. **File-by-File Narrative Manifest:**
    - **`path/to/file.ext`** *(Created / Modified / Deleted)*:
-     - Specific change or addition 1.
-     - Specific change or addition 2.
+     - **Narrative Walkthrough:** Write a descriptive paragraph explaining exactly what changed inside this file. Describe functions/classes introduced or modified, data flow, conditions checked, and error handling.
+     - **Key Logic Highlights:** Detail specific variables, logic flow updates, or structural changes.
 
 3. **Architectural & Design Choices:**
-   - Rationale for the chosen pattern, library, or logic flow.
-   - Key assumptions or trade-offs accepted.
+   - Rationale for the chosen pattern, library, or logic flow over alternatives.
+   - Key assumptions or performance/complexity trade-offs accepted.
 
 4. **Potential Side Effects & Edge Cases:**
-   - Identified edge cases handled (or left as future improvements).
-   - Impact on existing dependencies, schemas, or tests.
+   - Specific edge cases handled (or left as future improvements).
+   - Downstream impact on existing dependencies, database schemas, or tests.
 
 5. **Next Steps / Verification:**
    - Exact terminal command(s) to run for verification:
      ```bash
-     # Example command
+     # Example verification command
      ```
+   - Manual verification steps if applicable.
