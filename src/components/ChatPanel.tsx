@@ -241,7 +241,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
                   className={`rounded-[var(--fluid-radius)] px-[clamp(0.75rem,2.5vw,1rem)] py-[clamp(0.5rem,2vw,0.625rem)] max-w-[82%] text-fluid-small leading-relaxed ${
                     isUser
                       ? "bg-[#0A84FF] text-white shadow-sm font-normal"
-                      : "glass-cell text-white"
+                      : "chat-assistant-bubble glass-cell text-white"
                   }`}
                 >
                   {isUser ? (

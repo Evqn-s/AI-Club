@@ -399,6 +399,40 @@ html.light .text-white {
   text-shadow: none !important;
 }
 
+html.light [class~="text-white/40"],
+html.light [class~="text-white/50"],
+html.light [class~="text-white/60"],
+html.light [class~="text-white/70"] {
+  color: #57575D !important;
+}
+
+html.light [class~="text-white/80"],
+html.light [class~="text-white/90"] {
+  color: #1D1D1F !important;
+}
+
+html.light [class*="hover:text-white"]:hover,
+html.light .group:hover [class*="group-hover:text-white"] {
+  color: #1D1D1F !important;
+}
+
+html.light [class*="placeholder:text-white/"]::placeholder {
+  color: #57575D !important;
+  opacity: 1;
+}
+
+html:not(.light) .chat-assistant-bubble {
+  background: rgba(128, 128, 136, 0.24) !important;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF !important;
+}
+
+html.light .chat-assistant-bubble {
+  background: rgba(82, 86, 94, 0.14) !important;
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #1D1D1F !important;
+}
+
 html.light .text-\[\#9B98A0\],
 html.light .text-\[\#67646C\] {
   color: #86868B !important;
