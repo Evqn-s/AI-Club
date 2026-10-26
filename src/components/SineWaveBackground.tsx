@@ -4,12 +4,18 @@ const NUM_STRANDS = 10;
 const X_STEP = 6;
 const MAX_GRID_CELLS = 180_000;
 
-// Controls only how much water ripples affect the sine strands: 0 disables
 // Controls only how strongly ripples deform the sine strands: 0 disables
 // their response, 1 preserves the original effect, and 2 produces four times
 // the original displacement while returning more slowly.
-const RIPPLE_ELASTICITY = 1;
-const STRAND_RIPPLE_SCALE = 2 * RIPPLE_ELASTICITY ** 2;
+const RIPPLE_ELASTICITY = 0.5;
+const STRAND_RIPPLE_SCALE = 4 * RIPPLE_ELASTICITY ** 2;
+const MAX_STRAND_SPEED_BOOST = 4;
+const STRAND_SPEED_REFERENCE = 0.5;
+const STRAND_SPEED_DECAY_MS = 180;
+const MOUSE_SMOOTHING = 0.18;
+const SINE_GRAB_THRESHOLD = 28;
+const DRAG_INFLUENCE_WIDTH = 120;
+const DRAG_HOLD_STRETCH_RATE = 35;
 const WAVE_STRENGTH = 0.25;
 const WAVE_SPEED = 0.25;
 const DAMPENING = 0.96;
@@ -45,7 +51,7 @@ export function SineWaveBackground() {
     let imgData = new ImageData(1, 1);
     let pixels32 = new Uint32Array(imgData.data.buffer);
     let cachedGrads: CanvasGradient[] = [];
-    let smoothedDisplacements: Float32Array[] = [];
+    let smoothedDisplacements = new Float32Array();
     let isPaused = false;
     let isLight = document.documentElement.classList.contains("light");
     const prefersReducedMotion = window.matchMedia(
@@ -59,9 +65,21 @@ export function SineWaveBackground() {
     const mouse = {
       x: -1000,
       y: -1000,
+      targetX: -1000,
+      targetY: -1000,
+      rawX: -1000,
+      rawY: -1000,
       prevX: -1000,
       prevY: -1000,
       isHovered: false,
+      directionY: 1,
+      speed: 0,
+      lastMoveTime: 0,
+      radial: false,
+      isDragging: false,
+      grabStartY: 0,
+      grabStartTime: 0,
+      grabDirectionY: 1,
     };
 
     function packPixel(r: number, g: number, b: number, a: number) {
@@ -121,10 +139,7 @@ export function SineWaveBackground() {
       buffer2 = new Float32Array(cols * rows);
       imgData = new ImageData(cols, rows);
       pixels32 = new Uint32Array(imgData.data.buffer);
-      smoothedDisplacements = Array.from(
-        { length: NUM_STRANDS },
-        () => new Float32Array(Math.ceil(width / X_STEP) + 1),
-      );
+      smoothedDisplacements = new Float32Array(Math.ceil(width / X_STEP) + 1);
 
       if (tempCanvas.width !== cols || tempCanvas.height !== rows) {
         tempCanvas.width = cols;
@@ -170,6 +185,37 @@ export function SineWaveBackground() {
           }
         }
       }
+    }
+
+    function getSineY(x: number, strand: number) {
+      const depth = strand / (NUM_STRANDS - 1);
+      const centerY = Math.max(height * 0.34, 230);
+      const baseY = centerY + (depth - 0.5) * 60;
+      const depthPhase = phase + depth * 1.35;
+      return (
+        baseY +
+        Math.sin(x * 0.0022 + depthPhase) * (26 + depth * 18) +
+        Math.cos(x * 0.0045 + depthPhase * 0.7) * (10 + depth * 8)
+      );
+    }
+
+    function tryGrabSine(x: number, y: number) {
+      let nearestDistance = Number.POSITIVE_INFINITY;
+      let nearestStrand = 0;
+      for (let strand = 0; strand < NUM_STRANDS; strand++) {
+        const distance = Math.abs(getSineY(x, strand) - y);
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearestStrand = strand;
+        }
+      }
+      if (nearestDistance > SINE_GRAB_THRESHOLD) return;
+
+      mouse.isDragging = true;
+      mouse.grabStartY = y;
+      mouse.grabStartTime = performance.now();
+      mouse.grabDirectionY =
+        Math.sign(y - getSineY(x, nearestStrand)) || mouse.directionY;
     }
 
     function triggerClickRipple(clickX: number, clickY: number) {
@@ -264,33 +310,64 @@ export function SineWaveBackground() {
       }
 
       const centerY = Math.max(height * 0.34, 230);
+      const speedBoost =
+        Math.min(mouse.speed / STRAND_SPEED_REFERENCE, MAX_STRAND_SPEED_BOOST) *
+        Math.exp(
+          -(performance.now() - mouse.lastMoveTime) / STRAND_SPEED_DECAY_MS,
+        );
+      const speedScale = 1 + speedBoost;
+      const heldStretch = mouse.isDragging
+        ? mouse.y -
+          mouse.grabStartY +
+          mouse.grabDirectionY *
+            ((performance.now() - mouse.grabStartTime) / 1000) *
+            DRAG_HOLD_STRETCH_RATE
+        : 0;
+      const centerStrand = (NUM_STRANDS - 1) / 2;
+      let pointIndex = 0;
+      for (let x = 0; x <= width; x += X_STEP) {
+        const sampleY = getSineY(x, centerStrand);
+        const gridCol = Math.floor(x / scaleFactor);
+        const gridRow = Math.floor(sampleY / scaleFactor);
+        let targetDisplacement = 0;
+        if (gridCol > 0 && gridCol < cols && gridRow > 0 && gridRow < rows) {
+          const rippleMagnitude = Math.abs(buffer1[gridRow * cols + gridCol]);
+          const direction = mouse.radial
+            ? Math.sign(sampleY - mouse.y)
+            : mouse.directionY;
+          targetDisplacement =
+            rippleMagnitude * STRAND_RIPPLE_SCALE * speedScale * direction;
+        }
+
+        if (mouse.isDragging) {
+          const dragDistance = x - mouse.x;
+          const dragInfluence = Math.exp(
+            -(dragDistance * dragDistance) /
+              (2 * DRAG_INFLUENCE_WIDTH * DRAG_INFLUENCE_WIDTH),
+          );
+          targetDisplacement += heldStretch * dragInfluence;
+        }
+
+        smoothedDisplacements[pointIndex] +=
+          (targetDisplacement - smoothedDisplacements[pointIndex]) *
+          STRAND_RETURN_RATE;
+        pointIndex++;
+      }
+
       for (let strand = 0; strand < NUM_STRANDS; strand++) {
         const depth = strand / (NUM_STRANDS - 1);
         const baseY = centerY + (depth - 0.5) * 60;
         const amp1 = 26 + depth * 18;
         const amp2 = 10 + depth * 8;
         const depthPhase = phase + depth * 1.35;
-        const displacements = smoothedDisplacements[strand];
-
         context.beginPath();
-        let pointIndex = 0;
+        pointIndex = 0;
         for (let x = 0; x <= width; x += X_STEP) {
           let y =
             baseY +
             Math.sin(x * 0.0022 + depthPhase) * amp1 +
             Math.cos(x * 0.0045 + depthPhase * 0.7) * amp2;
-          const gridCol = Math.floor(x / scaleFactor);
-          const gridRow = Math.floor(y / scaleFactor);
-          let targetDisplacement = 0;
-          if (gridCol > 0 && gridCol < cols && gridRow > 0 && gridRow < rows) {
-            targetDisplacement =
-              buffer1[gridRow * cols + gridCol] * STRAND_RIPPLE_SCALE;
-          }
-
-          displacements[pointIndex] +=
-            (targetDisplacement - displacements[pointIndex]) *
-            STRAND_RETURN_RATE;
-          y += displacements[pointIndex];
+          y += smoothedDisplacements[pointIndex];
           if (pointIndex === 0) context.moveTo(x, y);
           else context.lineTo(x, y);
           pointIndex++;
@@ -313,6 +390,10 @@ export function SineWaveBackground() {
     function drawFrame() {
       animationFrameId = 0;
       if (isPaused) return;
+      if (mouse.isHovered) {
+        mouse.x += (mouse.targetX - mouse.x) * MOUSE_SMOOTHING;
+        mouse.y += (mouse.targetY - mouse.y) * MOUSE_SMOOTHING;
+      }
       injectContinuousWake();
       processWavePhysics();
       renderSurfaceAndWaves();
@@ -339,13 +420,28 @@ export function SineWaveBackground() {
     }
 
     function updateMousePos(clientX: number, clientY: number) {
+      const now = performance.now();
       if (!mouse.isHovered) {
+        mouse.x = clientX;
+        mouse.y = clientY;
         mouse.prevX = clientX;
         mouse.prevY = clientY;
         mouse.isHovered = true;
+        mouse.rawX = clientX;
+        mouse.rawY = clientY;
+      } else {
+        const dx = clientX - mouse.rawX;
+        const dy = clientY - mouse.rawY;
+        const elapsed = Math.max(1, now - mouse.lastMoveTime);
+        if (dy !== 0) mouse.directionY = Math.sign(dy);
+        mouse.speed = Math.hypot(dx, dy) / elapsed;
+        mouse.rawX = clientX;
+        mouse.rawY = clientY;
       }
-      mouse.x = clientX;
-      mouse.y = clientY;
+      mouse.targetX = clientX;
+      mouse.targetY = clientY;
+      mouse.lastMoveTime = now;
+      mouse.radial = false;
     }
 
     function handleMouseMove(event: MouseEvent) {
@@ -353,16 +449,40 @@ export function SineWaveBackground() {
     }
 
     function handleMouseDown(event: MouseEvent) {
+      mouse.x = event.clientX;
+      mouse.y = event.clientY;
+      mouse.targetX = event.clientX;
+      mouse.targetY = event.clientY;
+      mouse.rawX = event.clientX;
+      mouse.rawY = event.clientY;
+      mouse.isHovered = true;
+      mouse.radial = true;
+      tryGrabSine(event.clientX, event.clientY);
       triggerClickRipple(event.clientX, event.clientY);
+    }
+
+    function handleMouseUp() {
+      mouse.isDragging = false;
     }
 
     function handleMouseLeave() {
       mouse.isHovered = false;
+      mouse.isDragging = false;
     }
 
     function handleTouchStart(event: TouchEvent) {
       const touch = event.touches[0];
-      if (touch) triggerClickRipple(touch.clientX, touch.clientY);
+      if (touch) {
+        mouse.x = touch.clientX;
+        mouse.y = touch.clientY;
+        mouse.targetX = touch.clientX;
+        mouse.targetY = touch.clientY;
+        mouse.rawX = touch.clientX;
+        mouse.rawY = touch.clientY;
+        mouse.isHovered = true;
+        mouse.radial = true;
+        triggerClickRipple(touch.clientX, touch.clientY);
+      }
     }
 
     function handleTouchMove(event: TouchEvent) {
@@ -394,6 +514,7 @@ export function SineWaveBackground() {
     window.addEventListener("resize", initBuffers);
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mousedown", handleMouseDown);
+    window.addEventListener("mouseup", handleMouseUp);
     window.addEventListener("mouseleave", handleMouseLeave);
     window.addEventListener("touchstart", handleTouchStart, { passive: true });
     window.addEventListener("touchmove", handleTouchMove, { passive: true });
@@ -406,6 +527,7 @@ export function SineWaveBackground() {
       window.removeEventListener("resize", initBuffers);
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mousedown", handleMouseDown);
+      window.removeEventListener("mouseup", handleMouseUp);
       window.removeEventListener("mouseleave", handleMouseLeave);
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchmove", handleTouchMove);
