@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-[clamp(14px,13.5px_+_0.1vw,15px)] font-medium uppercase tracking-[0.05em] transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 min-h-[var(--fluid-control-h)] px-[clamp(1rem,3vw,1.5rem)] py-[clamp(0.5rem,2vw,0.625rem)] select-none",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-[clamp(13px,12.75px_+_0.1vw,14px)] font-medium uppercase tracking-[0.05em] transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 min-h-[var(--fluid-control-h)] px-[clamp(0.875rem,2.5vw,1.25rem)] py-[clamp(0.375rem,1.5vw,0.5rem)] select-none",
   {
     variants: {
       variant: {
@@ -26,7 +26,7 @@ const buttonVariants = cva(
       size: {
         default: "h-[var(--fluid-control-h)] px-[clamp(1rem,3vw,1.5rem)]",
         sm: "min-h-[var(--fluid-control-h-sm)] px-[clamp(0.75rem,2.5vw,1rem)] text-fluid-label",
-        lg: "min-h-[clamp(44px,48px_+_0.3vw,52px)] px-[clamp(1.5rem,4vw,2rem)] text-fluid-body",
+        lg: "min-h-[44px] px-[clamp(1.25rem,3vw,1.75rem)] text-fluid-body",
         icon: "h-[var(--fluid-control-h)] w-[var(--fluid-control-h)] p-0",
       },
     },
