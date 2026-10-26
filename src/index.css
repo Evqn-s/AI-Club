@@ -325,46 +325,46 @@ html:not(.light) .ask-ai-fab:hover {
 
 html.light .schedule-glass-cta {
   background: rgba(105, 112, 126, 0.025) !important;
-  border-color: rgba(160, 75, 86, 0.18) !important;
-  border-top-color: rgba(194, 100, 110, 0.3) !important;
+  border-color: rgba(37, 99, 235, 0.24) !important;
+  border-top-color: rgba(255, 255, 255, 0.9) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.56),
-    inset 0 -1px 0 rgba(123, 54, 65, 0.08),
-    0 6px 18px rgba(0, 0, 0, 0.08) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 8px 22px rgba(37, 99, 235, 0.08) !important;
 }
 
 html.light .schedule-glass-cta::before {
   background: linear-gradient(
     145deg,
-    rgba(178, 136, 142, 0.035),
-    rgba(130, 48, 58, 0.018)
+    rgba(255, 255, 255, 0.12),
+    rgba(37, 99, 235, 0.025)
   );
 }
 
 html.light .schedule-glass-cta:hover {
   background: rgba(105, 112, 126, 0.05) !important;
+  border-color: rgba(37, 99, 235, 0.38) !important;
 }
 
 html.light .ask-ai-glass-cta {
   background: rgba(105, 112, 126, 0.025) !important;
-  border-color: rgba(160, 75, 86, 0.18) !important;
-  border-top-color: rgba(194, 100, 110, 0.3) !important;
+  border-color: rgba(37, 99, 235, 0.24) !important;
+  border-top-color: rgba(255, 255, 255, 0.9) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.56),
-    inset 0 -1px 0 rgba(123, 54, 65, 0.08),
-    0 6px 18px rgba(0, 0, 0, 0.08) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 8px 22px rgba(37, 99, 235, 0.08) !important;
 }
 
 html.light .ask-ai-glass-cta::before {
   background: linear-gradient(
     145deg,
-    rgba(178, 136, 142, 0.035),
-    rgba(130, 48, 58, 0.018)
+    rgba(255, 255, 255, 0.12),
+    rgba(37, 99, 235, 0.025)
   );
 }
 
 html.light .ask-ai-glass-cta:hover {
   background: rgba(105, 112, 126, 0.05) !important;
+  border-color: rgba(37, 99, 235, 0.38) !important;
 }
 
 html:not(.light) [class*="text-[#0A84FF]"],
@@ -1097,6 +1097,17 @@ html {
 [data-page="calendar"] .cal-list-card--top {
   transform: scale(1.03);
   z-index: 1;
+}
+
+[data-page="calendar"] .cal-list-card {
+  background: rgba(18, 18, 21, 0.82);
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-page="calendar"] .cal-list-card--top {
+  background: linear-gradient(145deg, rgba(224, 163, 170, 0.035), #121013 72%);
+  border-color: rgba(224, 163, 170, 0.28) !important;
+  box-shadow: 0 0 24px -10px rgba(224, 163, 170, 0.24);
 }
 
 /* Calendar Navigation Arrows (Apple Liquid Glass round buttons) */

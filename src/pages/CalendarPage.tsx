@@ -1938,9 +1938,7 @@ export function CalendarPage() {
                     handleSelectEvent(evt);
                   }}
                   className={`cal-list-card relative rounded-2xl border text-left w-full overflow-hidden cursor-pointer p-4 ${
-                    isTop || isHighlighted
-                      ? "cal-list-card--top border-[#0A84FF]/50 bg-white/[0.08] backdrop-blur-[28px] shadow-lg"
-                      : "border-white/10 bg-[#121215]/80"
+                    isTop || isHighlighted ? "cal-list-card--top" : ""
                   }`}
                 >
                   {isHighlighted && !isTop && (
