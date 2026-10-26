@@ -576,7 +576,7 @@ const MonthDayCell = memo(function MonthDayCell({
         if (!isInteractive || !hasEvents) return;
         onSelectEvent(dayEvents[0]);
       }}
-      className={`min-h-[140px] sm:min-h-[160px] md:min-h-[220px] lg:min-h-[260px] xl:min-h-[300px] rounded-lg md:rounded-xl border p-1 md:p-1.5 flex flex-col justify-between transition-all ${
+      className={`calendar-month-cell min-h-[140px] sm:min-h-[160px] md:min-h-[220px] lg:min-h-[260px] xl:min-h-[300px] rounded-lg md:rounded-xl border p-1 md:p-1.5 flex flex-col justify-between transition-all ${
         hasEvents ? "cursor-pointer md:cursor-default" : ""
       } ${
         dayObj.isCurrentMonth
@@ -722,7 +722,7 @@ const MobileWeekView = memo(function MobileWeekView({
               }}
               className={`flex-1 min-w-[44px] py-1.5 px-1 rounded-xl border flex flex-col items-center gap-0.5 transition-all shadow-md ${
                 isSelected
-                  ? "glass-panel ring-1 ring-[#0A84FF] border-[#0A84FF] border-t-white/60 text-[#0A84FF] shadow-sm"
+                  ? "calendar-week-selected glass-panel ring-1 ring-[#0A84FF] border-[#0A84FF] border-t-white/60 text-[#0A84FF] shadow-sm"
                   : "glass-cell glass-cell-hover text-white/60"
               } ${d.isToday ? "cal-today" : ""}`}
             >
