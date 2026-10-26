@@ -516,7 +516,7 @@ const MonthEventCard = memo(function MonthEventCard({
         }}
             className={`w-full text-left p-1 md:p-1.5 rounded-lg border transition-all flex flex-col justify-between ${
           isHighlighted
-            ? "bg-[#FF3B30]/20 border-[#FF3B30] border-t-white/50 ring-1 ring-[#FF3B30]/60 shadow-sm"
+            ? "bg-[#FF3B30]/10 border border-white/10 border-t-white/20 shadow-[0_10px_30px_-5px_rgba(0,0,0,0.4)]"
             : "glass-chip"
             } ${isHighlighted ? "cal-search-match" : ""}`}
       >
@@ -584,9 +584,9 @@ const MonthDayCell = memo(function MonthDayCell({
           : "backdrop-blur-sm bg-white/[0.015] border-white/5 border-t-white/10 opacity-35"
       } ${
         isDateSearched
-          ? "ring-2 ring-[#FF3B30] border-[#FF3B30] border-t-white/60 shadow-sm"
+          ? "border border-white/10 border-t-white/20 shadow-[0_10px_30px_-5px_rgba(0,0,0,0.4)]"
           : dayObj.isToday
-          ? "ring-1 ring-[#FF3B30]/60 border-white/20 border-t-white/50 shadow-sm"
+          ? "border border-white/10 border-t-white/20 shadow-[0_10px_30px_-5px_rgba(0,0,0,0.32)]"
           : ""
       } ${
         // Today gets a soft breathing halo (see .cal-today in index.css) so it
@@ -622,8 +622,8 @@ const MonthDayCell = memo(function MonthDayCell({
             key={evt.id}
             className={`h-2.5 w-2.5 rounded-full transition-all ${
               evt.id === highlightedEventId || isAnyHighlighted || isDateSearched
-                ? "bg-[#FF3B30] ring-2 ring-[#FF3B30] scale-125 shadow-sm"
-                : "bg-[#FF3B30] shadow-sm"
+                ? "bg-[#FF3B30] scale-125 shadow-[0_4px_12px_rgba(0,0,0,0.2)]"
+                : "bg-[#FF3B30] shadow-[0_4px_12px_rgba(0,0,0,0.2)]"
             }`}
           />
         ))}
@@ -1939,8 +1939,8 @@ export function CalendarPage() {
                   }}
                   className={`cal-list-card relative rounded-2xl border text-left w-full overflow-hidden cursor-pointer p-4 ${
                     isTop || isHighlighted
-                      ? "cal-list-card--top border-[#FF3B30]/50 bg-white/[0.08] backdrop-blur-[28px] shadow-lg"
-                      : "border-white/10 bg-[#121215]/80"
+                      ? "cal-list-card--top border border-white/10 bg-white/[0.08] backdrop-blur-[28px] shadow-[0_10px_30px_-5px_rgba(0,0,0,0.4)]"
+                      : "border-white/10 bg-[#121215]/80 shadow-[0_10px_30px_-5px_rgba(0,0,0,0.3)]"
                   }`}
                 >
                   {isHighlighted && !isTop && (

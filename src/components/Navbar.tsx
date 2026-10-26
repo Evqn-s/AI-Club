@@ -83,8 +83,8 @@ export function Navbar() {
                 }}
                 className={`flex items-center justify-center rounded-full font-medium tracking-[0.05em] transition-all whitespace-nowrap px-[clamp(0.875rem,2.5vw,1.25rem)] py-[clamp(0.5rem,1.5vw,0.625rem)] min-h-[clamp(2.5rem,2.25rem_+_2vw,2.75rem)] text-fluid-body sm:px-[clamp(0.625rem,2vw,1rem)] sm:py-[clamp(0.25rem,1vw,0.375rem)] sm:min-h-0 sm:text-fluid-small cursor-pointer ${
                   isActive
-                    ? "nav-tab-active bg-[rgba(255,59,48,0.2)] text-[#FF3B30] border border-[rgba(255,59,48,0.35)] shadow-sm font-semibold"
-                    : "text-[#8E8E93] hover:text-[#FF3B30] hover:bg-white/10"
+                    ? "nav-tab-active bg-[rgba(255,59,48,0.08)] text-[#FF3B30] border border-[rgba(255,59,48,0.2)] shadow-[0_8px_24px_rgba(0,0,0,0.06)] font-semibold"
+                    : "text-[#8E8E93] hover:text-[#FF3B30] hover:bg-white/5"
                 }`}
               >
                 {link.label}

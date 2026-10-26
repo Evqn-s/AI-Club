@@ -17,11 +17,11 @@ body::after {
   --color-surface-3: #3A3A3C;
 
   /* Apple System Red accent palette */
-  --color-accent-subtle: rgba(255, 59, 48, 0.15);
-  --color-accent-base: #FF3B30;
-  --color-accent-strong: #D32F2F;
-  --color-accent-highlight: #FF6961;
-  --color-accent-light: #FF6961;
+  --color-accent-subtle: rgba(211, 47, 47, 0.15);
+  --color-accent-base: #D32F2F;
+  --color-accent-strong: #B71C1C;
+  --color-accent-highlight: #D32F2F;
+  --color-accent-light: #D32F2F;
 
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #8E8E93;
@@ -43,10 +43,15 @@ body::after {
 }
 
 :root.light {
-  --bg-main: #F5F7FA;
+  --bg-main: #F5F5F7;
   --bg-surface: rgba(255, 255, 255, 0.75);
   --bg-elevated: #FFFFFF;
-  --text-main: #1C1C1E;
+  --text-main: #1D1D1F;
+  --color-accent-subtle: rgba(255, 59, 48, 0.12);
+  --color-accent-base: #FF3B30;
+  --color-accent-strong: #E03126;
+  --color-accent-highlight: #FF6961;
+  --color-accent-light: #FF6961;
   --color-border-subtle: rgba(0, 0, 0, 0.08);
   color-scheme: light;
 }
@@ -73,12 +78,11 @@ body::after {
 .glass-panel-hover:hover,
 .glass-panel:hover {
   background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 59, 48, 0.25);
-  border-top-color: rgba(255, 100, 90, 0.42);
+  border-color: rgba(255, 255, 255, 0.12);
+  border-top-color: rgba(255, 255, 255, 0.18);
   box-shadow:
     inset 0 1px 0 0 rgba(255, 255, 255, 0.24),
-    0 14px 40px 0 rgba(0, 0, 0, 0.42),
-    0 0 24px 0 rgba(255, 59, 48, 0.12);
+    0 10px 30px -5px rgba(0, 0, 0, 0.5);
 }
 
 /* Navigation Bars, Action Controls & Buttons */
@@ -104,6 +108,37 @@ body::after {
   color: #FFFFFF;
 }
 
+.btn-ask-ai,
+.ask-ai-fab {
+  background: #FF3B30 !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-top-color: rgba(255, 255, 255, 0.36) !important;
+  border-bottom-color: rgba(0, 0, 0, 0.12) !important;
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.26),
+    0 4px 12px rgba(0, 0, 0, 0.2),
+    0 0 12px -3px rgba(255, 59, 48, 0.18) !important;
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+}
+
+.btn-ask-ai *,
+.ask-ai-fab * {
+  color: #FFFFFF !important;
+}
+
+.btn-ask-ai:hover,
+.ask-ai-fab:hover {
+  background: #E03126 !important;
+  border-top-color: rgba(255, 255, 255, 0.46) !important;
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.28),
+    0 6px 18px rgba(0, 0, 0, 0.24),
+    0 0 16px -3px rgba(255, 59, 48, 0.24) !important;
+  color: #FFFFFF !important;
+}
+
 /* Secondary Inset Cells */
 .glass-cell {
   backdrop-filter: blur(28px) saturate(190%);
@@ -117,8 +152,8 @@ body::after {
 
 .glass-cell-hover:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 59, 48, 0.25);
-  border-top-color: rgba(255, 100, 90, 0.38);
+  border-color: rgba(255, 255, 255, 0.12);
+  border-top-color: rgba(255, 255, 255, 0.18);
 }
 
 /* Micro Pills & Badges */
@@ -134,52 +169,47 @@ body::after {
 
 .glass-chip:hover {
   background: rgba(255, 255, 255, 0.11);
-  border-color: rgba(255, 59, 48, 0.25);
-  border-top-color: rgba(255, 100, 90, 0.38);
-}
-
-/* Dual Ask AI buttons — Deep crimson gradient fill with crisp white text */
-.btn-ask-ai,
-.ask-ai-fab {
-  background: linear-gradient(135deg, #FF3B30, #C0392B) !important;
-  color: #FFFFFF !important;
-  border: 1px solid rgba(255, 255, 255, 0.22) !important;
-  border-top-color: rgba(255, 255, 255, 0.4) !important;
-  border-bottom-color: rgba(0, 0, 0, 0.15) !important;
-  box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
-    0 8px 28px 0 rgba(192, 57, 43, 0.45) !important;
-  backdrop-filter: blur(28px) saturate(190%);
-  -webkit-backdrop-filter: blur(28px) saturate(190%);
-}
-
-.btn-ask-ai *,
-.ask-ai-fab * {
-  color: #FFFFFF !important;
-}
-
-.btn-ask-ai:hover,
-.ask-ai-fab:hover {
-  background: linear-gradient(135deg, #FF453A, #D32F2F) !important;
-  border-top-color: rgba(255, 255, 255, 0.5) !important;
-  box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.38),
-    0 12px 34px 0 rgba(192, 57, 43, 0.55),
-    0 3px 8px 0 rgba(0, 0, 0, 0.25) !important;
-  color: #FFFFFF !important;
+  border-color: rgba(255, 255, 255, 0.12);
+  border-top-color: rgba(255, 255, 255, 0.18);
 }
 
 /* Active Navigation Tabs & Segmented Controls */
 .nav-tab-active {
-  background: rgba(255, 59, 48, 0.2) !important;
-  border: 1px solid rgba(255, 59, 48, 0.35) !important;
-  border-top-color: rgba(255, 100, 90, 0.45) !important;
-  color: #FF453A !important;
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.2), 0 2px 8px rgba(255, 59, 48, 0.2) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-top-color: rgba(255, 255, 255, 0.18) !important;
+  color: #D32F2F !important;
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.16), 0 10px 30px -5px rgba(0, 0, 0, 0.38) !important;
 }
 
 .nav-tab-active * {
-  color: #FF453A !important;
+  color: #D32F2F !important;
+}
+
+html:not(.light) [class~="text-[#FF3B30]"],
+html:not(.light) [class~="text-[#FF453A]"] {
+  color: #D32F2F !important;
+}
+
+html:not(.light) [class~="hover:text-[#FF6961]"]:hover,
+html:not(.light) [class~="hover:text-[#FF3B30]"]:hover {
+  color: #D32F2F !important;
+}
+
+html:not(.light) [class~="bg-[#FF3B30]"] {
+  background-color: #D32F2F !important;
+}
+
+html.light [class~="bg-[#FF3B30]"] {
+  background-color: #0A84FF !important;
+}
+
+html.light [class~="hover:bg-[#D32F2F]"]:hover {
+  background-color: #0071E3 !important;
+}
+
+html.light [class~="hover:text-[#FF6961]"]:hover {
+  color: #0071E3 !important;
 }
 
 /* ==========================================================================
@@ -187,110 +217,87 @@ body::after {
    ========================================================================== */
 
 :root.light .glass-panel {
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.45);
   border: 1px solid rgba(0, 0, 0, 0.08);
-  border-top-color: rgba(255, 255, 255, 0.92);
+  border-top-color: rgba(255, 255, 255, 0.9);
   box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.88),
-    0 8px 32px 0 rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.85),
+    0 8px 32px 0 rgba(0, 0, 0, 0.05),
     0 1px 2px 0 rgba(0, 0, 0, 0.03);
-  color: #1C1C1E;
+  color: #1D1D1F;
 }
 
 :root.light .glass-panel-hover:hover,
 :root.light .glass-panel:hover {
-  background: rgba(255, 255, 255, 0.85);
-  border-color: rgba(211, 47, 47, 0.22);
-  border-top-color: rgba(211, 47, 47, 0.38);
+  background: rgba(255, 255, 255, 0.65);
+  border-top-color: rgba(255, 255, 255, 1);
   box-shadow:
     inset 0 1px 0 0 rgba(255, 255, 255, 0.95),
     0 12px 38px 0 rgba(0, 0, 0, 0.08),
-    0 0 18px 0 rgba(211, 47, 47, 0.08);
+    0 2px 4px 0 rgba(0, 0, 0, 0.04);
 }
 
 :root.light .glass-button {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.75);
   border: 1px solid rgba(0, 0, 0, 0.08);
-  border-top-color: rgba(255, 255, 255, 0.96);
+  border-top-color: rgba(255, 255, 255, 0.95);
   box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.88),
-    0 4px 16px 0 rgba(0, 0, 0, 0.07);
-  color: #1C1C1E;
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.85),
+    0 4px 16px 0 rgba(0, 0, 0, 0.06);
+  color: #1D1D1F;
 }
 
 :root.light .glass-button:hover {
-  background: rgba(0, 0, 0, 0.05);
-  border-color: rgba(211, 47, 47, 0.25);
-  border-top-color: rgba(211, 47, 47, 0.4);
+  background: rgba(255, 255, 255, 0.9);
+  border-top-color: rgba(255, 255, 255, 1);
   box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.96),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.95),
     0 6px 20px 0 rgba(0, 0, 0, 0.09);
-  color: #D32F2F;
+  color: #000000;
+}
+
+:root.light nav.glass-button:hover {
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.85),
+    0 4px 16px 0 rgba(0, 0, 0, 0.06);
 }
 
 :root.light .glass-cell {
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(0, 0, 0, 0.07);
-  border-top-color: rgba(255, 255, 255, 0.88);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.82);
-  color: #1C1C1E;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-top-color: rgba(255, 255, 255, 0.85);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.8);
+  color: #1D1D1F;
 }
 
 :root.light .glass-cell-hover:hover {
-  background: rgba(0, 0, 0, 0.05);
-  border-color: rgba(211, 47, 47, 0.25);
-  border-top-color: rgba(211, 47, 47, 0.4);
-  color: #D32F2F;
+  background: rgba(255, 255, 255, 0.8);
+  border-top-color: rgba(255, 255, 255, 0.95);
 }
 
 :root.light .glass-chip {
-  background: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(0, 0, 0, 0.08);
-  border-top-color: rgba(255, 255, 255, 0.92);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.88);
-  color: #1C1C1E;
+  border-top-color: rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.85);
+  color: #1D1D1F;
 }
 
 :root.light .glass-chip:hover {
-  background: rgba(0, 0, 0, 0.05);
-  border-color: rgba(211, 47, 47, 0.25);
-  border-top-color: rgba(211, 47, 47, 0.4);
-  color: #D32F2F;
-}
-
-/* Ensure light mode NEVER turns Ask AI button text dark or strips the gradient */
-html.light .btn-ask-ai,
-html.light .ask-ai-fab {
-  background: linear-gradient(135deg, #FF3B30, #C0392B) !important;
-  color: #FFFFFF !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
-  border-top-color: rgba(255, 255, 255, 0.45) !important;
-  box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.35),
-    0 8px 24px 0 rgba(192, 57, 43, 0.4) !important;
-}
-
-html.light .btn-ask-ai *,
-html.light .ask-ai-fab * {
-  color: #FFFFFF !important;
-}
-
-html.light .btn-ask-ai:hover,
-html.light .ask-ai-fab:hover {
-  background: linear-gradient(135deg, #FF453A, #D32F2F) !important;
-  color: #FFFFFF !important;
+  background: rgba(255, 255, 255, 0.88);
 }
 
 html.light .nav-tab-active {
-  background: rgba(255, 59, 48, 0.15) !important;
-  border: 1px solid rgba(211, 47, 47, 0.3) !important;
-  border-top-color: rgba(255, 59, 48, 0.4) !important;
-  color: #D32F2F !important;
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.8), 0 2px 8px rgba(211, 47, 47, 0.15) !important;
+  background: rgba(255, 59, 48, 0.08) !important;
+  border: 1px solid rgba(255, 59, 48, 0.2) !important;
+  border-top-color: rgba(255, 255, 255, 0.9) !important;
+  color: #FF3B30 !important;
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.8), 0 8px 24px rgba(0, 0, 0, 0.06) !important;
 }
 
 html.light .nav-tab-active * {
-  color: #D32F2F !important;
+  color: #FF3B30 !important;
 }
 
 /* ==========================================================================
@@ -366,8 +373,8 @@ body {
 }
 
 html.light ::selection {
-  background-color: rgba(211, 47, 47, 0.2);
-  color: #1C1C1E !important;
+  background-color: rgba(0, 113, 227, 0.25);
+  color: #1D1D1F !important;
 }
 
 /* Apple Focus indicator */
@@ -377,7 +384,7 @@ html.light ::selection {
 }
 
 html.light *:focus-visible {
-  outline: 2px solid #D32F2F;
+  outline: 2px solid #0071E3;
   outline-offset: 2px;
 }
 
@@ -396,8 +403,8 @@ html.light .perimeter-line {
    ========================================================================== */
 
 html.light body {
-  background-color: #F5F7FA;
-  color: #1C1C1E !important;
+  background-color: #F5F5F7;
+  color: #1D1D1F !important;
 }
 
 header {
@@ -406,26 +413,26 @@ header {
   box-shadow: none !important;
 }
 
-/* Ambient canvas glows in light mode — soft crimson/rose tints */
+/* Ambient canvas glows in light mode */
 html.light .ambient-glow-top {
-  background: radial-gradient(ellipse, rgba(211, 47, 47, 0.08), transparent 70%) !important;
+  background: radial-gradient(ellipse, rgba(0, 113, 227, 0.12), transparent 70%) !important;
   opacity: 0.8;
 }
 
 html.light .ambient-glow-middle {
-  background: radial-gradient(ellipse, rgba(255, 150, 140, 0.06), transparent 70%) !important;
+  background: radial-gradient(ellipse, rgba(100, 210, 255, 0.1), transparent 70%) !important;
   opacity: 0.7;
 }
 
 /* Strict Apple Typography contrast in light mode — all text defaults to dark charcoal */
-html.light h1:not(.btn-ask-ai *),
-html.light h2:not(.btn-ask-ai *),
-html.light h3:not(.btn-ask-ai *),
-html.light h4:not(.btn-ask-ai *),
+html.light h1,
+html.light h2,
+html.light h3,
+html.light h4,
 html.light .text-\[\#E5E5E7\],
-html.light .text-\[\#FFFFFF\]:not(.btn-ask-ai *):not(.ask-ai-fab *),
-html.light .text-white:not(.btn-ask-ai *):not(.ask-ai-fab *) {
-  color: #1C1C1E !important;
+html.light .text-\[\#FFFFFF\],
+html.light .text-white {
+  color: #1D1D1F !important;
   text-shadow: none !important;
 }
 
@@ -433,7 +440,7 @@ html.light .text-\[\#9B98A0\],
 html.light .text-\[\#67646C\],
 html.light .text-white\/60,
 html.light .text-white\/70 {
-  color: #6E6E73 !important;
+  color: #86868B !important;
 }
 
 html.light .text-white\/40,
@@ -441,22 +448,21 @@ html.light .text-white\/50 {
   color: #8E8E93 !important;
 }
 
-/* Light mode link colors: vibrant crimson for links instead of blue */
 html.light a.text-\[\#FF3B30\],
-html.light .text-\[\#FF3B30\]:not(.btn-ask-ai *):not(.ask-ai-fab *) {
-  color: #D32F2F !important;
+html.light .text-\[\#FF3B30\] {
+  color: #FF3B30 !important;
 }
 
 /* Dark mode surfaces remap in light mode */
 html.light .bg-\[\#0A090A\],
 html.light .bg-\[\#0A090A\]\/95 {
-  background-color: #F5F7FA !important;
+  background-color: #F5F5F7 !important;
 }
 
 html.light .bg-\[\#141213\],
 html.light .bg-\[\#131214\] {
-  background-color: rgba(255, 255, 255, 0.85) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 html.light .bg-\[\#1E1A1B\],
@@ -466,15 +472,14 @@ html.light .bg-\[\#3D1E22\] {
   background-color: rgba(0, 0, 0, 0.04) !important;
 }
 
-/* Light mode hover: deepen fill slightly, text shifts to crimson */
-html.light nav a:hover:not(.nav-tab-active),
-html.light button:hover:not(.btn-ask-ai):not(.ask-ai-fab):not(.nav-tab-active),
-html.light a:hover:not(.btn-ask-ai):not(.ask-ai-fab):not(.nav-tab-active) {
-  color: #D32F2F !important;
+/* Keep the navigation container still so only the hovered tab changes. */
+html.light nav a:hover:not(.nav-tab-active) {
+  background-color: rgba(0, 113, 227, 0.08) !important;
+  color: #0071E3 !important;
 }
 
 html.light nav a:hover:not(.nav-tab-active) * {
-  color: #D32F2F !important;
+  color: #0071E3 !important;
 }
 
 /* ==========================================================================
@@ -717,9 +722,8 @@ html.light .cal-nav-arrow {
 }
 
 html.light .cal-nav-arrow:hover {
-  background-color: rgba(0, 0, 0, 0.05) !important;
-  border-color: rgba(211, 47, 47, 0.25) !important;
-  color: #D32F2F !important;
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  color: #1D1D1F !important;
 }
 
 html.light .cal-nav-arrow svg {
@@ -783,16 +787,16 @@ html.light .cal-slide-veil {
 html.light .cal-today::after {
   background: radial-gradient(
     120% 90% at 50% 0%,
-    rgba(211, 47, 47, 0.18) 0%,
-    rgba(211, 47, 47, 0.04) 55%,
+    rgba(0, 113, 227, 0.18) 0%,
+    rgba(0, 113, 227, 0.04) 55%,
     transparent 100%
   );
   box-shadow:
-    0 0 0 1px rgba(211, 47, 47, 0.4),
+    0 0 0 1px rgba(0, 113, 227, 0.4),
     inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
 }
 
-/* Search matches — crimson highlight */
+/* Search matches */
 .cal-search-match {
   background: rgba(255, 59, 48, 0.12) !important;
   border-color: rgba(255, 59, 48, 0.45) !important;
@@ -800,9 +804,9 @@ html.light .cal-today::after {
 }
 
 html.light .cal-search-match {
-  background: rgba(211, 47, 47, 0.1) !important;
-  border-color: rgba(211, 47, 47, 0.4) !important;
-  box-shadow: 0 0 0 1px rgba(211, 47, 47, 0.3) !important;
+  background: rgba(0, 113, 227, 0.12) !important;
+  border-color: rgba(0, 113, 227, 0.45) !important;
+  box-shadow: 0 0 0 1px rgba(0, 113, 227, 0.35) !important;
 }
 
 /* Mobile List Cards */
@@ -813,8 +817,8 @@ html.light [data-page="calendar"] .cal-list-card {
 }
 
 html.light [data-page="calendar"] .cal-list-card--top {
-  background: rgba(255, 255, 255, 0.94) !important;
-  border-color: rgba(211, 47, 47, 0.3) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(0, 113, 227, 0.35) !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
 }
 
