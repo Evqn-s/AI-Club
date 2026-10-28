@@ -11,15 +11,17 @@ export default defineConfig({
     },
   },
   build: {
-    // Keep the initial bundle lean: split heavy third-party code into
-    // separate chunks so the browser parses less JS before first paint.
-    // ChatPanel (ai SDK) and CalendarPage (framer-motion) load on demand.
+    // Keep the first paint lean: avoid modulepreload for route-scoped bundles,
+    // and split the truly heavy third-party runtimes into separate chunks.
+    modulePreload: false,
     cssCodeSplit: true,
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (id.includes("node_modules")) {
             if (id.includes("framer-motion") || id.includes("motion-dom")) return "motion";
+            if (id.includes("@ai-sdk") || id.includes("ai") || id.includes("zod")) return "chat-runtime";
+            if (id.includes("react-markdown") || id.includes("remark-")) return "markdown";
             if (id.includes("@supabase")) return "supabase";
             if (id.includes("react-dom") || id.includes("scheduler")) return "react-dom";
             if (id.includes("react") || id.includes("wouter") || id.includes("use-sync-external-store"))
