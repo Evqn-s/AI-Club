@@ -43,16 +43,13 @@ export function Navbar() {
           href="/"
           onMouseEnter={() => prefetchData("/")}
           onFocus={() => prefetchData("/")}
-          className="order-1 flex items-center gap-2 sm:gap-2.5 shrink-0 group"
+          className="order-1 flex items-center shrink-0 group"
         >
           <img
             src="/peths-ai-club-logo.png"
             alt="Peths AI Club logo"
-            className="dark-brand-mark block h-[var(--fluid-icon-box)] w-[var(--fluid-icon-box)] rounded-full object-cover shadow-sm ring-1 ring-white/35"
+            className="block h-8 w-auto max-w-none object-contain opacity-95 drop-shadow-[0_0_12px_rgba(255,255,255,0.08)] sm:h-9"
           />
-          <span className="text-fluid-body sm:text-fluid-small font-bold tracking-tight text-white group-hover:text-white/80 transition-colors whitespace-nowrap">
-            Peths AI Club
-          </span>
         </Link>
 
         {/* Theme Toggle — order 2 top-right on mobile, order 3 top-right on desktop */}
