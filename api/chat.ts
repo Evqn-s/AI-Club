@@ -18,7 +18,7 @@ const MAX_MESSAGE_LENGTH = 1000;
 
 const fallbackContext = {
   club_info: {
-    club_name: "AI Club",
+    club_name: "Peths AI Club",
     meeting_times: "Every Tuesday at 6 PM",
     contact_email: "contact.aiclub@gmail.com",
     google_classroom_code: "aiclub2026",
@@ -140,7 +140,7 @@ export default async function handler(request: Request): Promise<Response> {
       maxTokens: 1024,
       temperature: 0.1,
       topP: 1,
-      system: `You are a helpful, concise assistant for the AI Club.
+      system: `You are a helpful, concise assistant for Peths AI Club.
 Answer the user query strictly using the Club Context Data below.
 If asked follow-up questions, use the conversation history.
 

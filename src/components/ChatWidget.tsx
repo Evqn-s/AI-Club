@@ -23,7 +23,7 @@ export function ChatWidget() {
           mid-screen on top of content. */}
       {!isOpen && (
         <aside
-          aria-label="AI Club Assistant"
+          aria-label="Peths AI Club Assistant"
           className="fixed z-50 bottom-[clamp(1.25rem,4vw,2rem)] right-[clamp(1.25rem,4vw,2rem)]"
         >
           <Button

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 
-const NUM_STRANDS = 10;
-const X_STEP = 6;
-const MAX_GRID_CELLS = 180_000;
-const MOBILE_MAX_GRID_CELLS = 90_000;
-const MOBILE_MIN_GRID_STEP = 6;
+const NUM_STRANDS = 8;
+const X_STEP = 8;
+const MAX_GRID_CELLS = 100_000;
+const MOBILE_MAX_GRID_CELLS = 45_000;
+const MOBILE_MIN_GRID_STEP = 7;
+const FRAME_INTERVAL_MS = 1000 / 30;
 const MOBILE_MAX_DPR = 1.5;
 const MOBILE_OPACITY = 0.7;
 const MOBILE_PHASE_SPEED = 0.0055;
@@ -48,6 +49,7 @@ export function SineWaveBackground() {
     const context = ctx;
 
     let animationFrameId = 0;
+    let lastFrameTime = 0;
     let width = 0;
     let height = 0;
     let cols = 0;
@@ -424,9 +426,17 @@ export function SineWaveBackground() {
       context.restore();
     }
 
-    function drawFrame() {
+    function drawFrame(timestamp = performance.now()) {
       animationFrameId = 0;
-      if (isPaused) return;
+      if (isPaused || document.hidden) return;
+      if (!prefersReducedMotion) {
+        const elapsed = timestamp - lastFrameTime;
+        if (elapsed < FRAME_INTERVAL_MS) {
+          animationFrameId = requestAnimationFrame(drawFrame);
+          return;
+        }
+        lastFrameTime = timestamp;
+      }
       if (mouse.isHovered) {
         mouse.x += (mouse.targetX - mouse.x) * MOUSE_SMOOTHING;
         mouse.y += (mouse.targetY - mouse.y) * MOUSE_SMOOTHING;
@@ -455,6 +465,11 @@ export function SineWaveBackground() {
       isPaused = false;
       drawFrame();
     }
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) handlePause();
+      else handleResume();
+    };
 
     function updateMousePos(clientX: number, clientY: number) {
       const now = performance.now();
@@ -562,6 +577,7 @@ export function SineWaveBackground() {
     window.addEventListener("touchend", handleTouchEnd);
     window.addEventListener("calendar:transition-start", handlePause);
     window.addEventListener("calendar:transition-end", handleResume);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       themeObserver.disconnect();
@@ -575,6 +591,7 @@ export function SineWaveBackground() {
       window.removeEventListener("touchend", handleTouchEnd);
       window.removeEventListener("calendar:transition-start", handlePause);
       window.removeEventListener("calendar:transition-end", handleResume);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
     };
   }, []);

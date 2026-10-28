@@ -141,7 +141,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
 
   return (
     <aside
-      aria-label="AI Club Assistant"
+      aria-label="Peths AI Club Assistant"
       className="fixed z-50 bottom-[clamp(1.25rem,4vw,2rem)] right-[clamp(1.25rem,4vw,2rem)] max-sm:bottom-[clamp(1.25rem,4vw,2rem)] max-sm:right-1/2 max-sm:translate-x-1/2"
     >
       <div
@@ -174,7 +174,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
         <div className="flex-1 overflow-y-auto p-[var(--fluid-gap-sm)] space-y-[clamp(0.5rem,2vw,0.75rem)] bg-transparent">
           {messages.length === 0 && (
             <div className="text-center py-[clamp(2rem,8vw,3rem)] px-[var(--fluid-gap-sm)] text-[#8E8E93]">
-              <p className="text-fluid-body font-semibold text-white">AI Club Knowledge Base</p>
+              <p className="text-fluid-body font-semibold text-white">Peths AI Club Knowledge Base</p>
               <p className="text-fluid-small mt-1 text-[#8E8E93]">Ask questions about our meetings, agenda, or guidelines.</p>
             </div>
           )}

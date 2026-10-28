@@ -8,7 +8,7 @@ import { ArrowRight, MessageSquare } from "lucide-react";
 // card chrome (glass-panel), headers, outlined boxes (glass-cell) and vision
 // anchor. Static chrome (labels, titles) renders as real text so the
 // skeleton has identical geometry; only SQL-backed values shimmer.
-// The hero title ("AI Club") and both CTAs are static values — they render
+// The hero title ("Peths AI Club") and both CTAs are static values — they render
 // as real, fully functional content so the page is interactive while the
 // Supabase record loads.
 export function HomeSkeleton() {
@@ -21,7 +21,7 @@ export function HomeSkeleton() {
       {/* Hero — real title + functional CTAs (identical markup to HomePage) */}
       <section className="text-center max-w-[var(--fluid-container-max)] mx-auto w-full space-y-[var(--fluid-gap)] pt-[clamp(0.5rem,1vw,1rem)] pb-[clamp(0.25rem,1vw,0.75rem)]">
         <h1 className="text-fluid-hero font-bold tracking-[-0.02em] text-white leading-[0.98] select-none">
-          AI Club
+          Peths AI Club
         </h1>
         <div className="flex flex-wrap items-center justify-center gap-[clamp(0.5rem,2vw,0.75rem)] pt-[clamp(0.25rem,1.5vw,0.5rem)]">
           <Button asChild variant="glass" size="lg">

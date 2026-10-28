@@ -40,11 +40,11 @@ export function Navbar() {
           onTouchStart={() => prefetchData("/")}
           className="order-1 flex items-center gap-2 sm:gap-2.5 shrink-0 group"
         >
-          <span className="dark-brand-mark flex h-[var(--fluid-icon-box)] w-[var(--fluid-icon-box)] items-center justify-center rounded-full glass-chip text-fluid-small font-semibold text-white shadow-sm">
+          <span className="dark-brand-mark flex h-[var(--fluid-icon-box)] w-[var(--fluid-icon-box)] items-center justify-center rounded-full text-[0.53rem] font-black tracking-[-0.06em] text-white shadow-sm ring-1 ring-white/35">
             AI
           </span>
           <span className="text-fluid-body sm:text-fluid-small font-bold tracking-tight text-white group-hover:text-white/80 transition-colors whitespace-nowrap">
-            AI Club
+            Peths AI Club
           </span>
         </Link>
 
