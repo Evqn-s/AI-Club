@@ -4,13 +4,19 @@ import { ThemeBar } from "@/components/ThemeBar";
 // Module-level cache for the lazy component promise
 export let calendarComponentPromise: Promise<typeof import("../pages/CalendarPage")> | null = null;
 
+const isTouchDevice = () =>
+  typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+
 // Prefetch a route's data without pulling the Supabase client into the
 // initial bundle — the dynamic import loads data.ts + client on demand.
 function prefetchData(route: string) {
+  if (isTouchDevice()) return;
   import("@/lib/data").then(({ prefetchRoute }) => prefetchRoute(route));
 }
 
 export const preloadCalendar = () => {
+  if (isTouchDevice()) return;
+
   // 1. Fetch Supabase calendar data into lib/cache.ts memory cache
   prefetchData("/calendar");
 
@@ -37,7 +43,6 @@ export function Navbar() {
           href="/"
           onMouseEnter={() => prefetchData("/")}
           onFocus={() => prefetchData("/")}
-          onTouchStart={() => prefetchData("/")}
           className="order-1 flex items-center gap-2 sm:gap-2.5 shrink-0 group"
         >
           <span className="dark-brand-mark flex h-[var(--fluid-icon-box)] w-[var(--fluid-icon-box)] items-center justify-center rounded-full text-[0.53rem] font-black tracking-[-0.06em] text-white shadow-sm ring-1 ring-white/35">
@@ -68,13 +73,6 @@ export function Navbar() {
                   }
                 }}
                 onFocus={() => {
-                  if (link.href === "/calendar") {
-                    preloadCalendar();
-                  } else {
-                    prefetchData(link.href);
-                  }
-                }}
-                onTouchStart={() => {
                   if (link.href === "/calendar") {
                     preloadCalendar();
                   } else {

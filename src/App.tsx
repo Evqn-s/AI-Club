@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Route, Switch, useLocation } from "wouter";
 import { ThemeProvider } from "@/components/ThemeToggle";
 import { Navbar } from "@/components/Navbar";
@@ -27,15 +27,35 @@ const ChatWidget = lazy(() =>
 
 export function App() {
   const [location] = useLocation();
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(max-width: 767px), (pointer: coarse)").matches
+      : false,
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mediaQuery = window.matchMedia("(max-width: 767px), (pointer: coarse)");
+    const update = () => setIsMobileViewport(mediaQuery.matches);
+
+    update();
+    mediaQuery.addEventListener("change", update);
+    return () => mediaQuery.removeEventListener("change", update);
+  }, []);
+
   const isCalendar = location === "/calendar";
+  const shouldRenderDecorativeBackground = !isMobileViewport;
 
   return (
     <ThemeProvider>
       <div className="app-shell min-h-screen flex flex-col bg-[var(--bg-main)] text-[var(--text-main)] relative selection:bg-[#0A84FF] selection:text-white transition-colors duration-200">
-        {/* Decorative canvas — mounts after paint, never blocks LCP */}
-        <Suspense fallback={null}>
-          <OrganicBackground />
-        </Suspense>
+        {/* Decorative canvas — skip on mobile where the animation is a large CPU hit */}
+        {shouldRenderDecorativeBackground && (
+          <Suspense fallback={null}>
+            <OrganicBackground />
+          </Suspense>
+        )}
 
         <Navbar />
 

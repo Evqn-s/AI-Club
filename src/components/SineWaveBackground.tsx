@@ -34,6 +34,16 @@ const STRAND_RETURN_RATE = 0.025 / Math.max(RIPPLE_ELASTICITY, 0.01);
 export function SineWaveBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [fadedIn, setFadedIn] = useState(false);
+  const prefersReducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const isMobile =
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 767px), (pointer: coarse)").matches;
+
+  if (prefersReducedMotion || isMobile) {
+    return null;
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => setFadedIn(true), 60);
