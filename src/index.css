@@ -27,7 +27,7 @@ body::after {
   --color-border-subtle: #48252B;
   --color-border-clean: #613039;
 
-  --font-display: "Sora", -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", -apple-system-headline, sans-serif;
   --font-sans: "Sora", -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   --font-mono: "Space Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
@@ -713,7 +713,7 @@ html:not(.light) .app-shell {
 h1,
 .text-fluid-hero {
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 800;
   letter-spacing: -0.02em;
   text-shadow: none !important;
   filter: none !important;
