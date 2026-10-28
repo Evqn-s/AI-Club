@@ -16,7 +16,7 @@ const STRAND_RIPPLE_RESPONSE_MS = 100;
 // their response, 1 preserves the original effect, and 2 produces four times
 // the original displacement while returning more slowly.
 const RIPPLE_ELASTICITY = 0.5;
-const STRAND_RIPPLE_SCALE = 4 * RIPPLE_ELASTICITY ** 2;
+const STRAND_RIPPLE_SCALE = 8 * RIPPLE_ELASTICITY ** 2;
 const BASE_INTERACTION_SPEED = 1.4;
 const SPEED_BOOST_THRESHOLD = 1.0;
 const MAX_SPEED_BOOST = 2.5;
@@ -381,11 +381,22 @@ export function SineWaveBackground() {
         ) {
           const sample = Math.abs(buffer1[gridRow * cols + gridCol]);
           const rippleMagnitude = Math.max(0, sample - STRAND_RIPPLE_DEAD_ZONE);
-          const direction = mouse.radial
-            ? Math.sign(sampleY - mouse.y)
-            : mouse.directionY;
+
+          // Calculate distance from the mouse to this specific point on the strand
+          const distToMouse = Math.hypot(x - mouse.x, sampleY - mouse.y);
+          const isNearMouse = distToMouse < DRAG_INFLUENCE_WIDTH * 1.5;
+
+          // Only apply the global mouse direction and speed boost if the cursor is actually nearby
+          const direction = isNearMouse
+            ? mouse.radial
+              ? Math.sign(sampleY - mouse.y)
+              : mouse.directionY
+            : Math.sign(smoothedDisplacements[pointIndex] || 1); // Maintain current settling direction
+
+          const activeSpeedScale = isNearMouse ? speedScale : 1; // Drop the speed boost if far away
+
           targetDisplacement =
-            rippleMagnitude * STRAND_RIPPLE_SCALE * speedScale * direction;
+            rippleMagnitude * STRAND_RIPPLE_SCALE * activeSpeedScale * direction;
         }
 
         if (mouse.isDragging) {
