@@ -46,8 +46,8 @@ export function Navbar() {
           className="order-1 flex items-center gap-2 sm:gap-2.5 shrink-0 group"
         >
           <img
-            src="/peths-ai-club-mark.svg"
-            alt=""
+            src="/peths-ai-club-logo.png"
+            alt="Peths AI Club logo"
             className="dark-brand-mark block h-[var(--fluid-icon-box)] w-[var(--fluid-icon-box)] rounded-full object-cover shadow-sm ring-1 ring-white/35"
           />
           <span className="text-fluid-body sm:text-fluid-small font-bold tracking-tight text-white group-hover:text-white/80 transition-colors whitespace-nowrap">
