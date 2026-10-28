@@ -27,8 +27,9 @@ body::after {
   --color-border-subtle: #48252B;
   --color-border-clean: #613039;
 
-  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", -apple-system-headline, sans-serif;
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif;
+  --font-display: "Urbanist", -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  --font-sans: "Inter", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  --font-mono: "Space Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 :root {
@@ -695,7 +696,7 @@ html.light .ask-ai-fab:hover {
    ========================================================================== */
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif;
+  font-family: var(--font-sans);
   color: var(--text-main);
   background-color: var(--bg-main);
   -webkit-font-smoothing: antialiased;
@@ -711,7 +712,7 @@ html:not(.light) .app-shell {
 /* Page / Hero Titles: Bold / Heavy font weight, sharp contrast, default letter spacing */
 h1,
 .text-fluid-hero {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
+  font-family: var(--font-display);
   font-weight: 800;
   letter-spacing: -0.02em;
   text-shadow: none !important;
@@ -723,7 +724,7 @@ h2,
 h3,
 h4,
 .font-display {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
+  font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: -0.01em;
   text-shadow: none !important;
