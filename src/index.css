@@ -28,8 +28,8 @@ body::after {
   --color-border-clean: #613039;
 
   --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", -apple-system-headline, sans-serif;
-  --font-sans: "Sora", -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  --font-mono: "Space Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 :root {
