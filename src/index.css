@@ -27,8 +27,8 @@ body::after {
   --color-border-subtle: #48252B;
   --color-border-clean: #613039;
 
-  --font-display: "Urbanist", -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-  --font-sans: "Inter", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  --font-display: "Sora", -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  --font-sans: "Sora", -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   --font-mono: "Space Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
@@ -713,7 +713,7 @@ html:not(.light) .app-shell {
 h1,
 .text-fluid-hero {
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 400;
   letter-spacing: -0.02em;
   text-shadow: none !important;
   filter: none !important;
@@ -737,6 +737,15 @@ h4,
 [class*="tracking-[0.08em]"],
 [class*="tracking-[0.06em]"] {
   letter-spacing: 0.05em !important;
+}
+
+/* Small section titles / badges: Space Mono monospace */
+.badge-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.7;
 }
 
 /* Globally remove scrollbars while keeping content scrollable */
