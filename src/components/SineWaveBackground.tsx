@@ -481,19 +481,8 @@ export function SineWaveBackground() {
       else handleResume();
     };
 
-    function isNearWaveInteraction(clientX: number, clientY: number) {
-      const centerStrand = (NUM_STRANDS - 1) / 2;
-      const waveY = getSineY(clientX, centerStrand);
-      return Math.abs(clientY - waveY) < 180;
-    }
-
     function updateMousePos(clientX: number, clientY: number) {
       const now = performance.now();
-      if (!isNearWaveInteraction(clientX, clientY)) {
-        mouse.isHovered = false;
-        return;
-      }
-
       if (!mouse.isHovered) {
         mouse.x = clientX;
         mouse.y = clientY;
@@ -522,11 +511,6 @@ export function SineWaveBackground() {
     }
 
     function handleMouseDown(event: MouseEvent) {
-      if (!isNearWaveInteraction(event.clientX, event.clientY)) {
-        mouse.isHovered = false;
-        return;
-      }
-
       const now = performance.now();
       mouse.x = event.clientX;
       mouse.y = event.clientY;
@@ -552,22 +536,19 @@ export function SineWaveBackground() {
 
     function handleTouchStart(event: TouchEvent) {
       const touch = event.touches[0];
-      if (!touch || !isNearWaveInteraction(touch.clientX, touch.clientY)) {
-        mouse.isHovered = false;
-        return;
+      if (touch) {
+        const now = performance.now();
+        mouse.x = touch.clientX;
+        mouse.y = touch.clientY;
+        mouse.targetX = touch.clientX;
+        mouse.targetY = touch.clientY;
+        mouse.rawX = touch.clientX;
+        mouse.rawY = touch.clientY;
+        mouse.isHovered = true;
+        mouse.radial = true;
+        mouse.lastMoveTime = now;
+        triggerClickRipple(touch.clientX, touch.clientY);
       }
-
-      const now = performance.now();
-      mouse.x = touch.clientX;
-      mouse.y = touch.clientY;
-      mouse.targetX = touch.clientX;
-      mouse.targetY = touch.clientY;
-      mouse.rawX = touch.clientX;
-      mouse.rawY = touch.clientY;
-      mouse.isHovered = true;
-      mouse.radial = true;
-      mouse.lastMoveTime = now;
-      triggerClickRipple(touch.clientX, touch.clientY);
     }
 
     function handleTouchMove(event: TouchEvent) {
